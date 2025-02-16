@@ -18,8 +18,7 @@
     [CascadingParameter]
     private IMudDialogInstance MudDialog { get; set; }
 
-    [Parameter]
-    public Category Category { get; set; } = new();
+
 
 
     [Parameter]
@@ -28,7 +27,7 @@
     private async Task OnSubmit()
     {
 
-        MudDialog.Close(DialogResult.Ok(Category.CategoryId));
+        MudDialog.Close(DialogResult.Ok(true));
 
        
     }

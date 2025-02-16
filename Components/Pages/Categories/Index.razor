@@ -112,7 +112,6 @@ else
     {
         var parameters = new DialogParameters<DialogComponent>
         {
-            {x => x.Category, category },
             {x => x.ContentText, $"Are you sure you want to delete the category '{category.CategoryName}'? This action cannot be undone."}
         };
 

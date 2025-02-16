@@ -40,7 +40,9 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.Requ
     .AddDefaultTokenProviders();
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
-builder.Services.AddScoped<ICategoryService, CategoryService>(); // Register ICategoryHelper
+builder.Services.AddScoped<IInventoryService, InventoryService>(); 
+builder.Services.AddScoped<ICategoryService, CategoryService>(); 
+builder.Services.AddScoped<IProductService, ProductService>(); 
 
 var app = builder.Build();
 
