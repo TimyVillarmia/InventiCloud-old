@@ -1,0 +1,39 @@
+﻿@using InventiCloud.Models
+@using Microsoft.EntityFrameworkCore
+@using MudBlazor
+@inject IDbContextFactory<InventiCloud.Data.ApplicationDbContext> DbFactory
+
+
+
+<MudDialog>
+    <DialogContent>
+        <MudText>@ContentText</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Error" OnClick="OnSubmit">Delete</MudButton>
+    </DialogActions>
+</MudDialog>
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public Category Category { get; set; } = new();
+
+
+    [Parameter]
+    public string ContentText { get; set; }
+
+    private async Task OnSubmit()
+    {
+
+        MudDialog.Close(DialogResult.Ok(Category.CategoryId));
+
+       
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+
+}

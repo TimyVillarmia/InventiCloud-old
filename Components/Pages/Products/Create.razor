@@ -1,0 +1,273 @@
+@page "/inventory/products/create"
+@using InventiCloud.Data
+@using InventiCloud.Utils
+@using Microsoft.EntityFrameworkCore
+@using InventiCloud.Models
+@inject IDbContextFactory<InventiCloud.Data.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Create</PageTitle>
+
+<MudContainer Class="pt-5" MaxWidth="MaxWidth.Large">
+    <div class="d-flex gap-4 align-items-center mb-4">
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" aria-label="delete" Href="/catalog/products"/>
+        <MudText Typo="Typo.h4">CREATE PRODUCT</MudText>
+    </div>
+    <EditForm method="post" Model="Product" OnValidSubmit="AddProduct" FormName="create" Enhance>
+        <DataAnnotationsValidator />
+        <MudGrid>
+            <MudItem xs="12">
+                <MudText Typo="Typo.h6">PRODUCT DETAILS</MudText>
+            </MudItem>
+            <MudItem xs="12" sm="8">
+                <MudTextField @bind-Value="Product.Name" Label="Name" For="@(() => Product.Name)" Variant="Variant.Outlined"/>
+                <MudTextField @bind-Value="Product.Brand" Label="Brand" For="@(() => Product.Brand)" Variant="Variant.Outlined" />
+                <MudTextField @bind-Value="Product.SKU" Label="SKU" For="@(() => Product.SKU)" Variant="Variant.Outlined" />
+                <MudGrid>
+                    <MudItem xs="5">
+                        <MudSelect Label="Category" @bind-Value="Product.CategoryId" For="@(() => Product.CategoryId)"
+                                   Variant="Variant.Outlined">
+                            <MudSelectItem T="int" Value="0" Disabled="true">Select Category</MudSelectItem>
+                            @foreach (var category in _categories)
+                            {
+                                <MudSelectItem Value="@category.CategoryId">@category.CategoryName</MudSelectItem>
+                            }
+                        </MudSelect>
+
+                    </MudItem>
+                    <MudItem xs="5">
+                        <MudNumericField  @bind-Value="Product.WeightValue" HideSpinButtons="true"  Label="Weight" For="@(() => Product.WeightValue)" Variant="Variant.Outlined" />
+                    </MudItem>
+                    <MudItem xs="2">
+                        <MudSelect @bind-Value="Product!.WeightUnit" Label="Unit" For="@(() => Product.WeightUnit)" Variant="Variant.Outlined">
+                            @foreach (string unit in Units)
+                            {
+                                <MudSelectItem Value="@unit"/>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                </MudGrid>
+
+            </MudItem>
+            <MudItem xs="12" sm="4">
+                <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">xs=6</MudPaper>
+            </MudItem>
+
+            <MudItem xs="12">
+                <MudTextField @bind-Value="Product.Description" Label="Description" For="@(() => Product.Description)" Variant="Variant.Outlined" Lines="5" />
+            </MudItem>
+
+            <MudItem xs="12">
+                <MudText Typo="Typo.h6">PRICING</MudText>
+            </MudItem>
+
+            <MudItem xs="12" sm="6">
+                <MudNumericField  @bind-Value="Product.Cost" HideSpinButtons="true" Label="Cost" For="@(() => Product.Cost)"  Variant="Variant.Outlined" @bind-Value:after="After" />
+                <MudNumericField @bind-Value="Product.Price" HideSpinButtons="true" Label="Price" For="@(() => Product.Price)" Variant="Variant.Outlined" @bind-Value:after="After" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudTextField id="Profit" Variant="Variant.Outlined" Label="Profit" @bind-Value="Profit" Immediate="true" ReadOnly="true"/>
+                <MudTextField id="Margin" Variant="Variant.Outlined" Label="Margin" @bind-Value="Margin" Immediate="true" ReadOnly="true"/>
+            </MudItem>
+
+            <MudItem xs="12">
+                <MudText Typo="Typo.h6">ATTRIBUTES</MudText>
+            </MudItem>
+
+            <MudItem xs="12" sm="6">
+                <MudSelect @bind-Value="ProductAttribute.AttributeSetId" Clearable="true" Variant="Variant.Outlined">
+                    @foreach (AttributeSet set in _attributesets)
+                    {
+                        <MudSelectItem Value="@set.AttributeSetId">@set.AttributeSetName</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+
+            <MudItem xs="12" sm="6">
+                @if(ProductAttribute.AttributeSetId != 0){
+                    <MudText Typo="Typo.h4">@ProductAttribute.AttributeSetId</MudText>
+                }
+            </MudItem>
+
+            <MudItem xs="12">
+                <MudText Typo="Typo.h6">INVENTORY</MudText>
+            </MudItem>
+
+            <MudItem xs="12">
+                <MudSimpleTable Style="overflow-x: auto;">
+                    <thead>
+                        <tr>
+                            @foreach (var h in headings)
+                            {
+                                <th>@h</th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in rows)
+                        {
+                            <tr>
+                                @foreach (var x in row.Split())
+                                {
+                                    <td>@x</td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </MudSimpleTable>
+            </MudItem>
+        </MudGrid>
+
+        <MudItem xs="12" Class="justify-center">
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">CREATE PRODUCT</MudButton>
+        </MudItem>
+
+    </EditForm>
+
+
+
+</MudContainer>
+
+
+
+@code {
+    #nullable enable
+    private const string DefaultDragClass = "relative rounded-lg border-2 border-dashed pa-4 mt-4 mud-width-full mud-height-full";
+    private string _dragClass = DefaultDragClass;
+    private readonly List<string> _fileNames = new();
+    private MudFileUpload<IReadOnlyList<IBrowserFile>>? _fileUpload;
+
+
+    string _searchBrand;
+    private List<string?> _brands = new();
+    private string[] Units = {
+        "kg",
+        "lbs",
+        "oz",
+        "g"
+     };
+
+    string[] headings = { "Branch", "Location", "Onhand", "Incoming", "Unavailable" };
+    string[] rows = {};
+
+
+    [SupplyParameterFromForm]
+    private Product Product { get; set; } = new();
+    private ProductAttribute ProductAttribute { get; set; } = new();
+
+
+    private ApplicationDbContext context = default!;
+
+    private List<Category> _categories = new();
+    private List<AttributeSet> _attributesets = new();
+    private List<Inventory> _inventories = new();
+    private List<Branch> _branches = new();
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        using var context = DbFactory.CreateDbContext();
+
+        _categories = context.Categories.ToList();
+        _attributesets = context.AttributeSets.ToList();
+        _branches = context.Branches.ToList();
+
+        foreach (var branch in _branches)
+        {
+            rows.Append($"{branch.Name} {GetFullAddressUtil.GetFullAddress(branch)} 0 0 0");
+        }
+
+    }
+
+    // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async Task AddProduct()
+    {
+        context = DbFactory.CreateDbContext();
+        context.Products.Add(Product);
+        await context.SaveChangesAsync();
+
+        foreach (var branch in await context.Branches.ToListAsync())
+        {
+            context.Inventories.Add(new Inventory
+                {
+                    ProductID = Product.ProductId,
+                    BranchID = branch.BranchId,
+                    OnHand = 0,
+                    Incoming = 0,
+                    Unavailable = 0
+                });
+        }
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/inventory/products");
+    }
+
+    private string Profit = "--";
+    private string Margin = "--";
+    private decimal? _profit;
+    private decimal? _margin;
+
+    private void After()
+    {
+
+        if (Product.Price == 0)
+        {
+            Profit = "--";
+            Margin = "--";
+
+        }
+        else
+        {
+            _profit = Product.Price - Product.Cost;
+            _margin = _profit / Product.Price;
+
+            Profit = String.Format(new System.Globalization.CultureInfo("en-PH"), "{0:C2}", _profit);
+            Margin = $"{_margin:P2}"; // Displays percentage with 2 decimal places
+        }
+
+    }
+
+    private async Task<IEnumerable<string>> Search(string value, CancellationToken token)
+    {
+        // In real life use an asynchronous function for fetching data from an api.
+        await Task.Delay(5, token);
+
+        // if text is null or empty, show complete list
+        if (string.IsNullOrEmpty(value))
+            return _brands;
+
+        return _brands.Where(x => x.Contains(value, StringComparison.InvariantCultureIgnoreCase));
+    }
+
+    private async Task ClearAsync()
+    {
+        await (_fileUpload?.ClearAsync() ?? Task.CompletedTask);
+        _fileNames.Clear();
+        ClearDragClass();
+    }
+
+    private Task OpenFilePickerAsync()
+        => _fileUpload?.OpenFilePickerAsync() ?? Task.CompletedTask;
+
+    private void OnInputFileChanged(InputFileChangeEventArgs e)
+    {
+        ClearDragClass();
+        var files = e.GetMultipleFiles();
+        foreach (var file in files)
+        {
+            _fileNames.Add(file.Name);
+        }
+    }
+
+    private void Upload()
+    {
+        // Upload the files here
+        // Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomCenter;
+        // Snackbar.Add("TODO: Upload your files!");
+    }
+
+    private void SetDragClass()
+        => _dragClass = $"{DefaultDragClass} mud-border-primary";
+
+    private void ClearDragClass()
+        => _dragClass = DefaultDragClass;
+}

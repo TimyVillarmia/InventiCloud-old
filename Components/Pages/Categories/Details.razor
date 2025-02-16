@@ -1,0 +1,93 @@
+@page "/product-setup/categories/{CategoryName}"
+@using Microsoft.EntityFrameworkCore
+@using InventiCloud.Models
+@inject IDbContextFactory<InventiCloud.Data.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>@CategoryName</PageTitle>
+
+
+
+<MudContainer Class="pt-5" MaxWidth="MaxWidth.Large">
+    <div class="d-flex gap-4 align-items-center mb-4">
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" aria-label="delete" Href="/product-setup/categories" />
+        <MudText Typo="Typo.h4">@CategoryName</MudText>
+    </div>
+    
+    @if (!category!.Products.Any())
+    {
+
+        <MudPaper Height="500px" Class="justify-center align-content-center">
+            <MudText Class="bol" Typo="Typo.h6" Align="Align.Center">No Products Found</MudText>
+            <MudText Typo="Typo.body1" Align="Align.Center">
+                This category currently has no associated products.
+            </MudText>
+            <MudContainer Class="d-flex justify-center mt-2">
+                <MudButton Variant="Variant.Filled" Href="inventory/products/create" Color="Color.Primary" Class="text-uppercase">
+                    Add Product
+                </MudButton>
+            </MudContainer>
+        </MudPaper>
+    }
+    else
+    {
+        <MudDataGrid T="Product" Items="@category.Products" QuickFilter="@_quickFilter">
+            <ToolBarContent>
+                <MudText Typo="Typo.h6">Products</MudText>
+                <MudSpacer />
+                <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                              AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+                <MudSpacer />
+            </ToolBarContent>
+            <Columns>
+                <PropertyColumn Property="product => product.SKU" />
+                <PropertyColumn Property="product => product.Name" />
+                <PropertyColumn Property="product => product.Cost" />
+                <PropertyColumn Property="product => product.Price" />
+            </Columns>
+            <PagerContent>
+                <MudDataGridPager T="Product" />
+            </PagerContent>
+        </MudDataGrid>
+    }
+
+
+
+</MudContainer>
+
+@code {
+    [Parameter]
+    public string CategoryName { get; set; }
+
+    private string _searchString;
+
+    public Category? category = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        category = await context.Categories
+                                .Include(c => c.Products)
+                                .FirstOrDefaultAsync(m => m.CategoryName == CategoryName);
+
+        if (category is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    private Func<Product, bool> _quickFilter => x =>
+       {
+       if (string.IsNullOrWhiteSpace(_searchString))
+           return true;
+
+           if (x.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+               return true;
+
+
+       return false;
+       };
+
+
+
+}

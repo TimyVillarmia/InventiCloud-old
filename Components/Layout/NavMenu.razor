@@ -1,0 +1,53 @@
+﻿@implements IDisposable
+
+@inject NavigationManager NavigationManager
+
+<MudNavMenu>
+    <MudNavLink Href="/home" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.Home">Home</MudNavLink>
+    <MudNavGroup Title="Inventory" Expanded="true" Icon="@Icons.Material.Outlined.ShoppingBag">
+        <MudNavLink Href="inventory/products" Match="NavLinkMatch.Prefix">Products</MudNavLink>
+        <MudNavLink Href="inventory/stock-transfer" Match="NavLinkMatch.Prefix">Stock Transfer</MudNavLink>
+        <MudNavLink Href="inventory/stock-adjustment" Match="NavLinkMatch.Prefix">Stock Adjustments</MudNavLink>
+    </MudNavGroup>
+    <MudNavGroup Title="Purchases" Expanded="true" Icon="@Icons.Material.Outlined.LocalShipping">
+        <MudNavLink Href="purchase/orders" Match="NavLinkMatch.Prefix">Purchase Orders</MudNavLink>
+        <MudNavLink Href="purchase/suppliers" Match="NavLinkMatch.Prefix">Suppliers</MudNavLink>
+    </MudNavGroup>
+    <MudNavGroup Title="Sales" Expanded="true" Icon="@Icons.Material.Outlined.ShoppingCart">
+        <MudNavLink Href="sales/orders" Match="NavLinkMatch.Prefix">Sales Orders</MudNavLink>
+        <MudNavLink Href="sales/customers" Match="NavLinkMatch.Prefix">Customers</MudNavLink>
+    </MudNavGroup>
+    <MudNavGroup Title="Product Setup" Expanded="true" Icon="@Icons.Material.Outlined.Window">
+        <MudNavLink Href="product-setup/categories" Match="NavLinkMatch.Prefix">Categories</MudNavLink>
+        <MudNavLink Href="product-setup/attributesets" Match="NavLinkMatch.Prefix">Attribute Sets</MudNavLink>
+    </MudNavGroup>
+    <MudNavLink Href="/analytics" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.BarChart">Analytics</MudNavLink>
+    <MudText Typo="Typo.body2" Class="px-4 mud-text-secondary">Settings</MudText>
+    <MudNavLink Href="/account" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.AccountCircle">Account</MudNavLink>
+    <MudNavLink Href="/store" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Storefront">Store</MudNavLink>
+</MudNavMenu>
+
+
+
+@code {
+    private string? currentUrl;
+
+    protected override void OnInitialized()
+    {
+        currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+        NavigationManager.LocationChanged += OnLocationChanged;
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        currentUrl = NavigationManager.ToBaseRelativePath(e.Location);
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        NavigationManager.LocationChanged -= OnLocationChanged;
+    }
+}
+
+

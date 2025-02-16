@@ -1,0 +1,147 @@
+@* @page "/products/details"
+@using Microsoft.EntityFrameworkCore
+@using InventiCloud.Models
+@inject IDbContextFactory<InventiCloud.Data.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Create</PageTitle>
+
+<MudContainer Class="pt-5" MaxWidth="MaxWidth.Large">
+    <div class="d-flex gap-4 align-items-center mb-4">
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" aria-label="delete" Href="/catalog/products" />
+        <MudText Typo="Typo.h4">CREATE PRODUCT</MudText>
+    </div>
+    <EditForm method="post" Model="Product" OnValidSubmit="AddProduct" FormName="create" Enhance>
+        <DataAnnotationsValidator />
+        <MudGrid>
+            <MudItem xs="12">
+                <MudText Typo="Typo.h6">PRODUCT DETAILS</MudText>
+            </MudItem>
+            <MudItem xs="12" sm="8">
+                <MudTextField @bind-Value="Product.Name" Label="Name" For="@(() => Product.Name)" Variant="Variant.Outlined" />
+                <MudTextField @bind-Value="Product.Brand" Label="Brand" For="@(() => Product.Brand)" Variant="Variant.Outlined" />
+                <MudTextField @bind-Value="Product.SKU" Label="SKU" For="@(() => Product.SKU)" Variant="Variant.Outlined" />
+                <MudGrid>
+                    <MudItem xs="5">
+                        <MudSelect Label="Category" @bind-Value="Product.CategoryId" For="@(() => Product.CategoryId)"
+                                   Variant="Variant.Outlined">
+                            <MudSelectItem T="int" Value="0" Disabled="true">Select Category</MudSelectItem>
+                            @foreach (var category in _categories)
+                            {
+                                <MudSelectItem Value="@category.CategoryId">@category.CategoryName</MudSelectItem>
+                            }
+                        </MudSelect>
+
+                    </MudItem>
+                    <MudItem xs="5">
+                        <MudNumericField @bind-Value="Product.WeightValue" HideSpinButtons="true" Label="Weight" For="@(() => Product.WeightValue)" Variant="Variant.Outlined" />
+                    </MudItem>
+                    <MudItem xs="2">
+                        <MudSelect @bind-Value="Product!.WeightUnit" Label="Unit" For="@(() => Product.WeightUnit)" Variant="Variant.Outlined">
+                            @foreach (string unit in Units)
+                            {
+                                <MudSelectItem Value="@unit" />
+                            }
+                        </MudSelect>
+                    </MudItem>
+                </MudGrid>
+
+            </MudItem>
+            <MudItem xs="12" sm="4">
+                <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">xs=6</MudPaper>
+            </MudItem>
+
+            <MudItem xs="12">
+                <MudTextField @bind-Value="Product.Description" Label="Description" For="@(() => Product.Description)" Variant="Variant.Outlined" Lines="5" />
+            </MudItem>
+
+            <MudItem xs="12">
+                <MudText Typo="Typo.h6">PRICING</MudText>
+            </MudItem>
+
+            <MudItem xs="12" sm="6">
+                <MudNumericField @bind-Value="Product.Cost" HideSpinButtons="true" Label="Cost" For="@(() => Product.Cost)" Variant="Variant.Outlined" @bind-Value:after="After" />
+                <MudNumericField @bind-Value="Product.Price" HideSpinButtons="true" Label="Price" For="@(() => Product.Price)" Variant="Variant.Outlined" @bind-Value:after="After" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudTextField id="Profit" Variant="Variant.Outlined" Label="Profit" @bind-Value="Profit" Immediate="true" ReadOnly="true" />
+                <MudTextField id="Margin" Variant="Variant.Outlined" Label="Margin" @bind-Value="Margin" Immediate="true" ReadOnly="true" />
+            </MudItem>
+
+            <MudItem xs="12">
+                <MudText Typo="Typo.h6">ATTRIBUTES</MudText>
+            </MudItem>
+
+            <MudItem xs="12" sm="6">
+                <MudSelect @bind-Value="ProductAttribute.AttributeSetId" Clearable="true" Variant="Variant.Outlined">
+                    @foreach (AttributeSet set in _attributesets)
+                    {
+                        <MudSelectItem Value="@set.AttributeSetId">@set.AttributeSetName</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+
+            <MudItem xs="12" sm="6">
+                @if (ProductAttribute.AttributeSetId != 0)
+                {
+                    <MudText Typo="Typo.h4">@ProductAttribute.AttributeSetId</MudText>
+                }
+            </MudItem>
+
+            <MudItem xs="12">
+                <MudText Typo="Typo.h6">INVENTORY</MudText>
+            </MudItem>
+
+            <MudItem xs="12">
+                <MudSimpleTable Style="overflow-x: auto;">
+                    <thead>
+                        <tr>
+                            @foreach (var h in headings)
+                            {
+                                <th>@h</th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in rows)
+                        {
+                            <tr>
+                                @foreach (var x in row.Split())
+                                {
+                                    <td>@x</td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </MudSimpleTable>
+            </MudItem>
+        </MudGrid>
+
+        <MudItem xs="12" Class="justify-center">
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">CREATE PRODUCT</MudButton>
+        </MudItem>
+
+    </EditForm>
+
+
+
+</MudContainer>
+
+@code {
+    private Product? product;
+
+    [SupplyParameterFromQuery]
+    private int ProductId { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        product = await context.Products.FirstOrDefaultAsync(m => m.ProductId == ProductId);
+
+        if (product is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+}
+ *@

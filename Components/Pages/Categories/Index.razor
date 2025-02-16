@@ -1,0 +1,213 @@
+@page "/product-setup/categories"
+@using InventiCloud.Components.UI
+@using InventiCloud.Services
+@using InventiCloud.Services.Interface
+@using Microsoft.EntityFrameworkCore
+@using InventiCloud.Models
+@using InventiCloud.Data
+@implements IAsyncDisposable
+@inject IDbContextFactory<InventiCloud.Data.ApplicationDbContext> DbFactory
+@inject IDialogService DialogService
+@inject ICategoryService CategoryService
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+<PageTitle>Index</PageTitle>
+
+
+
+<MudText Class="bold mb-2" Typo="Typo.h4">Categories</MudText>
+@if (_categories == null)
+{
+    <MudContainer Class="d-flex justify-center align-items-center" Style="height: 100vh;">
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    </MudContainer>
+}
+else
+{
+    <MudGrid>
+        <MudItem sm="6">
+            <EditForm method="post" Model="Category" OnValidSubmit="AddCategory" FormName="create" Enhance>
+                <DataAnnotationsValidator />
+                <MudStack Row="true" AlignItems="AlignItems.Center">
+                    <div>
+                        <MudTextField @bind-Value="Category.CategoryName" Label="Category Name" For="@(() => Category.CategoryName)" Variant="Variant.Outlined" />
+
+                    </div>
+                    <div>
+                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Add Category</MudButton>
+                    </div>
+                </MudStack>
+            </EditForm>
+        </MudItem>
+        <MudItem sm="6">
+            <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                          AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+        </MudItem>
+    </MudGrid>
+    @if (!_categories.Any())
+    {
+
+        <MudPaper Height="500px" Class="justify-center align-content-center">
+            <MudText Class="bold" Typo="Typo.h6" Align="Align.Center">No Categories Found</MudText>
+            <MudText Typo="Typo.body1" Align="Align.Center">Let's start organizing your products! Create your first category.</MudText>
+        </MudPaper>
+    }
+    else
+    {
+        <MudDataGrid @ref="dataGrid" T="Category" ServerData="ServerReload" RowClick="@RowClicked">
+            <Columns>
+                <PropertyColumn Property="category => category.CategoryName" Title="Category Name" />
+                <PropertyColumn Property="category => category.Products.Count()" Title="Products" />
+                <TemplateColumn CellClass="d-flex justify-end">
+                    <CellTemplate>
+                        <MudStack Row>
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" aria-label="delete" OnClick="@(() => OpenDialogAsync(context.Item))" />
+                        </MudStack>
+                    </CellTemplate>
+                </TemplateColumn>
+            </Columns>
+            <PagerContent>
+                <MudDataGridPager T="Category" />
+            </PagerContent>
+        </MudDataGrid>
+
+    }
+}
+
+
+@code {
+    private ApplicationDbContext context = default!;
+    private string _searchString;
+    MudDataGrid<Category> dataGrid;
+
+    [SupplyParameterFromForm]
+    private Category Category { get; set; } = new();
+    string searchString = null;
+
+    private IEnumerable<Category>? _categories;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // context = DbFactory.CreateDbContext();
+        _categories = await CategoryService.GetAllCategoryAsync();
+
+
+
+    }
+
+
+    // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async Task AddCategory()
+    {
+        // await context.Categories.AddAsync(Category);
+        await CategoryService.AddCategory(Category);
+
+        Category = new();
+
+        if (dataGrid == null)
+        {
+
+            return;
+
+        }
+        await dataGrid.ReloadServerData();
+
+    }
+
+
+    // events
+    async Task OpenDialogAsync(Category category)
+    {
+        var parameters = new DialogParameters<DialogComponent>
+        {
+            {x => x.Category, category },
+            {x => x.ContentText, $"Are you sure you want to delete the category '{category.CategoryName}'? This action cannot be undone."}
+        };
+
+        var dialog = await DialogService.ShowAsync<DialogComponent>("Delete Category", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            try
+            {
+                await CategoryService.DeleteCategory(category);
+                Snackbar.Add("Category Deleted", Severity.Success);
+                await dataGrid.ReloadServerData();
+
+            }
+            catch (InvalidOperationException ex)
+            {
+                Snackbar.Add(ex.Message, Severity.Error);
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add("An error occurred while deleting the category.", Severity.Error);
+            }
+        }
+
+    }
+
+    void RowClicked(DataGridRowClickEventArgs<Category> args)
+    {
+
+
+        if (args.Item == null)
+        {
+            return;
+        }
+
+        NavigationManager.NavigateTo($"/product-setup/categories/{args.Item.CategoryName}");
+
+    }
+
+
+    private async Task<GridData<Category>> ServerReload(GridState<Category> state)
+    {
+
+        _categories = await CategoryService.GetAllCategoryAsync();
+        await Task.Delay(300);
+        _categories = _categories.Where(category =>
+        {
+            if (string.IsNullOrWhiteSpace(searchString))
+                return true;
+            if (category.CategoryName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+                return true;
+            return false;
+        }).ToArray();
+        var totalItems = _categories.Count();
+
+        var sortDefinition = state.SortDefinitions.FirstOrDefault();
+        if (sortDefinition != null)
+        {
+            switch (sortDefinition.SortBy)
+            {
+                case nameof(Category.CategoryName):
+                    _categories = _categories.OrderByDirection(
+                        sortDefinition.Descending ? SortDirection.Descending : SortDirection.Ascending,
+                        o => o.CategoryName
+                    );
+                    break;
+            }
+        }
+
+        var pagedData = _categories.Skip(state.Page * state.PageSize).Take(state.PageSize).ToArray();
+        return new GridData<Category>
+            {
+                TotalItems = totalItems,
+                Items = pagedData
+            };
+    }
+
+
+
+
+    private Task OnSearch(string text)
+    {
+        searchString = text;
+        return dataGrid.ReloadServerData();
+    }
+
+
+    public async ValueTask DisposeAsync() => await CategoryService.DisposeAsync();
+}
