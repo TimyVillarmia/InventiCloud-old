@@ -41,7 +41,7 @@ else
         </MudItem>
         <MudItem sm="6">
             <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
-                          AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+            AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
         </MudItem>
     </MudGrid>
     @if (!_categories.Any())
@@ -78,12 +78,11 @@ else
 @code {
     private ApplicationDbContext context = default!;
     private string _searchString;
-    MudDataGrid<Category> dataGrid;
+    MudDataGrid<Category> dataGrid = new();
 
     [SupplyParameterFromForm]
     private Category Category { get; set; } = new();
     string searchString = null;
-
     private IEnumerable<Category>? _categories;
 
     protected override async Task OnInitializedAsync()
@@ -103,13 +102,6 @@ else
         await CategoryService.AddCategory(Category);
 
         Category = new();
-
-        if (dataGrid == null)
-        {
-
-            return;
-
-        }
         await dataGrid.ReloadServerData();
 
     }
