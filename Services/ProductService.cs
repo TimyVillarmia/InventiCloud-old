@@ -15,6 +15,12 @@ namespace InventiCloud.Services
             try
             {
                 using var context = DbFactory.CreateDbContext();
+                // Check for existing SKU
+                if (await context.Products.AnyAsync(p => p.SKU == product.SKU))
+                {
+                    throw new InvalidOperationException($"SKU '{product.SKU}' already exists.");
+                }
+
                 context.Products.Add(product);
                 await context.SaveChangesAsync();
                 await inventoryService.AddInventoryAsync(product);
@@ -22,9 +28,25 @@ namespace InventiCloud.Services
 
 
             }
+            catch (DbUpdateException ex)
+            {
+                _logger.LogError(ex, "An error occurred while adding the product.", product);
+                // Handle database-specific exceptions (e.g., unique constraint violations)
+                if (ex.InnerException != null && ex.InnerException.Message.Contains("UNIQUE constraint failed"))
+                {
+                    throw new InvalidOperationException($"SKU '{product.SKU}' already exists.");
+                }
+                throw; // Rethrow other DbUpdateExceptions
+            }
+            catch (InvalidOperationException ex)
+            {
+                _logger.LogError(ex, "An error occurred while adding the product.", product);
+                throw;
+            }
             catch (Exception ex)
             {
-                throw new Exception(ex.Message);
+                _logger.LogError(ex, "An unexpected error occurred while adding the product.", product);
+                throw;
             }
         }
 

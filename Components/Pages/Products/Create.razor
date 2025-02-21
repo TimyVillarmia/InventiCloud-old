@@ -186,18 +186,7 @@
         context.Products.Add(Product);
         await context.SaveChangesAsync();
 
-        foreach (var branch in await context.Branches.ToListAsync())
-        {
-            context.Inventories.Add(new Inventory
-                {
-                    ProductID = Product.ProductId,
-                    BranchID = branch.BranchId,
-                    OnHand = 0,
-                    Incoming = 0,
-                    Unavailable = 0
-                });
-        }
-        await context.SaveChangesAsync();
+        
         NavigationManager.NavigateTo("/inventory/products");
     }
 

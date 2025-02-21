@@ -11,6 +11,8 @@
 @inject ICategoryService CategoryService
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
+
+
 <PageTitle>Index</PageTitle>
 
 
@@ -76,7 +78,6 @@ else
 
 
 @code {
-    private ApplicationDbContext context = default!;
     private string _searchString;
     MudDataGrid<Category> dataGrid = new();
 

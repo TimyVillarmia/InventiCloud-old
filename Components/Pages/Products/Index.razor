@@ -64,6 +64,7 @@ else
     }
     else
     {
+
         <MudDataGrid @ref="dataGrid" T="Inventory" ServerData="ServerReload" MultiSelection="true">
             <Columns>
                 <PropertyColumn Property="inventory => inventory.Product.SKU" />
