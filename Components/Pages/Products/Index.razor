@@ -1,111 +1,123 @@
 @page "/inventory/products"
+@using InventiCloud.Services.Interface
 @using Microsoft.EntityFrameworkCore
 @using InventiCloud.Models
 @using InventiCloud.Data
 @implements IAsyncDisposable
-@inject IDbContextFactory<InventiCloud.Data.ApplicationDbContext> DbFactory
+@inject IProductService ProductService
+@inject IInventoryService InventoryService
 
 <PageTitle>Index</PageTitle>
 
 <MudText Class="bold mb-2" Typo="Typo.h4">Products</MudText>
-
-<MudGrid>
-    <MudItem sm="6">
-        <MudStack Row="true" AlignItems="AlignItems.Center">
-            <div>
-                <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
-                AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
-            </div>
-            <div>
-                <MudSelect @bind-Value="@selectedCategoryId" Variant="Variant.Outlined">
-                    <MudSelectItem Value="0">All</MudSelectItem>
-
-                    @foreach (Category b in _categories)
-                    {
-                        <MudSelectItem Value="@b.CategoryId">@b.CategoryName</MudSelectItem>
-                    }
-                </MudSelect>
-            </div>
-        </MudStack>
-
-    </MudItem>
-
-    <MudItem sm="6">
-        <MudButton Variant="Variant.Filled" Href="inventory/products/create" Color="Color.Primary" Class="text-uppercase">
-            Add Product
-        </MudButton>
-    </MudItem>
-
-</MudGrid>
-@if (!context.Products.Any())
+@if (_inventories == null)
 {
-
-    <MudPaper Height="500px" Class="justify-center align-content-center">
-        <MudText Class="bol" Typo="Typo.h6" Align="Align.Center">Add your products</MudText>
-        <MudText Typo="Typo.body1" Align="Align.Center">Your product catalog is currently empty. Click the "Add Product"
-            button to get started.</MudText>
-        <MudContainer Class="d-flex justify-center mt-2">
-            <MudButton Variant="Variant.Filled" Href="inventory/products/create" Color="Color.Primary" Class="text-uppercase">
-                Add Product</MudButton>
-        </MudContainer>
-    </MudPaper>
+    <MudContainer Class="d-flex justify-center align-items-center" Style="height: 100vh;">
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    </MudContainer>
 }
 else
 {
-    <MudDataGrid @ref="dataGrid" T="Inventory" ServerData="ServerReload" MultiSelection="true">
-        <Columns>
-            <PropertyColumn Property="inventory => inventory.Product.SKU" />
-            <PropertyColumn Property="inventory => inventory.Product.Name" />
-            <PropertyColumn Property="inventory => inventory.Product.Category.CategoryName" Title="Category Name" />
-            <PropertyColumn Property="inventory => inventory.Product.Cost" />
-            <PropertyColumn Property="inventory => inventory.Product.Price" />
-            <TemplateColumn CellClass="d-flex justify-end">
-                <CellTemplate>
-                    <MudMenu Icon="@Icons.Material.Filled.MoreVert" AriaLabel="Open user menu">
-                        <MudMenuItem Label="Edit" href="@($"/inventory/products/{context.Item.ProductID}")" />
-                        <MudMenuItem Label="Delete" Class="red-text" href="@($"/inventory/products/delete?id={context.Item.ProductID}")" />
-                    </MudMenu>
-                </CellTemplate>
-            </TemplateColumn>
-        </Columns>
-        <PagerContent>
-            <MudDataGridPager T="Product" />
-        </PagerContent>
-    </MudDataGrid>
+    <MudGrid>
+        <MudItem sm="6">
+            <MudStack Row="true" AlignItems="AlignItems.Center">
+                <div>
+                    <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                                  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+                </div>
+                <div>
+                    <MudSelect @bind-Value="@selectedCategoryId" Variant="Variant.Outlined">
+                        <MudSelectItem Value="0">All</MudSelectItem>
+
+                        @foreach (Category b in _categories)
+                        {
+                            <MudSelectItem Value="@b.CategoryId">@b.CategoryName</MudSelectItem>
+                        }
+                    </MudSelect>
+                </div>
+            </MudStack>
+
+        </MudItem>
+
+        <MudItem sm="6">
+            <MudButton Variant="Variant.Filled" Href="inventory/products/create" Color="Color.Primary" Class="text-uppercase">
+                Add Product
+            </MudButton>
+        </MudItem>
+
+    </MudGrid>
+    @if (!_inventories.Any())
+    {
+
+        <MudPaper Height="500px" Class="justify-center align-content-center">
+            <MudText Class="bol" Typo="Typo.h6" Align="Align.Center">Add your products</MudText>
+            <MudText Typo="Typo.body1" Align="Align.Center">
+                Your product catalog is currently empty. Click the "Add Product"
+                button to get started.
+            </MudText>
+            <MudContainer Class="d-flex justify-center mt-2">
+                <MudButton Variant="Variant.Filled" Href="inventory/products/create" Color="Color.Primary" Class="text-uppercase">
+                    Add Product
+                </MudButton>
+            </MudContainer>
+        </MudPaper>
+    }
+    else
+    {
+
+        <MudDataGrid @ref="dataGrid" T="Inventory" ServerData="ServerReload" MultiSelection="true">
+            <Columns>
+                <PropertyColumn Property="inventory => inventory.Product.SKU" />
+                <PropertyColumn Property="inventory => inventory.Product.Name" />
+                <PropertyColumn Property="inventory => inventory.Product.Category.CategoryName" Title="Category Name" />
+                <PropertyColumn Property="inventory => inventory.Product.Cost" />
+                <PropertyColumn Property="inventory => inventory.Product.Price" />
+                <TemplateColumn CellClass="d-flex justify-end">
+                    <CellTemplate>
+                        <MudMenu Icon="@Icons.Material.Filled.MoreVert" AriaLabel="Open user menu">
+                            <MudMenuItem Label="Edit" href="@($"/inventory/products/{context.Item.Product.SKU}")" />
+                        </MudMenu>
+                    </CellTemplate>
+                </TemplateColumn>
+            </Columns>
+            <PagerContent>
+                <MudDataGridPager T="Product" />
+            </PagerContent>
+        </MudDataGrid>
 
 
+
+    }
 
 }
 
 
 
 @code {
-    private ApplicationDbContext context = default!;
-    private string searchString;
+    string searchString = null;
     private int selectedBranchId;
     private int selectedCategoryId;
 
 
     private List<Product> _products = new();
     private List<Category> _categories = new();
+    private IEnumerable<Inventory>? _inventories;
 
-    MudDataGrid<Inventory> dataGrid;
+    MudDataGrid<Inventory> dataGrid = new();
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        context = DbFactory.CreateDbContext();
 
-        _categories = context.Categories.ToList();
+        _inventories = await InventoryService.GetAllInventoryAsync();
 
     }
 
     private async Task<GridData<Inventory>> ServerReload(GridState<Inventory> state)
     {
-        IEnumerable<Inventory> data = await context.Inventories
-                                            .Include(p => p.Product)
-                                            .ToListAsync();
+        _inventories = await InventoryService.GetAllInventoryAsync();
+
         await Task.Delay(300);
-        data = data.Where(inventory =>
+        _inventories = _inventories.Where(inventory =>
         {
             if (string.IsNullOrWhiteSpace(searchString))
                 return true;
@@ -123,7 +135,7 @@ else
                 return true;
             return false;
         }).ToArray();
-        var totalItems = data.Count();
+        var totalItems = _inventories.Count();
 
         var sortDefinition = state.SortDefinitions.FirstOrDefault();
         if (sortDefinition != null)
@@ -131,7 +143,7 @@ else
             switch (sortDefinition.SortBy)
             {
                 case nameof(Product.Name):
-                    data = data.OrderByDirection(
+                    _inventories = _inventories.OrderByDirection(
                         sortDefinition.Descending ? SortDirection.Descending : SortDirection.Ascending,
                         o => o.Product.Name
                     );
@@ -139,7 +151,7 @@ else
             }
         }
 
-        var pagedData = data.Skip(state.Page * state.PageSize).Take(state.PageSize).ToArray();
+        var pagedData = _inventories.Skip(state.Page * state.PageSize).Take(state.PageSize).ToArray();
         return new GridData<Inventory>
             {
                 TotalItems = totalItems,
@@ -157,5 +169,5 @@ else
     }
 
 
-    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+    public async ValueTask DisposeAsync() => await InventoryService.DisposeAsync();
 }

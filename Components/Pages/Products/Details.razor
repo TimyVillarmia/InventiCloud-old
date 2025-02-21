@@ -1,8 +1,13 @@
-@* @page "/products/details"
+@page "/products/details/{SKU}"
+@using InventiCloud.Components.UI
+@using InventiCloud.Services.Interface
 @using Microsoft.EntityFrameworkCore
 @using InventiCloud.Models
 @inject IDbContextFactory<InventiCloud.Data.ApplicationDbContext> DbFactory
 @inject NavigationManager NavigationManager
+@inject IProductService ProductService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
 
 <PageTitle>Create</PageTitle>
 
@@ -11,7 +16,7 @@
         <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" aria-label="delete" Href="/catalog/products" />
         <MudText Typo="Typo.h4">CREATE PRODUCT</MudText>
     </div>
-    <EditForm method="post" Model="Product" OnValidSubmit="AddProduct" FormName="create" Enhance>
+    <EditForm method="post" Model="Product" OnValidSubmit="UpdateProduct" FormName="create" Enhance>
         <DataAnnotationsValidator />
         <MudGrid>
             <MudItem xs="12">
@@ -24,7 +29,7 @@
                 <MudGrid>
                     <MudItem xs="5">
                         <MudSelect Label="Category" @bind-Value="Product.CategoryId" For="@(() => Product.CategoryId)"
-                                   Variant="Variant.Outlined">
+                        Variant="Variant.Outlined">
                             <MudSelectItem T="int" Value="0" Disabled="true">Select Category</MudSelectItem>
                             @foreach (var category in _categories)
                             {
@@ -118,7 +123,9 @@
         </MudGrid>
 
         <MudItem xs="12" Class="justify-center">
-            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">CREATE PRODUCT</MudButton>
+            <MudButton ButtonType="ButtonType.Button" Variant="Variant.Filled" Color="Color.Error" Class="ml-auto" OnClick="@(() => OpenDialogAsync())">DELETE</MudButton>
+
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">SAVE CHANGES</MudButton>
         </MudItem>
 
     </EditForm>
@@ -128,20 +135,165 @@
 </MudContainer>
 
 @code {
-    private Product? product;
+    #nullable enable
+    private const string DefaultDragClass = "relative rounded-lg border-2 border-dashed pa-4 mt-4 mud-width-full mud-height-full";
+    private string _dragClass = DefaultDragClass;
+    private readonly List<string> _fileNames = new();
+    private MudFileUpload<IReadOnlyList<IBrowserFile>>? _fileUpload;
 
-    [SupplyParameterFromQuery]
-    private int ProductId { get; set; }
+
+    string _searchBrand;
+    private List<string?> _brands = new();
+    private string[] Units = {
+        "kg",
+        "lbs",
+        "oz",
+        "g"
+     };
+
+    string[] headings = { "Branch", "Location", "Onhand", "Incoming", "Unavailable" };
+    string[] rows = { };
+
+
+    [SupplyParameterFromForm]
+    private Product Product { get; set; } = new();
+
+    private ProductAttribute ProductAttribute { get; set; } = new();
+
+    private List<Category> _categories = new();
+    private List<AttributeSet> _attributesets = new();
+    private List<Inventory> _inventories = new();
+    private List<Branch> _branches = new();
+
+
+    [Parameter]
+    public string SKU { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
         using var context = DbFactory.CreateDbContext();
-        product = await context.Products.FirstOrDefaultAsync(m => m.ProductId == ProductId);
+        Product = await context.Products.FirstAsync(m => m.SKU == SKU);
 
-        if (product is null)
+        if (Product is null)
         {
             NavigationManager.NavigateTo("notfound");
         }
     }
+
+
+    // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async Task UpdateProduct()
+    {
+        try
+        {
+            await ProductService.UpdateProductAsync(Product);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("An error occurred while deleting the category.", Severity.Error);
+
+        }
+        NavigationManager.NavigateTo("/inventory/products");
+    }
+
+    // events
+    async Task OpenDialogAsync()
+    {
+        var parameters = new DialogParameters<DialogComponent>
+        {
+            {x => x.ContentText, $"Are you sure you want to delete the product '{Product.Name}'? This action cannot be undone."}
+        };
+
+        var dialog = await DialogService.ShowAsync<DialogComponent>("Delete Product", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            try
+            {
+                await ProductService.DeleteProductAsync(Product);
+                Snackbar.Add("Product Deleted", Severity.Success);
+
+            }
+            catch (InvalidOperationException ex)
+            {
+                Snackbar.Add(ex.Message, Severity.Error);
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add("An error occurred while deleting the category.", Severity.Error);
+            }
+        }
+
+    }
+
+    private string Profit = "--";
+    private string Margin = "--";
+    private decimal? _profit;
+    private decimal? _margin;
+
+    private void After()
+    {
+
+        if (Product.Price == 0)
+        {
+            Profit = "--";
+            Margin = "--";
+
+        }
+        else
+        {
+            _profit = Product.Price - Product.Cost;
+            _margin = _profit / Product.Price;
+
+            Profit = String.Format(new System.Globalization.CultureInfo("en-PH"), "{0:C2}", _profit);
+            Margin = $"{_margin:P2}"; // Displays percentage with 2 decimal places
+        }
+
+    }
+
+    private async Task<IEnumerable<string>> Search(string value, CancellationToken token)
+    {
+        // In real life use an asynchronous function for fetching data from an api.
+        await Task.Delay(5, token);
+
+        // if text is null or empty, show complete list
+        if (string.IsNullOrEmpty(value))
+            return _brands;
+
+        return _brands.Where(x => x.Contains(value, StringComparison.InvariantCultureIgnoreCase));
+    }
+
+    private async Task ClearAsync()
+    {
+        await (_fileUpload?.ClearAsync() ?? Task.CompletedTask);
+        _fileNames.Clear();
+        ClearDragClass();
+    }
+
+    private Task OpenFilePickerAsync()
+        => _fileUpload?.OpenFilePickerAsync() ?? Task.CompletedTask;
+
+    private void OnInputFileChanged(InputFileChangeEventArgs e)
+    {
+        ClearDragClass();
+        var files = e.GetMultipleFiles();
+        foreach (var file in files)
+        {
+            _fileNames.Add(file.Name);
+        }
+    }
+
+    private void Upload()
+    {
+        // Upload the files here
+        // Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomCenter;
+        // Snackbar.Add("TODO: Upload your files!");
+    }
+
+    private void SetDragClass()
+        => _dragClass = $"{DefaultDragClass} mud-border-primary";
+
+    private void ClearDragClass()
+        => _dragClass = DefaultDragClass;
 }
- *@

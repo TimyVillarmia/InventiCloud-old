@@ -22,12 +22,34 @@ namespace InventiCloud.Services
             try
             {
                 using var context = DbFactory.CreateDbContext();
+
+                if (await context.Categories.AnyAsync(c => c.CategoryName == category.CategoryName))
+                {
+                    throw new InvalidOperationException($"Category name '{category.CategoryName}' already exists.");
+                }
+
                 context.Categories.Add(category);
                 await context.SaveChangesAsync();
             }
+            catch (DbUpdateException ex)
+            {
+                _logger.LogError(ex, "An error occurred while adding the category.", category);
+                // Handle database-specific exceptions (e.g., unique constraint violations)
+                if (ex.InnerException != null && ex.InnerException.Message.Contains("UNIQUE constraint failed"))
+                {
+                    throw new InvalidOperationException($"Category name '{category.CategoryName}' already exists.");
+                }
+                throw; // Rethrow other DbUpdateExceptions
+            }
+            catch (InvalidOperationException ex)
+            {
+                _logger.LogError(ex, "An error occurred while adding the category.", category);
+                throw;
+            }
             catch (Exception ex)
             {
-                throw new Exception(ex.Message);
+                _logger.LogError(ex, "An unexpected error occurred while adding the category.", category);
+                throw;
             }
         }
 
