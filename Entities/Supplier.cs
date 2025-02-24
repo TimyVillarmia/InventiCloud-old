@@ -10,6 +10,8 @@ public class Supplier
     [Key]
     public int SupplierId { get; set; }
 
+    public string SupplierName { get; set; }
+
     [Required]
     public string Company { get; set; }
 

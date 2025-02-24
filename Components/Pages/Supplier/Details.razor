@@ -1,0 +1,96 @@
+﻿@page "/supplier/details"
+@using InventiCloud.Components.UI
+@using InventiCloud.Data
+@using InventiCloud.Services.Interface
+@using InventiCloud.Utils
+@using Microsoft.EntityFrameworkCore
+@using InventiCloud.Models
+@inject IDbContextFactory<InventiCloud.Data.ApplicationDbContext> DbFactory
+@inject ISupplierService SupplierService
+@inject NavigationManager NavigationManager
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<PageTitle>Create</PageTitle>
+
+<MudContainer Class="pt-5" MaxWidth="MaxWidth.Large">
+    <div class="d-flex gap-4 align-items-center mb-4">
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" aria-label="delete" Href="/catalog/products" />
+        <MudText Typo="Typo.h4" @bind-Value="Supplier.SupplierName" Label="Supplier Name" For="@(() => Supplier.SupplierName)"/>
+    </div>
+
+    <EditForm method="post" Model="Supplier" OnValidSubmit="UpdateSupplier" FormName="create" Enhance>
+        <DataAnnotationsValidator />
+        <MudGrid>
+            <MudItem xs="12">
+                <MudText Typo="Typo.h6">SUPPLIER DETAILS</MudText>
+            </MudItem>
+            <MudTextField @bind-Value="Supplier.SupplierName" Label="Supplier Name" For="@(() => Supplier.SupplierName)" Variant="Variant.Outlined" />
+            <MudTextField @bind-Value="Supplier.SupplierId" Label="Supplier Code" For="@(() => Supplier.SupplierId)" Variant="Variant.Outlined" />
+            <MudTextField @bind-Value="Supplier.Company" Label="Company Name" For="@(() => Supplier.Company)" Variant="Variant.Outlined" />
+            <MudItem xs="12" sm="6">
+                <MudNumericField @bind-Value="Supplier.Country" HideSpinButtons="true" Label="Country" For="@(() => Supplier.Country)" Variant="Variant.Outlined" />
+                <MudNumericField @bind-Value="Supplier.City" HideSpinButtons="true" Label="City" For="@(() => Supplier.City)" Variant="Variant.Outlined" />
+                <MudNumericField @bind-Value="Supplier.PostalCode" HideSpinButtons="true" Label="Postal Code" For="@(() => Supplier.PostalCode)" Variant="Variant.Outlined" />
+            </MudItem>
+            <MudTextField @bind-Value="Supplier.ContactPerson   " Label="Contact Person" For="@(() => Supplier.ContactPerson)" Variant="Variant.Outlined" />
+            <MudTextField @bind-Value="Supplier.Email" Label="Email Address" For="@(() => Supplier.Email)" Variant="Variant.Outlined" />
+            <MudTextField @bind-Value="Supplier.PhoneNumber" Label="Phone Number" For="@(() => Supplier.PhoneNumber)" Variant="Variant.Outlined" />
+        </MudGrid>
+        <MudItem xs="12" Class="justify-center">
+            <MudButton ButtonType="ButtonType.Button" Variant="Variant.Filled" Color="Color.Error" Class="ml-auto" OnClick="@(() => OpenDialogAsync())">DELETE</MudButton>
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">CREATE SUPPLIER</MudButton>
+        </MudItem>
+    </EditForm>
+</MudContainer>
+
+@code {
+    [SupplyParameterFromForm]
+    private Supplier Supplier { get; set; } = new();
+
+    private ApplicationDbContext context = default!;
+
+    async Task OpenDialogAsync()
+    {
+        var parameters = new DialogParameters<DialogComponent>
+        {
+            {x => x.ContentText, $"Are you sure you want to delete the Supplier '{Supplier.SupplierName}'? This action cannot be undone."}
+        };
+
+        var dialog = await DialogService.ShowAsync<DialogComponent>("Delete Supplier", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            try
+            {
+                await SupplierService.DeleteSupplierAsync(Supplier);
+                Snackbar.Add("Supplier Deleted", Severity.Success);
+
+            }
+            catch (InvalidOperationException ex)
+            {
+                Snackbar.Add(ex.Message, Severity.Error);
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add("An error occurred while deleting the Supplier.", Severity.Error);
+            }
+        }
+
+    }
+
+    private async Task UpdateSupplier()
+    {
+        try
+        {
+            await SupplierService.UpdateSupplierAsync(Supplier);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("An error occurred while deleting the Supplier.", Severity.Error);
+
+        }
+        NavigationManager.NavigateTo("/supplier/details");
+    }
+}

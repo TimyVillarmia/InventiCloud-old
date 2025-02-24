@@ -1,4 +1,4 @@
-﻿@page "/product-management/attributesets"
+﻿@page "/supplier"
 @using InventiCloud.Components.UI
 @using InventiCloud.Services
 @using InventiCloud.Services.Interface
@@ -13,11 +13,8 @@
 
 
 
-<PageTitle>Index</PageTitle>
-
-
-<MudText Class="bold mb-2" Typo="Typo.h4">ATTRIBUTE SETS</MudText>
-@if (_attributesets == null)
+<MudText Class="bold mb-2" Typo="Typo.h4">Suppliers</MudText>
+@if (_supplier == null)
 {
     <MudContainer Class="d-flex justify-center align-items-center" Style="height: 100vh;">
         <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
@@ -27,38 +24,38 @@ else
 {
     <MudGrid>
         <MudItem sm="6">
-            <EditForm method="post" Model="attributeSet" OnValidSubmit="AddAttributeSet" FormName="create" Enhance>
+            <EditForm method="post" Model="supplier" OnValidSubmit="AddSupplier" FormName="create" Enhance>
                 <DataAnnotationsValidator />
                 <MudStack Row="true" AlignItems="AlignItems.Center">
                     <div>
-                        <MudTextField @bind-Value="attributeSet.AttributeSetName" Label="AttributeSet Name" For="@(() => attributeSet.AttributeSetName)" Variant="Variant.Outlined" />
+                        <MudTextField @bind-Value="supplier.SupplierName" Label="Supplier Name" For="@(() => supplier.SupplierName)" Variant="Variant.Outlined" />
 
                     </div>
                     <div>
-                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Add Attribute Set</MudButton>
+                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Add Supplier</MudButton>
                     </div>
                 </MudStack>
             </EditForm>
         </MudItem>
         <MudItem sm="6">
             <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
-            AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+                          AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
         </MudItem>
     </MudGrid>
-    @if (!_attributesets.Any())
+    @if (!_supplier.Any())
     {
 
         <MudPaper Height="500px" Class="justify-center align-content-center">
-            <MudText Class="bold" Typo="Typo.h6" Align="Align.Center">No Categories Found</MudText>
-            <MudText Typo="Typo.body1" Align="Align.Center">Let's start organizing your products! Create your first Attribute Sets.</MudText>
+            <MudText Class="bold" Typo="Typo.h6" Align="Align.Center">Add Suppliers</MudText>
+            <MudText Typo="Typo.body1" Align="Align.Center">Your supplier catalog is currently empty. Click the "ADD SUPPLIERS" button to get started.</MudText>
         </MudPaper>
     }
     else
     {
-        <MudDataGrid @ref="dataGrid" T="AttributeSet" ServerData="ServerReload" RowClick="@RowClicked">
+        <MudDataGrid @ref="dataGrid" T="Supplier" ServerData="ServerReload" RowClick="@RowClicked">
             <Columns>
-                <PropertyColumn Property="attributesets => attributesets.AttributeSetName" Title="AttributeSet Name" />
-                <PropertyColumn Property="attributesets => attributesets.Attributes.Count()" Title="Attributes" />
+                <PropertyColumn Property="supplier => supplier.SupplierName" Title="Supplier Name" />
+                @* <PropertyColumn Property="supplier => supplier.Attributes.Count()" Title="Attributes" /> *@
                 <TemplateColumn CellClass="d-flex justify-end">
                     <CellTemplate>
                         <MudStack Row>
@@ -68,7 +65,7 @@ else
                 </TemplateColumn>
             </Columns>
             <PagerContent>
-                <MudDataGridPager T="AttributeSet" />
+                <MudDataGridPager T="Supplier" />
             </PagerContent>
         </MudDataGrid>
 
@@ -78,44 +75,44 @@ else
 
 @code {
     private string _searchString;
-    MudDataGrid<AttributeSet> dataGrid = new();
+    MudDataGrid<Supplier> dataGrid = new();
 
     [SupplyParameterFromForm]
-    private AttributeSet attributeSet { get; set; } = new();
+    private Supplier supplier { get; set; } = new();
     string searchString = null;
-    private IEnumerable<AttributeSet>? _attributesets;
+    private IEnumerable<Supplier>? _supplier;
 
     protected override async Task OnInitializedAsync()
     {
         // context = DbFactory.CreateDbContext();
-        _attributesets = await AttributeSetService.GetAllAttributeSetAsync();
+        _supplier = await SupplierService.GetAllSupplierAsync();
     }
 
-    private async Task AddAttributeSet()
+    private async Task AddSupplier()
     {
         // await context.AttributeSet.AddAsync(attributeSet);
-        await AttributeSetService.AddAttributeSet(attributeSet);
+        await SupplierService.AddSupplier(supplier);
 
-        attributeSet = new();
+        supplier = new();
         await dataGrid.ReloadServerData();
     }
 
-    async Task OpenDialogAsync(AttributeSet attributesets)
+    async Task OpenDialogAsync(Supplier supplier)
     {
         var parameters = new DialogParameters<DialogComponent>
         {
-            {x => x.ContentText, $"Are you sure you want to delete the category '{attributesets.AttributeSetName}'? This action cannot be undone."}
+            {x => x.ContentText, $"Are you sure you want to delete the supplier '{supplier.SupplierName}'? This action cannot be undone."}
         };
 
-        var dialog = await DialogService.ShowAsync<DialogComponent>("Delete AttributeSet Name", parameters);
+        var dialog = await DialogService.ShowAsync<DialogComponent>("Delete Supplier Name", parameters);
         var result = await dialog.Result;
 
         if (!result.Canceled)
         {
             try
             {
-                await AttributeSetService.DeleteAttributeSet(attributesets);
-                Snackbar.Add("AttributeSet Name Deleted", Severity.Success);
+                await SupplierService.DeleteSupplier(supplier);
+                Snackbar.Add("Supplier Name Deleted", Severity.Success);
                 await dataGrid.ReloadServerData();
 
             }
@@ -144,30 +141,30 @@ else
 
     }
 
-    private async Task<GridData<AttributeSet>> ServerReload(GridState<AttributeSet> state)
+    private async Task<GridData<Supplier>> ServerReload(GridState<AttributeSet> state)
     {
 
-        _attributesets = await AttributeSetService.GetAllAttributeSetAsync();
+        _supplier = await Supplier.GetAllSupplierAsync();
         await Task.Delay(300);
-        _attributesets = _attributesets.Where(attributesets =>
+        _supplier = _supplier.Where(supplier =>
         {
             if (string.IsNullOrWhiteSpace(searchString))
                 return true;
-            if (attributesets.AttributeSetName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            if (supplier.SupplierName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
                 return true;
             return false;
         }).ToArray();
-        var totalItems = _attributesets.Count();
+        var totalItems = _supplier.Count();
 
         var sortDefinition = state.SortDefinitions.FirstOrDefault();
         if (sortDefinition != null)
         {
             switch (sortDefinition.SortBy)
             {
-                case nameof(AttributeSet.AttributeSetName):
-                    _attributesets = _attributesets.OrderByDirection(
+                case nameof(Supplier.SupplierName):
+                    _supplier = _supplier.OrderByDirection(
                         sortDefinition.Descending ? SortDirection.Descending : SortDirection.Ascending,
-                        o => o.AttributeSetName
+                        o => o.SupplierName
                     );
                     break;
             }

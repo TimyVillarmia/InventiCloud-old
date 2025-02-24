@@ -8,38 +8,38 @@ namespace InventiCloud.Services
     {
         public async Task AddSupplier(Supplier supplier)
         {
-            //try
-            //{
-            //    using var context = DbFactory.CreateDbContext();
+            try
+            {
+                using var context = DbFactory.CreateDbContext();
 
-            //    if (await context.Suppliers.AnyAsync(s => s.SupplierId == category.CategoryName))
-            //    {
-            //        throw new InvalidOperationException($"Category name '{category.CategoryName}' already exists.");
-            //    }
+                if (await context.Suppliers.AnyAsync(s => s.SupplierName == supplier.SupplierName))
+                {
+                    throw new InvalidOperationException($"Supplier name '{supplier.SupplierName}' already exists.");
+                }
 
-            //    context.Categories.Add(category);
-            //    await context.SaveChangesAsync();
-            //}
-            //catch (DbUpdateException ex)
-            //{
-            //    _logger.LogError(ex, "An error occurred while adding the category.", category);
-            //    // Handle database-specific exceptions (e.g., unique constraint violations)
-            //    if (ex.InnerException != null && ex.InnerException.Message.Contains("UNIQUE constraint failed"))
-            //    {
-            //        throw new InvalidOperationException($"Category name '{category.CategoryName}' already exists.");
-            //    }
-            //    throw; // Rethrow other DbUpdateExceptions
-            //}
-            //catch (InvalidOperationException ex)
-            //{
-            //    _logger.LogError(ex, "An error occurred while adding the category.", category);
-            //    throw;
-            //}
-            //catch (Exception ex)
-            //{
-            //    _logger.LogError(ex, "An unexpected error occurred while adding the category.", category);
-            //    throw;
-            //}
+                context.Suppliers.Add(supplier);
+                await context.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                _logger.LogError(ex, "An error occurred while adding the category.", supplier);
+                // Handle database-specific exceptions (e.g., unique constraint violations)
+                if (ex.InnerException != null && ex.InnerException.Message.Contains("UNIQUE constraint failed"))
+                {
+                    throw new InvalidOperationException($"Supplier name '{supplier.SupplierName}' already exists.");
+                }
+                throw; // Rethrow other DbUpdateExceptions
+            }
+            catch (InvalidOperationException ex)
+            {
+                _logger.LogError(ex, "An error occurred while adding the supplier.", supplier);
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An unexpected error occurred while adding the supplier.", supplier);
+                throw;
+            }
         }
 
         public Task DeleteSupplier(Supplier supplier)
@@ -57,6 +57,30 @@ namespace InventiCloud.Services
             using var context = DbFactory.CreateDbContext();
             return await context.Suppliers
                 .ToListAsync();
+        }
+
+        public bool SupplierExist(int supplierid)
+        {
+            using var context = DbFactory.CreateDbContext();
+            return context.Suppliers.Any(e => e.SupplierId == supplierid);
+        }
+
+        public async Task UpdateSupplierAsync(Supplier supplier)
+        {
+            using var context = DbFactory.CreateDbContext();
+            context.Attach(supplier!).State = EntityState.Modified;
+
+            try
+            {
+                await context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!SupplierExist(supplier!.SupplierId))
+                {
+                    throw;
+                }
+            }
         }
     }
 }

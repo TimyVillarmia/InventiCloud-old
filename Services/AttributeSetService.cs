@@ -10,7 +10,7 @@ namespace InventiCloud.Services
         {
             using var context = DbFactory.CreateDbContext();
             return await context.AttributeSets
-                .Include(c => c.Attributes) //Galibog ko asa ni siya connect
+                .Include(c => c.Attributes) //Galibog ko asa ni siya connect 
                 .ToListAsync();
         }
         public async Task AddAttributeSet(AttributeSet attributesets)
