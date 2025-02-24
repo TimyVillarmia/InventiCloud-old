@@ -7,11 +7,11 @@
 @using InventiCloud.Data
 @inject IDbContextFactory<InventiCloud.Data.ApplicationDbContext> DbFactory
 @inject IDialogService DialogService
-@inject ICategoryService CategoryService
+@inject ISupplierService SupplierService
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
 
-
+<PageTitle>Index</PageTitle>
 
 <MudText Class="bold mb-2" Typo="Typo.h4">Suppliers</MudText>
 @if (_supplier == null)
@@ -111,7 +111,7 @@ else
         {
             try
             {
-                await SupplierService.DeleteSupplier(supplier);
+                await SupplierService.DeleteSupplierAsync(supplier);
                 Snackbar.Add("Supplier Name Deleted", Severity.Success);
                 await dataGrid.ReloadServerData();
 
@@ -122,13 +122,13 @@ else
             }
             catch (Exception ex)
             {
-                Snackbar.Add("An error occurred while deleting the category.", Severity.Error);
+                Snackbar.Add("An error occurred while deleting the Supplier.", Severity.Error);
             }
         }
 
     }
 
-    void RowClicked(DataGridRowClickEventArgs<AttributeSet> args)
+    void RowClicked(DataGridRowClickEventArgs<Supplier> args)
     {
 
 
@@ -137,14 +137,14 @@ else
             return;
         }
 
-        NavigationManager.NavigateTo($"/product-management/attributesets/{args.Item.AttributeSetName}");
+        NavigationManager.NavigateTo($"/supplier/{args.Item.SupplierName}");
 
     }
 
-    private async Task<GridData<Supplier>> ServerReload(GridState<AttributeSet> state)
+    private async Task<GridData<Supplier>> ServerReload(GridState<Supplier> state)
     {
 
-        _supplier = await Supplier.GetAllSupplierAsync();
+        _supplier = await SupplierService.GetAllSupplierAsync();
         await Task.Delay(300);
         _supplier = _supplier.Where(supplier =>
         {

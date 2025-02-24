@@ -1,0 +1,81 @@
+﻿@page "/purchase/orders/create"
+@using InventiCloud.Components.UI
+@using InventiCloud.Services
+@using InventiCloud.Services.Interface
+@using Microsoft.EntityFrameworkCore
+@using InventiCloud.Models
+@using InventiCloud.Data
+@inject IDbContextFactory<InventiCloud.Data.ApplicationDbContext> DbFactory
+@inject IDialogService DialogService
+@inject IPurchaseOrderService PurchaseOrderService
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+
+<MudContainer Class="pt-5" MaxWidth="MaxWidth.Large">
+    <div class="d-flex gap-4 align-items-center mb-4">
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" aria-label="delete" Href="/catalog/products"/>
+        <MudText Typo="Typo.h4">ADD PURCHASE ORDERS</MudText>
+    </div>
+    <MudItem xs="12">
+        <MudText Typo="Typo.h6">DETAILS</MudText>
+    </MudItem>
+
+    @* <MudItem xs="12" sm="6">
+        <MudNumericField @bind-Value="Supplier.Supplier" HideSpinButtons="true" Label="Supplier" For="@(() => PurchaseOrder.Supplier)" Variant="Variant.Outlined" @bind-Value:after="After" />
+        <MudNumericField @bind-Value="Branch.BranchName" HideSpinButtons="true" Label="Destination Branch" For="@(() => Branch.BranchName)" Variant="Variant.Outlined" @bind-Value:after="After" />
+    </MudItem>
+    <MudItem xs="12" sm="6">
+        <MudTextField @bind-Value="PurchaseOrder.PurchaseOrder" HideSpinButtons="true" Label="Purchase Order Number" For="@(() => PurchaseOrder.PurchaseOrder)" Variant="Variant.Outlined" @bind-Value:after="After" />
+        <MudDatePicker id="Margin" Variant="Variant.Outlined" Label="Estimated Arrival" @bind-Value="Margin" Immediate="true" ReadOnly="true"/>
+    </MudItem>
+    <MudItem xs="12">
+        <MudText Typo="Typo.h6">PRODUCTS</MudText>
+    </MudItem>
+    <MudItem xs="12" sm="6">
+        <MudTextField id="Profit" Variant="Variant.Outlined" Label="Profit" @bind-Value="Profit" Immediate="true" ReadOnly="true" />
+        <MudTextField id="Quantity" Variant="Variant.Outlined" Label="Quantity" @bind-Value="Quantity" Immediate="true" ReadOnly="true" />
+        <MudTextField id="Price" Variant="Variant.Outlined" Label="Price" @bind-Value="Price" Immediate="true" ReadOnly="true" />
+    </MudItem>
+    <MudDataGrid xs="12" sm="6"> 
+        <MudText Typo="Typo.h6">Product Name</MudText>
+        <MudText Typo="Typo.h6">Quantity</MudText>
+        <MudText Typo="Typo.h6">Price</MudText>
+        <MudText Typo="Typo.h6">Subtotal</MudText>
+    </MudDataGrid>
+    <MudItem xs="12" Class="justify-center">
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">SAVE AS DRAFT</MudButton>
+        </MudItem>
+ *@
+</MudContainer>
+
+@code {
+    MudDataGrid<PurchaseOrder> dataGrid = new();
+
+    [SupplyParameterFromForm]
+    private Product Product { get; set; } = new();
+    private ProductAttribute ProductAttribute { get; set; } = new();
+
+
+    private ApplicationDbContext context = default!;
+
+    private List<Supplier> _supplier = new();
+    private List<Branch> _branches = new();
+    private PurchaseOrder purchaseorder { get; set; } = new();
+    
+    private IEnumerable<PurchaseOrder>? _purchaseorder; 
+
+    protected override async Task OnInitializedAsync()
+    {
+        // context = DbFactory.CreateDbContext();
+        _purchaseorder = await PurchaseOrderService.GetAllPurchaseOrderAsync();
+    }
+
+    private async Task AddPurchaseOrder()
+    {
+        // await context.AttributeSet.AddAsync(attributeSet);
+        await PurchaseOrderService.AddPurchaseOrder(purchaseorder);
+
+        purchaseorder = new();
+        await dataGrid.ReloadServerData();
+    }
+}

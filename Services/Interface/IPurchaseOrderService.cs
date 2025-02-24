@@ -4,10 +4,10 @@ namespace InventiCloud.Services.Interface
 {
     public interface IPurchaseOrderService
     {
-        Task AddAttributeSet(PurchaseOrder purchaseorder);
-        Task DeleteAttributeSet(PurchaseOrder purchaseorder);
+        Task AddPurchaseOrder(PurchaseOrder purchaseorder);
+        Task DeletePurchaseOrder(PurchaseOrder purchaseorder);
 
-        Task<IEnumerable<PurchaseOrder>> GetAllAttributeSetAsync();
+        Task<IEnumerable<PurchaseOrder>> GetAllPurchaseOrderAsync();
 
         Task DisposeAsync();
     }
