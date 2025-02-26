@@ -10,7 +10,7 @@ public class AttributeSet
 
     [Required,
     Display(Name = "Attribute Set Name")]
-    public string AttributeSetName { get; set; }
+    public string? AttributeSetName { get; set; }
 
     public virtual ICollection<Attribute> Attributes { get; set; } = new List<Attribute>();
 

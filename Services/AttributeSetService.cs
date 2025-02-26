@@ -1,12 +1,12 @@
 ﻿using InventiCloud.Models;
-using InventiCloud.Services.Interface;
 using Microsoft.EntityFrameworkCore;
-
+using InventiCloud.Services;
+using InventiCloud.Services.Interface;
 namespace InventiCloud.Services
 {
     public class AttributeSetService(ILogger<AttributeSetService> _logger, IDbContextFactory<InventiCloud.Data.ApplicationDbContext> DbFactory) : IAttributeSetService
     {
-        public async Task<IEnumerable<AttributeSetService>> GetAllAttributeSetAsync()
+        public async Task<IEnumerable<AttributeSet>> GetAllAttributeSetAsync()
         {
             using var context = DbFactory.CreateDbContext();
             return await context.AttributeSets

@@ -7,10 +7,9 @@
 @using InventiCloud.Data
 @inject IDbContextFactory<InventiCloud.Data.ApplicationDbContext> DbFactory
 @inject IDialogService DialogService
-@inject ICategoryService CategoryService
+@inject IAttributeSetService AttributeSetService
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
-
 
 
 <PageTitle>Index</PageTitle>
@@ -146,7 +145,6 @@ else
 
     private async Task<GridData<AttributeSet>> ServerReload(GridState<AttributeSet> state)
     {
-
         _attributesets = await AttributeSetService.GetAllAttributeSetAsync();
         await Task.Delay(300);
         _attributesets = _attributesets.Where(attributesets =>
