@@ -1,4 +1,4 @@
-﻿@page "/product-management/attributesets"
+﻿@page "/product-setup/attributesets"
 @using InventiCloud.Components.UI
 @using InventiCloud.Services
 @using InventiCloud.Services.Interface
@@ -170,6 +170,14 @@ else
                     break;
             }
         }
+
+
+        var pagedData = _attributesets.Skip(state.Page * state.PageSize).Take(state.PageSize).ToArray();
+        return new GridData<AttributeSet>
+            {
+                TotalItems = totalItems,
+                Items = pagedData
+            };
     }
 
 

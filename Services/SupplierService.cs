@@ -47,6 +47,11 @@ namespace InventiCloud.Services
             throw new NotImplementedException();
         }
 
+        public Task DeleteSupplierAsync(Supplier supplier)
+        {
+            throw new NotImplementedException();
+        }
+
         public Task DisposeAsync()
         {
             throw new NotImplementedException();

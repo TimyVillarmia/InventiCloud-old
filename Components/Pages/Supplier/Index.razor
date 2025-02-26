@@ -169,6 +169,13 @@ else
                     break;
             }
         }
+
+        var pagedData = _supplier.Skip(state.Page * state.PageSize).Take(state.PageSize).ToArray();
+        return new GridData<Supplier>
+            {
+                TotalItems = totalItems,
+                Items = pagedData
+            };
     }
 
 
