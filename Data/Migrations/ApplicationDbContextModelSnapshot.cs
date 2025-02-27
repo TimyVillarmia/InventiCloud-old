@@ -106,7 +106,7 @@ namespace InventiCloud.Migrations
 
                     b.HasIndex("AttributeSetId");
 
-                    b.ToTable("Attributes");
+                    b.ToTable("Attributes", (string)null);
                 });
 
             modelBuilder.Entity("InventiCloud.Models.AttributeSet", b =>
@@ -123,7 +123,7 @@ namespace InventiCloud.Migrations
 
                     b.HasKey("AttributeSetId");
 
-                    b.ToTable("AttributeSets");
+                    b.ToTable("AttributeSets", (string)null);
                 });
 
             modelBuilder.Entity("InventiCloud.Models.Branch", b =>
@@ -164,7 +164,7 @@ namespace InventiCloud.Migrations
 
                     b.HasKey("BranchId");
 
-                    b.ToTable("Branches");
+                    b.ToTable("Branches", (string)null);
                 });
 
             modelBuilder.Entity("InventiCloud.Models.Category", b =>
@@ -184,7 +184,7 @@ namespace InventiCloud.Migrations
                     b.HasIndex("CategoryName")
                         .IsUnique();
 
-                    b.ToTable("Categories");
+                    b.ToTable("Categories", (string)null);
                 });
 
             modelBuilder.Entity("InventiCloud.Models.Inventory", b =>
@@ -216,7 +216,7 @@ namespace InventiCloud.Migrations
 
                     b.HasIndex("ProductID");
 
-                    b.ToTable("Inventories");
+                    b.ToTable("Inventories", (string)null);
                 });
 
             modelBuilder.Entity("InventiCloud.Models.Product", b =>
@@ -271,7 +271,7 @@ namespace InventiCloud.Migrations
                     b.HasIndex("SKU")
                         .IsUnique();
 
-                    b.ToTable("Products");
+                    b.ToTable("Products", (string)null);
                 });
 
             modelBuilder.Entity("InventiCloud.Models.ProductAttribute", b =>
@@ -294,7 +294,7 @@ namespace InventiCloud.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("ProductAttributes");
+                    b.ToTable("ProductAttributes", (string)null);
                 });
 
             modelBuilder.Entity("InventiCloud.Models.PurchaseOrder", b =>
@@ -344,7 +344,7 @@ namespace InventiCloud.Migrations
 
                     b.HasIndex("SupplierID");
 
-                    b.ToTable("PurchaseOrders");
+                    b.ToTable("PurchaseOrders", (string)null);
                 });
 
             modelBuilder.Entity("InventiCloud.Models.PurchaseOrderItem", b =>
@@ -378,7 +378,7 @@ namespace InventiCloud.Migrations
 
                     b.HasIndex("PurchaseOrderID");
 
-                    b.ToTable("PurchaseOrderItems");
+                    b.ToTable("PurchaseOrderItems", (string)null);
                 });
 
             modelBuilder.Entity("InventiCloud.Models.PurchaseOrderStatus", b =>
@@ -395,7 +395,7 @@ namespace InventiCloud.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("PurchaseOrderStatuses");
+                    b.ToTable("PurchaseOrderStatuses", (string)null);
                 });
 
             modelBuilder.Entity("InventiCloud.Models.Supplier", b =>
@@ -444,7 +444,7 @@ namespace InventiCloud.Migrations
 
                     b.HasKey("SupplierId");
 
-                    b.ToTable("Suppliers");
+                    b.ToTable("Suppliers", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>

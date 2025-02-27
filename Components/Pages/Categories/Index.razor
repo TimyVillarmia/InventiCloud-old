@@ -155,7 +155,7 @@ else
     {
 
         _categories = await CategoryService.GetAllCategoryAsync();
-        await Task.Delay(300);
+        await Task.Delay(300); // simulate long query
         _categories = _categories.Where(category =>
         {
             if (string.IsNullOrWhiteSpace(searchString))

@@ -165,7 +165,6 @@
 
     protected override void OnInitialized()
     {
-        base.OnInitialized();
         using var context = DbFactory.CreateDbContext();
 
         _categories = context.Categories.ToList();
