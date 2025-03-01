@@ -1,6 +1,6 @@
 @page "/product-setup/categories/{CategoryName}"
 @using Microsoft.EntityFrameworkCore
-@using InventiCloud.Models
+@using InventiCloud.Entities
 @inject IDbContextFactory<InventiCloud.Data.ApplicationDbContext> DbFactory
 @inject NavigationManager NavigationManager
 
@@ -41,9 +41,9 @@
             </ToolBarContent>
             <Columns>
                 <PropertyColumn Property="product => product.SKU" />
-                <PropertyColumn Property="product => product.Name" />
-                <PropertyColumn Property="product => product.Cost" />
-                <PropertyColumn Property="product => product.Price" />
+                <PropertyColumn Property="product => product.ProductName" />
+                <PropertyColumn Property="product => product.UnitCost" />
+                <PropertyColumn Property="product => product.UnitPrice" />
             </Columns>
             <PagerContent>
                 <MudDataGridPager T="Product" />
@@ -81,7 +81,7 @@
        if (string.IsNullOrWhiteSpace(_searchString))
            return true;
 
-           if (x.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+           if (x.ProductName.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
                return true;
 
 

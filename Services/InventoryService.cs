@@ -1,4 +1,4 @@
-﻿using InventiCloud.Models;
+﻿using InventiCloud.Entities;
 using InventiCloud.Services.Interface;
 using Microsoft.EntityFrameworkCore;
 
@@ -26,9 +26,10 @@ namespace InventiCloud.Services
                     {
                         ProductID = product.ProductId,
                         BranchID = branch.BranchId,
-                        OnHand = 0,
-                        Incoming = 0,
-                        Unavailable = 0
+                        OnHandquantity = 0,
+                        IncomingQuantity = 0,
+                        AvailableQuantity = 0,
+                        OutgoingQuantity = 0
                     });
                 }
                 await context.SaveChangesAsync();

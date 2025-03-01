@@ -87,7 +87,7 @@ namespace InventiCloud.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
-            modelBuilder.Entity("InventiCloud.Models.Attribute", b =>
+            modelBuilder.Entity("InventiCloud.Entities.Attribute", b =>
                 {
                     b.Property<int>("AttributeId")
                         .ValueGeneratedOnAdd()
@@ -102,14 +102,17 @@ namespace InventiCloud.Migrations
                     b.Property<int>("AttributeSetId")
                         .HasColumnType("int");
 
+                    b.Property<bool>("isRequired")
+                        .HasColumnType("bit");
+
                     b.HasKey("AttributeId");
 
                     b.HasIndex("AttributeSetId");
 
-                    b.ToTable("Attributes", (string)null);
+                    b.ToTable("Attributes");
                 });
 
-            modelBuilder.Entity("InventiCloud.Models.AttributeSet", b =>
+            modelBuilder.Entity("InventiCloud.Entities.AttributeSet", b =>
                 {
                     b.Property<int>("AttributeSetId")
                         .ValueGeneratedOnAdd()
@@ -123,10 +126,26 @@ namespace InventiCloud.Migrations
 
                     b.HasKey("AttributeSetId");
 
-                    b.ToTable("AttributeSets", (string)null);
+                    b.ToTable("AttributeSets");
                 });
 
-            modelBuilder.Entity("InventiCloud.Models.Branch", b =>
+            modelBuilder.Entity("InventiCloud.Entities.AttributeValue", b =>
+                {
+                    b.Property<int>("AttributeValueId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AttributeValueId"));
+
+                    b.Property<int>("Value")
+                        .HasColumnType("int");
+
+                    b.HasKey("AttributeValueId");
+
+                    b.ToTable("AttributeValues");
+                });
+
+            modelBuilder.Entity("InventiCloud.Entities.Branch", b =>
                 {
                     b.Property<int>("BranchId")
                         .ValueGeneratedOnAdd()
@@ -138,6 +157,10 @@ namespace InventiCloud.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("BranchName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("City")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -146,11 +169,11 @@ namespace InventiCloud.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Name")
+                    b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Phone")
+                    b.Property<string>("PhoneNumber")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -164,10 +187,10 @@ namespace InventiCloud.Migrations
 
                     b.HasKey("BranchId");
 
-                    b.ToTable("Branches", (string)null);
+                    b.ToTable("Branches");
                 });
 
-            modelBuilder.Entity("InventiCloud.Models.Category", b =>
+            modelBuilder.Entity("InventiCloud.Entities.Category", b =>
                 {
                     b.Property<int>("CategoryId")
                         .ValueGeneratedOnAdd()
@@ -184,10 +207,42 @@ namespace InventiCloud.Migrations
                     b.HasIndex("CategoryName")
                         .IsUnique();
 
-                    b.ToTable("Categories", (string)null);
+                    b.ToTable("Categories");
                 });
 
-            modelBuilder.Entity("InventiCloud.Models.Inventory", b =>
+            modelBuilder.Entity("InventiCloud.Entities.Customer", b =>
+                {
+                    b.Property<int>("CustomerId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CustomerId"));
+
+                    b.Property<int>("Age")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("BirthDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CustomerName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Email")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Occupation")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("CustomerId");
+
+                    b.ToTable("Customers");
+                });
+
+            modelBuilder.Entity("InventiCloud.Entities.Inventory", b =>
                 {
                     b.Property<int>("InventroyId")
                         .ValueGeneratedOnAdd()
@@ -195,19 +250,22 @@ namespace InventiCloud.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("InventroyId"));
 
+                    b.Property<int>("AvailableQuantity")
+                        .HasColumnType("int");
+
                     b.Property<int>("BranchID")
                         .HasColumnType("int");
 
-                    b.Property<int>("Incoming")
+                    b.Property<int>("IncomingQuantity")
                         .HasColumnType("int");
 
-                    b.Property<int>("OnHand")
+                    b.Property<int>("OnHandquantity")
+                        .HasColumnType("int");
+
+                    b.Property<int>("OutgoingQuantity")
                         .HasColumnType("int");
 
                     b.Property<int>("ProductID")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Unavailable")
                         .HasColumnType("int");
 
                     b.HasKey("InventroyId");
@@ -216,10 +274,10 @@ namespace InventiCloud.Migrations
 
                     b.HasIndex("ProductID");
 
-                    b.ToTable("Inventories", (string)null);
+                    b.ToTable("Inventories");
                 });
 
-            modelBuilder.Entity("InventiCloud.Models.Product", b =>
+            modelBuilder.Entity("InventiCloud.Entities.Product", b =>
                 {
                     b.Property<int>("ProductId")
                         .ValueGeneratedOnAdd()
@@ -227,15 +285,14 @@ namespace InventiCloud.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ProductId"));
 
+                    b.Property<int?>("AttributeSetId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Brand")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("CategoryId")
                         .HasColumnType("int");
-
-                    b.Property<decimal>("Cost")
-                        .HasPrecision(19, 2)
-                        .HasColumnType("decimal(19,2)");
 
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
@@ -243,61 +300,66 @@ namespace InventiCloud.Migrations
                     b.Property<string>("ImageURL")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Name")
+                    b.Property<string>("ProductName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<decimal>("Price")
-                        .HasPrecision(19, 2)
-                        .HasColumnType("decimal(19,2)");
 
                     b.Property<string>("SKU")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("WeightUnit")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<decimal>("UnitCost")
+                        .HasPrecision(19, 2)
+                        .HasColumnType("decimal(19,2)");
 
-                    b.Property<double?>("WeightValue")
-                        .HasColumnType("float");
+                    b.Property<decimal>("UnitPrice")
+                        .HasPrecision(19, 2)
+                        .HasColumnType("decimal(19,2)");
 
                     b.Property<bool>("isActive")
                         .HasColumnType("bit");
 
                     b.HasKey("ProductId");
 
+                    b.HasIndex("AttributeSetId");
+
                     b.HasIndex("CategoryId");
 
                     b.HasIndex("SKU")
                         .IsUnique();
 
-                    b.ToTable("Products", (string)null);
+                    b.ToTable("Products");
                 });
 
-            modelBuilder.Entity("InventiCloud.Models.ProductAttribute", b =>
+            modelBuilder.Entity("InventiCloud.Entities.ProductAttributeValue", b =>
                 {
-                    b.Property<int>("ProductAttributeId")
+                    b.Property<int>("ProductAttributeValueId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ProductAttributeId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ProductAttributeValueId"));
 
-                    b.Property<int?>("AttributeSetId")
+                    b.Property<int>("AttributeId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("AttributeValueId")
                         .HasColumnType("int");
 
                     b.Property<int>("ProductId")
                         .HasColumnType("int");
 
-                    b.HasKey("ProductAttributeId");
+                    b.HasKey("ProductAttributeValueId");
 
-                    b.HasIndex("AttributeSetId");
+                    b.HasIndex("AttributeId");
+
+                    b.HasIndex("AttributeValueId");
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("ProductAttributes", (string)null);
+                    b.ToTable("ProductAttributeValues");
                 });
 
-            modelBuilder.Entity("InventiCloud.Models.PurchaseOrder", b =>
+            modelBuilder.Entity("InventiCloud.Entities.PurchaseOrder", b =>
                 {
                     b.Property<int>("PurchaseOrderId")
                         .ValueGeneratedOnAdd()
@@ -305,18 +367,18 @@ namespace InventiCloud.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PurchaseOrderId"));
 
-                    b.Property<string>("ApplicationUserId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<int>("BranchId")
-                        .HasColumnType("int");
-
                     b.Property<string>("CreatedBy")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2");
 
                     b.Property<int>("DestinationBranch")
                         .HasColumnType("int");
+
+                    b.Property<DateTime>("EstimatedArrival")
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime>("PurchasedDate")
                         .HasColumnType("datetime2");
@@ -336,28 +398,24 @@ namespace InventiCloud.Migrations
 
                     b.HasKey("PurchaseOrderId");
 
-                    b.HasIndex("ApplicationUserId");
+                    b.HasIndex("CreatedBy");
 
-                    b.HasIndex("BranchId");
+                    b.HasIndex("DestinationBranch");
 
                     b.HasIndex("StatusId");
 
                     b.HasIndex("SupplierID");
 
-                    b.ToTable("PurchaseOrders", (string)null);
+                    b.ToTable("PurchaseOrders");
                 });
 
-            modelBuilder.Entity("InventiCloud.Models.PurchaseOrderItem", b =>
+            modelBuilder.Entity("InventiCloud.Entities.PurchaseOrderItem", b =>
                 {
                     b.Property<int>("PurchaseOrderItemId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PurchaseOrderItemId"));
-
-                    b.Property<decimal>("Price")
-                        .HasPrecision(19, 4)
-                        .HasColumnType("decimal(19,4)");
 
                     b.Property<int>("ProductID")
                         .HasColumnType("int");
@@ -372,33 +430,212 @@ namespace InventiCloud.Migrations
                         .HasPrecision(19, 4)
                         .HasColumnType("decimal(19,4)");
 
+                    b.Property<decimal>("UnitPrice")
+                        .HasPrecision(19, 4)
+                        .HasColumnType("decimal(19,4)");
+
                     b.HasKey("PurchaseOrderItemId");
 
                     b.HasIndex("ProductID");
 
                     b.HasIndex("PurchaseOrderID");
 
-                    b.ToTable("PurchaseOrderItems", (string)null);
+                    b.ToTable("PurchaseOrderItems");
                 });
 
-            modelBuilder.Entity("InventiCloud.Models.PurchaseOrderStatus", b =>
+            modelBuilder.Entity("InventiCloud.Entities.PurchaseOrderStatus", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("PurchaseOrderStatusId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PurchaseOrderStatusId"));
 
-                    b.Property<string>("Name")
+                    b.Property<string>("StatusName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("Id");
+                    b.HasKey("PurchaseOrderStatusId");
 
-                    b.ToTable("PurchaseOrderStatuses", (string)null);
+                    b.ToTable("PurchaseOrderStatuses");
                 });
 
-            modelBuilder.Entity("InventiCloud.Models.Supplier", b =>
+            modelBuilder.Entity("InventiCloud.Entities.StockAdjustment", b =>
+                {
+                    b.Property<int>("StockAdjustmentId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("StockAdjustmentId"));
+
+                    b.Property<string>("AdjustedBy")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("AdjustedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("ReasonId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("StatusId")
+                        .HasColumnType("int");
+
+                    b.HasKey("StockAdjustmentId");
+
+                    b.HasIndex("AdjustedBy");
+
+                    b.HasIndex("ReasonId");
+
+                    b.HasIndex("StatusId");
+
+                    b.ToTable("StockAdjustments");
+                });
+
+            modelBuilder.Entity("InventiCloud.Entities.StockAdjustmentDetail", b =>
+                {
+                    b.Property<int>("StockAdjustmentDetailId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("StockAdjustmentDetailId"));
+
+                    b.Property<int>("AdjustedQuantity")
+                        .HasColumnType("int");
+
+                    b.Property<int>("InventoryId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("NewQuantity")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PreviousQuantity")
+                        .HasColumnType("int");
+
+                    b.Property<int>("StockAdjustmentId")
+                        .HasColumnType("int");
+
+                    b.HasKey("StockAdjustmentDetailId");
+
+                    b.HasIndex("InventoryId");
+
+                    b.HasIndex("StockAdjustmentId");
+
+                    b.ToTable("StockAdjustmentDetails");
+                });
+
+            modelBuilder.Entity("InventiCloud.Entities.StockAdjustmentReason", b =>
+                {
+                    b.Property<int>("StockAdjustmentReasonId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("StockAdjustmentReasonId"));
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("StockAdjustmentReasonId");
+
+                    b.ToTable("StockAdjustmentReasons");
+                });
+
+            modelBuilder.Entity("InventiCloud.Entities.StockAdjustmentStatus", b =>
+                {
+                    b.Property<int>("StockAdjustmentStatusId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("StockAdjustmentStatusId"));
+
+                    b.Property<string>("StatusName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("StockAdjustmentStatusId");
+
+                    b.ToTable("StockAdjustmentStatuses");
+                });
+
+            modelBuilder.Entity("InventiCloud.Entities.StockTransfer", b =>
+                {
+                    b.Property<int>("StockTransferId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("StockTransferId"));
+
+                    b.Property<int>("FromBranchId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("ReceivedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("StatusId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ToBranchId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("TransferDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("StockTransferId");
+
+                    b.HasIndex("FromBranchId");
+
+                    b.HasIndex("StatusId");
+
+                    b.HasIndex("ToBranchId");
+
+                    b.ToTable("StockTransfers");
+                });
+
+            modelBuilder.Entity("InventiCloud.Entities.StockTransferDetail", b =>
+                {
+                    b.Property<int>("StockTransferDetailId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("StockTransferDetailId"));
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("StockTransferId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TransferQuantity")
+                        .HasColumnType("int");
+
+                    b.HasKey("StockTransferDetailId");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("StockTransferId");
+
+                    b.ToTable("StockTransferDetails");
+                });
+
+            modelBuilder.Entity("InventiCloud.Entities.StockTransferStatus", b =>
+                {
+                    b.Property<int>("StockTransferStatusId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("StockTransferStatusId"));
+
+                    b.Property<string>("StatusName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("StockTransferStatusId");
+
+                    b.ToTable("StockTransferStatuses");
+                });
+
+            modelBuilder.Entity("InventiCloud.Entities.Supplier", b =>
                 {
                     b.Property<int>("SupplierId")
                         .ValueGeneratedOnAdd()
@@ -442,9 +679,20 @@ namespace InventiCloud.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("SupplierCode")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("SupplierName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("SupplierId");
 
-                    b.ToTable("Suppliers", (string)null);
+                    b.HasIndex("SupplierCode")
+                        .IsUnique();
+
+                    b.ToTable("Suppliers");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -580,9 +828,9 @@ namespace InventiCloud.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("InventiCloud.Models.Attribute", b =>
+            modelBuilder.Entity("InventiCloud.Entities.Attribute", b =>
                 {
-                    b.HasOne("InventiCloud.Models.AttributeSet", "AttributeSet")
+                    b.HasOne("InventiCloud.Entities.AttributeSet", "AttributeSet")
                         .WithMany("Attributes")
                         .HasForeignKey("AttributeSetId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -591,15 +839,15 @@ namespace InventiCloud.Migrations
                     b.Navigation("AttributeSet");
                 });
 
-            modelBuilder.Entity("InventiCloud.Models.Inventory", b =>
+            modelBuilder.Entity("InventiCloud.Entities.Inventory", b =>
                 {
-                    b.HasOne("InventiCloud.Models.Branch", "Branch")
+                    b.HasOne("InventiCloud.Entities.Branch", "Branch")
                         .WithMany("Inventories")
                         .HasForeignKey("BranchID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("InventiCloud.Models.Product", "Product")
+                    b.HasOne("InventiCloud.Entities.Product", "Product")
                         .WithMany("Inventories")
                         .HasForeignKey("ProductID")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -610,53 +858,71 @@ namespace InventiCloud.Migrations
                     b.Navigation("Product");
                 });
 
-            modelBuilder.Entity("InventiCloud.Models.Product", b =>
+            modelBuilder.Entity("InventiCloud.Entities.Product", b =>
                 {
-                    b.HasOne("InventiCloud.Models.Category", "Category")
+                    b.HasOne("InventiCloud.Entities.AttributeSet", "AttributeSet")
+                        .WithMany()
+                        .HasForeignKey("AttributeSetId");
+
+                    b.HasOne("InventiCloud.Entities.Category", "Category")
                         .WithMany("Products")
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.Navigation("AttributeSet");
+
                     b.Navigation("Category");
                 });
 
-            modelBuilder.Entity("InventiCloud.Models.ProductAttribute", b =>
+            modelBuilder.Entity("InventiCloud.Entities.ProductAttributeValue", b =>
                 {
-                    b.HasOne("InventiCloud.Models.AttributeSet", "AttributeSet")
+                    b.HasOne("InventiCloud.Entities.Attribute", "Attribute")
                         .WithMany()
-                        .HasForeignKey("AttributeSetId");
+                        .HasForeignKey("AttributeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-                    b.HasOne("InventiCloud.Models.Product", "Product")
+                    b.HasOne("InventiCloud.Entities.AttributeValue", "AttributeValue")
                         .WithMany()
+                        .HasForeignKey("AttributeValueId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("InventiCloud.Entities.Product", "Product")
+                        .WithMany("ProductAttributeValues")
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("AttributeSet");
+                    b.Navigation("Attribute");
+
+                    b.Navigation("AttributeValue");
 
                     b.Navigation("Product");
                 });
 
-            modelBuilder.Entity("InventiCloud.Models.PurchaseOrder", b =>
+            modelBuilder.Entity("InventiCloud.Entities.PurchaseOrder", b =>
                 {
                     b.HasOne("InventiCloud.Data.ApplicationUser", "ApplicationUser")
                         .WithMany()
-                        .HasForeignKey("ApplicationUserId");
-
-                    b.HasOne("InventiCloud.Models.Branch", "Branch")
-                        .WithMany()
-                        .HasForeignKey("BranchId")
+                        .HasForeignKey("CreatedBy")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("InventiCloud.Models.PurchaseOrderStatus", "Status")
+                    b.HasOne("InventiCloud.Entities.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("DestinationBranch")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("InventiCloud.Entities.PurchaseOrderStatus", "PurchaseOrderStatus")
                         .WithMany("PurchaseOrders")
                         .HasForeignKey("StatusId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("InventiCloud.Models.Supplier", "Supplier")
+                    b.HasOne("InventiCloud.Entities.Supplier", "Supplier")
                         .WithMany()
                         .HasForeignKey("SupplierID")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -666,20 +932,20 @@ namespace InventiCloud.Migrations
 
                     b.Navigation("Branch");
 
-                    b.Navigation("Status");
+                    b.Navigation("PurchaseOrderStatus");
 
                     b.Navigation("Supplier");
                 });
 
-            modelBuilder.Entity("InventiCloud.Models.PurchaseOrderItem", b =>
+            modelBuilder.Entity("InventiCloud.Entities.PurchaseOrderItem", b =>
                 {
-                    b.HasOne("InventiCloud.Models.Product", "Product")
+                    b.HasOne("InventiCloud.Entities.Product", "Product")
                         .WithMany()
                         .HasForeignKey("ProductID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("InventiCloud.Models.PurchaseOrder", "PurchaseOrder")
+                    b.HasOne("InventiCloud.Entities.PurchaseOrder", "PurchaseOrder")
                         .WithMany("PurchaseOrderItems")
                         .HasForeignKey("PurchaseOrderID")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -688,6 +954,98 @@ namespace InventiCloud.Migrations
                     b.Navigation("Product");
 
                     b.Navigation("PurchaseOrder");
+                });
+
+            modelBuilder.Entity("InventiCloud.Entities.StockAdjustment", b =>
+                {
+                    b.HasOne("InventiCloud.Data.ApplicationUser", "ApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("AdjustedBy")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("InventiCloud.Entities.StockAdjustmentReason", "StockAdjustmentReason")
+                        .WithMany()
+                        .HasForeignKey("ReasonId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("InventiCloud.Entities.StockAdjustmentStatus", "StockAdjustmentStatus")
+                        .WithMany()
+                        .HasForeignKey("StatusId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ApplicationUser");
+
+                    b.Navigation("StockAdjustmentReason");
+
+                    b.Navigation("StockAdjustmentStatus");
+                });
+
+            modelBuilder.Entity("InventiCloud.Entities.StockAdjustmentDetail", b =>
+                {
+                    b.HasOne("InventiCloud.Entities.Inventory", "Inventory")
+                        .WithMany()
+                        .HasForeignKey("InventoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("InventiCloud.Entities.StockAdjustment", "StockAdjustment")
+                        .WithMany("Details")
+                        .HasForeignKey("StockAdjustmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Inventory");
+
+                    b.Navigation("StockAdjustment");
+                });
+
+            modelBuilder.Entity("InventiCloud.Entities.StockTransfer", b =>
+                {
+                    b.HasOne("InventiCloud.Entities.Branch", "FromBranch")
+                        .WithMany()
+                        .HasForeignKey("FromBranchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("InventiCloud.Entities.StockTransferStatus", "Status")
+                        .WithMany()
+                        .HasForeignKey("StatusId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("InventiCloud.Entities.Branch", "ToBranch")
+                        .WithMany()
+                        .HasForeignKey("ToBranchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("FromBranch");
+
+                    b.Navigation("Status");
+
+                    b.Navigation("ToBranch");
+                });
+
+            modelBuilder.Entity("InventiCloud.Entities.StockTransferDetail", b =>
+                {
+                    b.HasOne("InventiCloud.Entities.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("InventiCloud.Entities.StockTransfer", "StockTransfer")
+                        .WithMany("Details")
+                        .HasForeignKey("StockTransferId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+
+                    b.Navigation("StockTransfer");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -741,34 +1099,46 @@ namespace InventiCloud.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("InventiCloud.Models.AttributeSet", b =>
+            modelBuilder.Entity("InventiCloud.Entities.AttributeSet", b =>
                 {
                     b.Navigation("Attributes");
                 });
 
-            modelBuilder.Entity("InventiCloud.Models.Branch", b =>
+            modelBuilder.Entity("InventiCloud.Entities.Branch", b =>
                 {
                     b.Navigation("Inventories");
                 });
 
-            modelBuilder.Entity("InventiCloud.Models.Category", b =>
+            modelBuilder.Entity("InventiCloud.Entities.Category", b =>
                 {
                     b.Navigation("Products");
                 });
 
-            modelBuilder.Entity("InventiCloud.Models.Product", b =>
+            modelBuilder.Entity("InventiCloud.Entities.Product", b =>
                 {
                     b.Navigation("Inventories");
+
+                    b.Navigation("ProductAttributeValues");
                 });
 
-            modelBuilder.Entity("InventiCloud.Models.PurchaseOrder", b =>
+            modelBuilder.Entity("InventiCloud.Entities.PurchaseOrder", b =>
                 {
                     b.Navigation("PurchaseOrderItems");
                 });
 
-            modelBuilder.Entity("InventiCloud.Models.PurchaseOrderStatus", b =>
+            modelBuilder.Entity("InventiCloud.Entities.PurchaseOrderStatus", b =>
                 {
                     b.Navigation("PurchaseOrders");
+                });
+
+            modelBuilder.Entity("InventiCloud.Entities.StockAdjustment", b =>
+                {
+                    b.Navigation("Details");
+                });
+
+            modelBuilder.Entity("InventiCloud.Entities.StockTransfer", b =>
+                {
+                    b.Navigation("Details");
                 });
 #pragma warning restore 612, 618
         }

@@ -1,4 +1,4 @@
-﻿using InventiCloud.Models;
+﻿using InventiCloud.Entities;
 
 namespace InventiCloud.Utils
 {

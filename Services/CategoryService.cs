@@ -1,4 +1,4 @@
-﻿using InventiCloud.Models;
+﻿using InventiCloud.Entities;
 using Microsoft.EntityFrameworkCore;
 using InventiCloud.Services;
 using InventiCloud.Services.Interface;

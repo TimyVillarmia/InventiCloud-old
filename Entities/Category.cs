@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.ComponentModel.DataAnnotations;
 
-namespace InventiCloud.Models;
+namespace InventiCloud.Entities;
 
 [Index(nameof(CategoryName), IsUnique = true)]
 public class Category
@@ -15,6 +15,6 @@ public class Category
     public string CategoryName { get; set; }
 
      // navigation properties
-    public virtual ICollection<Product> Products {get;set;} = new List<Product>();
+    public virtual ICollection<Product> Products {get;set;}
 
 }

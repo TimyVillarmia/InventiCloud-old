@@ -3,7 +3,7 @@
 @using InventiCloud.Services
 @using InventiCloud.Services.Interface
 @using Microsoft.EntityFrameworkCore
-@using InventiCloud.Models
+@using InventiCloud.Entities
 @using InventiCloud.Data
 @inject IDbContextFactory<InventiCloud.Data.ApplicationDbContext> DbFactory
 @inject IDialogService DialogService
@@ -76,7 +76,7 @@ else
 }
 
 @code {
-    private string _searchString;
+    private string? _searchString;
     MudDataGrid<AttributeSet> dataGrid = new();
 
     [SupplyParameterFromForm]

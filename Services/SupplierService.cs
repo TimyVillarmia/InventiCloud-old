@@ -1,4 +1,4 @@
-﻿using InventiCloud.Models;
+﻿using InventiCloud.Entities;
 using InventiCloud.Services.Interface;
 using Microsoft.EntityFrameworkCore;
 
@@ -64,10 +64,10 @@ namespace InventiCloud.Services
                 .ToListAsync();
         }
 
-        public bool SupplierExist(int supplierid)
+        public bool SupplierExist(string supplierid)
         {
             using var context = DbFactory.CreateDbContext();
-            return context.Suppliers.Any(e => e.SupplierId == supplierid);
+            return context.Suppliers.Any(e => e.SupplierCode == supplierid);
         }
 
         public async Task UpdateSupplierAsync(Supplier supplier)
@@ -81,7 +81,7 @@ namespace InventiCloud.Services
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!SupplierExist(supplier!.SupplierId))
+                if (!SupplierExist(supplier!.SupplierCode))
                 {
                     throw;
                 }

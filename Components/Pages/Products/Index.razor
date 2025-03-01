@@ -1,7 +1,7 @@
 @page "/inventory/products"
 @using InventiCloud.Services.Interface
 @using Microsoft.EntityFrameworkCore
-@using InventiCloud.Models
+@using InventiCloud.Entities
 @using InventiCloud.Data
 @implements IAsyncDisposable
 @inject IProductService ProductService
@@ -68,10 +68,10 @@ else
         <MudDataGrid @ref="dataGrid" T="Inventory" ServerData="ServerReload" MultiSelection="true">
             <Columns>
                 <PropertyColumn Property="inventory => inventory.Product.SKU" />
-                <PropertyColumn Property="inventory => inventory.Product.Name" />
+                <PropertyColumn Property="inventory => inventory.Product.ProductName" />
                 <PropertyColumn Property="inventory => inventory.Product.Category.CategoryName" Title="Category Name" />
-                <PropertyColumn Property="inventory => inventory.Product.Cost" />
-                <PropertyColumn Property="inventory => inventory.Product.Price" />
+                <PropertyColumn Property="inventory => inventory.Product.UnitCost" />
+                <PropertyColumn Property="inventory => inventory.Product.UnitPrice" />
                 <TemplateColumn CellClass="d-flex justify-end">
                     <CellTemplate>
                         <MudMenu Icon="@Icons.Material.Filled.MoreVert" AriaLabel="Open user menu">
@@ -127,7 +127,7 @@ else
                 return true;
             if (inventory.Product.SKU.Contains(searchString, StringComparison.OrdinalIgnoreCase))
                 return true;
-            if (inventory.Product.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            if (inventory.Product.ProductName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
                 return true;
             if (inventory.Product.Category.CategoryName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
                 return true;
@@ -142,10 +142,10 @@ else
         {
             switch (sortDefinition.SortBy)
             {
-                case nameof(Product.Name):
+                case nameof(Product.ProductName):
                     _inventories = _inventories.OrderByDirection(
                         sortDefinition.Descending ? SortDirection.Descending : SortDirection.Ascending,
-                        o => o.Product.Name
+                        o => o.Product.ProductName
                     );
                     break;
             }

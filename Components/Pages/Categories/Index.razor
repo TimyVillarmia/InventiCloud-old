@@ -3,7 +3,7 @@
 @using InventiCloud.Services
 @using InventiCloud.Services.Interface
 @using Microsoft.EntityFrameworkCore
-@using InventiCloud.Models
+@using InventiCloud.Entities
 @using InventiCloud.Data
 @implements IAsyncDisposable
 @inject IDbContextFactory<InventiCloud.Data.ApplicationDbContext> DbFactory
@@ -78,7 +78,7 @@ else
 
 
 @code {
-    private string _searchString;
+    private string? _searchString;
     MudDataGrid<Category> dataGrid = new();
 
     [SupplyParameterFromForm]

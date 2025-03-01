@@ -3,20 +3,25 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
-namespace InventiCloud.Models;
+namespace InventiCloud.Entities;
 
 public class PurchaseOrderItem
 {
     [Key]
     public int PurchaseOrderItemId { get; set; }
 
+    [Required,
+     ForeignKey("PurchaseOrder")]
     public int PurchaseOrderID { get; set; }
 
+
+    [Required,
+     ForeignKey("Product")]
     public int ProductID { get; set; }
     public int Quantity { get; set; }
 
     [Precision(19, 4)]
-    public decimal Price { get; set; }
+    public decimal UnitPrice { get; set; }
     [Precision(19, 4)]
     public decimal SubTotal { get; set; }
 

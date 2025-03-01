@@ -3,7 +3,7 @@
 @using InventiCloud.Services
 @using InventiCloud.Services.Interface
 @using Microsoft.EntityFrameworkCore
-@using InventiCloud.Models
+@using InventiCloud.Entities
 @using InventiCloud.Data
 @inject IDbContextFactory<InventiCloud.Data.ApplicationDbContext> DbFactory
 @inject IDialogService DialogService
@@ -53,7 +53,6 @@
 
     [SupplyParameterFromForm]
     private Product Product { get; set; } = new();
-    private ProductAttribute ProductAttribute { get; set; } = new();
 
 
     private ApplicationDbContext context = default!;

@@ -2,19 +2,22 @@ using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace InventiCloud.Models;
+namespace InventiCloud.Entities;
 
 public class Inventory
 {
     [Key]
     public int InventroyId { get; set; }
 
+    [ForeignKey("Product")]
     public int ProductID { get; set; }
 
+    [ForeignKey("Branch")]
     public int BranchID { get; set; }
-    public int OnHand { get; set; } = 0;
-    public int Incoming { get; set; } = 0;
-    public int Unavailable { get; set; } = 0;
+    public int OnHandquantity { get; set; } = 0;
+    public int IncomingQuantity { get; set; } = 0;
+    public int AvailableQuantity { get; set; } = 0;
+    public int OutgoingQuantity { get; set; } = 0;
 
  // navigation properties
     public virtual Product Product { get; set; }

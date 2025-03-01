@@ -2,13 +2,16 @@ using System;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 
-namespace InventiCloud.Models;
+namespace InventiCloud.Entities;
 
-[PrimaryKey(nameof(SupplierId))]
+[Index(nameof(SupplierCode), IsUnique = true)]
 public class Supplier
 {
     [Key]
     public int SupplierId { get; set; }
+
+    [Required]
+    public string SupplierCode { get; set; }
 
     public string SupplierName { get; set; }
 

@@ -2,7 +2,7 @@ using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace InventiCloud.Models;
+namespace InventiCloud.Entities;
 
 public class Attribute
 {
@@ -11,12 +11,15 @@ public class Attribute
 
     [Required,
     Display(Name = "Attribute name")]
-    public string AttributeName { get; set; }
+    public string AttributeName { get; set; } 
 
     [ForeignKey("AttributeSet")]
     public int AttributeSetId { get; set; }
 
+    [Column(TypeName = "bit")]
+    public bool isRequired { get; set; } = false;
 
-    public virtual AttributeSet AttributeSet { get; set; }
+
+    public virtual AttributeSet AttributeSet { get; set; } 
 
 }

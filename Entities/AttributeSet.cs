@@ -1,7 +1,7 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 
-namespace InventiCloud.Models;
+namespace InventiCloud.Entities;
 
 public class AttributeSet
 {
@@ -12,6 +12,6 @@ public class AttributeSet
     Display(Name = "Attribute Set Name")]
     public string? AttributeSetName { get; set; }
 
-    public virtual ICollection<Attribute> Attributes { get; set; } = new List<Attribute>();
+    public virtual ICollection<Attribute> Attributes { get; set; }
 
 }

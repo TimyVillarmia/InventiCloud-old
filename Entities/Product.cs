@@ -1,10 +1,11 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using InventiCloud.Entities;
 using InventiCloud.Utils;
 using Microsoft.EntityFrameworkCore;
 
-namespace InventiCloud.Models;
+namespace InventiCloud.Entities;
 
 [Index(nameof(SKU), IsUnique = true)]
 public class Product
@@ -13,14 +14,15 @@ public class Product
     public int ProductId { get; set; }
 
     [Required,
-    Range(1, int.MaxValue , ErrorMessage = "You must select a category for this product.")]
+    Range(1, int.MaxValue , ErrorMessage = "You must select a category for this product."),
+    ForeignKey("Category")]
     public int CategoryId { get; set; }
 
-    //[Required]
-    //public int AttributeSetId { get; set; }
+    [ForeignKey("AttributeSet")]
+    public int? AttributeSetId { get; set; }
 
     [Required]
-    public string Name { get; set; }
+    public string ProductName { get; set; }
     public string? ImageURL { get; set; }
 
     public string? Brand { get; set; }
@@ -28,18 +30,15 @@ public class Product
 
     [Required,
     Precision(19, 2)]
-    public decimal Cost { get; set; }
+    public decimal UnitCost { get; set; }
 
     [Required,
-    SellingPriceCostValidation(nameof(Cost), nameof(Price)),
+    SellingPriceCostValidation(nameof(UnitCost), nameof(UnitPrice)),
     Precision(19, 2)]
-    public decimal Price { get; set; }
+    public decimal UnitPrice { get; set; }
 
     [Required]
     public string SKU { get; set; }
-
-    public double? WeightValue { get; set; }
-    public string? WeightUnit { get; set; }
 
     [Column(TypeName = "bit")]
     public bool isActive { get; set; } = true;
@@ -47,8 +46,9 @@ public class Product
 
     // navigation properties
     public virtual Category Category { get; set; }
-    //public virtual AttributeSet AttributeSet { get; set; }
+    public virtual AttributeSet? AttributeSet { get; set; }
     public virtual ICollection<Inventory> Inventories { get; set; }
+    public virtual ICollection<ProductAttributeValue> ProductAttributeValues { get; set; } 
 
 
 }
