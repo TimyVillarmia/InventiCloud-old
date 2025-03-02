@@ -14,6 +14,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<Customer> Customers { get; set; }
     public DbSet<Category> Categories { get; set; }
     public DbSet<Branch> Branches { get; set; }
+    public DbSet<BranchAccount> BranchAccounts { get; set; }
     public DbSet<Inventory> Inventories { get; set; }
 
 

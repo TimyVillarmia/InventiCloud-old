@@ -1,0 +1,157 @@
+﻿@page "/branches"
+@using InventiCloud.Components.UI
+@using InventiCloud.Services
+@using InventiCloud.Services.Interface
+@using InventiCloud.Entities
+@inject IBranchService BranchService
+
+
+<PageTitle>Branches</PageTitle>
+
+<MudText Class="bold mb-2" Typo="Typo.h4">Branches</MudText>
+@if (!_branches.Any())
+{
+
+    <MudContainer Class="d-flex justify-center align-items-center" Style="height: 100vh;">
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    </MudContainer>
+}
+else
+{
+    <MudGrid>
+        <MudItem sm="6">
+            <MudButton Variant="Variant.Filled" Href="branches/create" Color="Color.Primary" Class="text-uppercase">
+                Add Branch
+            </MudButton>
+        </MudItem>
+        <MudItem sm="6">
+            <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                          AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+        </MudItem>
+    </MudGrid>
+    <MudDataGrid @ref="dataGrid" T="Branch" ServerData="ServerReload" RowClick="@RowClicked">
+        <Columns>
+            <PropertyColumn Property="branch => branch.BranchName" Title="Branch Name" />
+            <PropertyColumn Property="branch => branch.Address" Title="Location" />
+            <PropertyColumn Property="branch => branch.PhoneNumber" Title="Phone Number" />
+            <PropertyColumn Property="branch => branch.Email" Title="Email" />
+            <TemplateColumn CellClass="d-flex justify-end">
+                <CellTemplate>
+                    <MudStack Row>
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" aria-label="delete" OnClick="@(() => OpenDialogAsync(context.Item))" />
+                    </MudStack>
+                </CellTemplate>
+            </TemplateColumn>
+        </Columns>
+        <PagerContent>
+            <MudDataGridPager T="Category" />
+        </PagerContent>
+    </MudDataGrid>
+
+}
+
+
+<MudText Class="bold mb-2" Typo="Typo.h4">Branch Accounts</MudText>
+
+
+
+@code {
+
+
+    MudDataGrid<Branch> dataGrid = new();
+    private string? searchString;
+
+    private IEnumerable<Branch>? _branches;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        _branches = await BranchService.GetAllBranchAsync();
+    }
+
+    private async Task<GridData<Branch>> ServerReload(GridState<Branch> state)
+    {
+
+        _branches = await BranchService.GetAllBranchAsync();
+        _branches = _branches.Where(branch =>
+        {
+            if (string.IsNullOrWhiteSpace(searchString))
+                return true;
+            if (branch.BranchName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+                return true;
+            return false;
+        }).ToArray();
+        var totalItems = _branches.Count();
+
+        var sortDefinition = state.SortDefinitions.FirstOrDefault();
+        if (sortDefinition != null)
+        {
+            switch (sortDefinition.SortBy)
+            {
+                case nameof(Branch.BranchName):
+                    _branches = _branches.OrderByDirection(
+                        sortDefinition.Descending ? SortDirection.Descending : SortDirection.Ascending,
+                        b => b.BranchName
+                    );
+                    break;
+            }
+        }
+
+        var pagedData = _branches.Skip(state.Page * state.PageSize).Take(state.PageSize).ToArray();
+        return new GridData<Branch>
+            {
+                TotalItems = totalItems,
+                Items = pagedData
+            };
+    }
+
+    void RowClicked(DataGridRowClickEventArgs<Branch> args)
+    {
+
+
+        if (args.Item == null)
+        {
+            return;
+        }
+
+
+    }
+
+    // events
+    async Task OpenDialogAsync(Branch branch)
+    {
+        // var parameters = new DialogParameters<DialogComponent>
+        // {
+        //     {x => x.ContentText, $"Are you sure you want to delete the category '{branch.BranchName}'? This action cannot be undone."}
+        // };
+
+        // var dialog = await DialogService.ShowAsync<DialogComponent>("Delete Category", parameters);
+        // var result = await dialog.Result;
+
+        // if (!result.Canceled)
+        // {
+        //     try
+        //     {
+        //         await CategoryService.DeleteCategoryyAsync(category);
+        //         Snackbar.Add("Category Deleted", Severity.Success);
+        //         await dataGrid.ReloadServerData();
+
+        //     }
+        //     catch (InvalidOperationException ex)
+        //     {
+        //         Snackbar.Add(ex.Message, Severity.Error);
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         Snackbar.Add("An error occurred while deleting the category.", Severity.Error);
+        //     }
+        // }
+
+    }
+
+    private Task OnSearch(string text)
+    {
+        searchString = text;
+        return dataGrid.ReloadServerData();
+    }
+}

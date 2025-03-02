@@ -18,6 +18,7 @@ public class Branch
 
     // navigation properties
     public virtual ICollection<Inventory> Inventories { get; set; }
+    public virtual ICollection<BranchAccount> BranchAccounts { get; set; }
 
 
 }

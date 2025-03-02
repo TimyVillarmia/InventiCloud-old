@@ -13,7 +13,7 @@
 @inject ISnackbar Snackbar
 
 
-<PageTitle>Index</PageTitle>
+<PageTitle>Categories</PageTitle>
 
 
 
@@ -78,17 +78,15 @@ else
 
 
 @code {
-    private string? _searchString;
     MudDataGrid<Category> dataGrid = new();
 
     [SupplyParameterFromForm]
     private Category Category { get; set; } = new();
-    string searchString = null;
     private IEnumerable<Category>? _categories;
+    private string? searchString;
 
     protected override async Task OnInitializedAsync()
     {
-        // context = DbFactory.CreateDbContext();
         _categories = await CategoryService.GetAllCategoryAsync();
     }
 
