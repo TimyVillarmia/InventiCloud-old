@@ -4,8 +4,10 @@ namespace InventiCloud.Services.Interface
 {
     public interface ICategoryService
     {
-        Task AddCategory(Category category);
-        Task DeleteCategory(Category category);
+        Task AddCategoryAsync(Category category);
+        Task DeleteCategoryyAsync(Category category);
+
+        Task<Category> GetCategoryByName(string categoryname);
 
         Task<IEnumerable<Category>> GetAllCategoryAsync();
 

@@ -6,11 +6,12 @@
 @implements IAsyncDisposable
 @inject IProductService ProductService
 @inject IInventoryService InventoryService
+@inject ICategoryService CategoryService
 
 <PageTitle>Index</PageTitle>
 
 <MudText Class="bold mb-2" Typo="Typo.h4">Products</MudText>
-@if (_inventories == null)
+@if (_products == null)
 {
     <MudContainer Class="d-flex justify-center align-items-center" Style="height: 100vh;">
         <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
@@ -18,35 +19,7 @@
 }
 else
 {
-    <MudGrid>
-        <MudItem sm="6">
-            <MudStack Row="true" AlignItems="AlignItems.Center">
-                <div>
-                    <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
-                                  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
-                </div>
-                <div>
-                    <MudSelect @bind-Value="@selectedCategoryId" Variant="Variant.Outlined">
-                        <MudSelectItem Value="0">All</MudSelectItem>
-
-                        @foreach (Category b in _categories)
-                        {
-                            <MudSelectItem Value="@b.CategoryId">@b.CategoryName</MudSelectItem>
-                        }
-                    </MudSelect>
-                </div>
-            </MudStack>
-
-        </MudItem>
-
-        <MudItem sm="6">
-            <MudButton Variant="Variant.Filled" Href="inventory/products/create" Color="Color.Primary" Class="text-uppercase">
-                Add Product
-            </MudButton>
-        </MudItem>
-
-    </MudGrid>
-    @if (!_inventories.Any())
+    @if (!_products.Any())
     {
 
         <MudPaper Height="500px" Class="justify-center align-content-center">
@@ -65,17 +38,46 @@ else
     else
     {
 
-        <MudDataGrid @ref="dataGrid" T="Inventory" ServerData="ServerReload" MultiSelection="true">
+        <MudGrid>
+            <MudItem sm="6">
+                <MudStack Row="true" AlignItems="AlignItems.Center">
+                    <div>
+                        <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                                      AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+                    </div>
+                    <div>
+                        <MudSelect @bind-Value="@selectedCategoryId" Variant="Variant.Outlined">
+                            <MudSelectItem Value="0">All</MudSelectItem>
+
+                            @foreach (Category b in _categories)
+                            {
+                                <MudSelectItem Value="@b.CategoryId">@b.CategoryName</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </div>
+                </MudStack>
+
+            </MudItem>
+
+            <MudItem sm="6">
+                <MudButton Variant="Variant.Filled" Href="inventory/products/create" Color="Color.Primary" Class="text-uppercase">
+                    Add Product
+                </MudButton>
+            </MudItem>
+
+        </MudGrid>
+
+        <MudDataGrid @ref="dataGrid" T="Product" ServerData="ServerReload" MultiSelection="true">
             <Columns>
-                <PropertyColumn Property="inventory => inventory.Product.SKU" />
-                <PropertyColumn Property="inventory => inventory.Product.ProductName" />
-                <PropertyColumn Property="inventory => inventory.Product.Category.CategoryName" Title="Category Name" />
-                <PropertyColumn Property="inventory => inventory.Product.UnitCost" />
-                <PropertyColumn Property="inventory => inventory.Product.UnitPrice" />
+                <PropertyColumn Property="product => product.SKU" />
+                <PropertyColumn Property="product => product.ProductName" Title="Product Name"/>
+                <PropertyColumn Property="product => product.Category.CategoryName" Title="Category" />
+                <PropertyColumn Property="product => product.UnitCost" Title="Cost" />
+                <PropertyColumn Property="product => product.UnitPrice" Title="Price" />
                 <TemplateColumn CellClass="d-flex justify-end">
                     <CellTemplate>
                         <MudMenu Icon="@Icons.Material.Filled.MoreVert" AriaLabel="Open user menu">
-                            <MudMenuItem Label="Edit" href="@($"/inventory/products/{context.Item.Product.SKU}")" />
+                            <MudMenuItem Label="Edit" href="@($"/inventory/products/{context.Item.SKU}")" />
                         </MudMenu>
                     </CellTemplate>
                 </TemplateColumn>
@@ -99,25 +101,24 @@ else
     private int selectedCategoryId;
 
 
-    private List<Product> _products = new();
-    private List<Category> _categories = new();
-    private IEnumerable<Inventory>? _inventories;
+    private IEnumerable<Product>? _products;
+    private IEnumerable<Category> _categories;
 
-    MudDataGrid<Inventory> dataGrid = new();
+    MudDataGrid<Product> dataGrid = new();
 
     protected override async Task OnInitializedAsync()
     {
 
-        _inventories = await InventoryService.GetAllInventoryAsync();
+        _products = await ProductService.GetAllProductAsync();
+        _categories = await CategoryService.GetAllCategoryAsync();
 
     }
 
-    private async Task<GridData<Inventory>> ServerReload(GridState<Inventory> state)
+    private async Task<GridData<Product>> ServerReload(GridState<Product> state)
     {
-        _inventories = await InventoryService.GetAllInventoryAsync();
+        _products = await ProductService.GetAllProductAsync();
 
-        await Task.Delay(300);
-        _inventories = _inventories.Where(inventory =>
+        _products = _products.Where(product =>
         {
             if (string.IsNullOrWhiteSpace(searchString))
                 return true;
@@ -125,17 +126,19 @@ else
                 return true;
             if (selectedBranchId == 0)
                 return true;
-            if (inventory.Product.SKU.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            if (product.SKU.Contains(searchString, StringComparison.OrdinalIgnoreCase))
                 return true;
-            if (inventory.Product.ProductName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            if (product.ProductName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
                 return true;
-            if (inventory.Product.Category.CategoryName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            if (product.Brand.Contains(searchString, StringComparison.OrdinalIgnoreCase))
                 return true;
-            if (inventory.Product.CategoryId.Equals(selectedCategoryId))
+            if (product.Category.CategoryName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+                return true;
+            if (product.CategoryId.Equals(selectedCategoryId))
                 return true;
             return false;
         }).ToArray();
-        var totalItems = _inventories.Count();
+        var totalItems = _products.Count();
 
         var sortDefinition = state.SortDefinitions.FirstOrDefault();
         if (sortDefinition != null)
@@ -143,16 +146,16 @@ else
             switch (sortDefinition.SortBy)
             {
                 case nameof(Product.ProductName):
-                    _inventories = _inventories.OrderByDirection(
+                    _products = _products.OrderByDirection(
                         sortDefinition.Descending ? SortDirection.Descending : SortDirection.Ascending,
-                        o => o.Product.ProductName
+                        o => o.ProductName
                     );
                     break;
             }
         }
 
-        var pagedData = _inventories.Skip(state.Page * state.PageSize).Take(state.PageSize).ToArray();
-        return new GridData<Inventory>
+        var pagedData = _products.Skip(state.Page * state.PageSize).Take(state.PageSize).ToArray();
+        return new GridData<Product>
             {
                 TotalItems = totalItems,
                 Items = pagedData
@@ -169,5 +172,5 @@ else
     }
 
 
-    public async ValueTask DisposeAsync() => await InventoryService.DisposeAsync();
+    public async ValueTask DisposeAsync() => await ProductService.DisposeAsync();
 }

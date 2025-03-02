@@ -16,8 +16,9 @@ namespace InventiCloud.Services
                 .ToListAsync();
         }
 
+  
 
-        public async Task AddCategory(Category category)
+        public async Task AddCategoryAsync(Category category)
         {
             try
             {
@@ -53,7 +54,7 @@ namespace InventiCloud.Services
             }
         }
 
-        public async Task DeleteCategory(Category category)
+        public async Task DeleteCategoryyAsync(Category category)
         {
             try
             {
@@ -86,5 +87,13 @@ namespace InventiCloud.Services
             await context.DisposeAsync();
         }
 
+
+        public async Task<Category> GetCategoryByName(string categoryname)
+        {
+            using var context = DbFactory.CreateDbContext();
+            return await context.Categories
+                .Include(c => c.Products)
+                .FirstAsync(c => c.CategoryName == categoryname);
+        }
     }
 }
