@@ -71,8 +71,7 @@
 
     private async Task AddPurchaseOrder()
     {
-        // await context.AttributeSet.AddAsync(attributeSet);
-        await PurchaseOrderService.AddPurchaseOrder(purchaseorder);
+        // await PurchaseOrderService.AddPurchaseOrder(purchaseorder);
 
         purchaseorder = new();
         await dataGrid.ReloadServerData();
