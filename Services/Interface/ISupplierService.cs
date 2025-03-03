@@ -4,10 +4,10 @@ namespace InventiCloud.Services.Interface
 {
     public interface ISupplierService
     {
-        Task AddSupplier(Supplier supplier);
+        Task AddSupplierAsync(Supplier supplier);
         Task UpdateSupplierAsync(Supplier supplier);
         Task DeleteSupplierAsync(Supplier supplier);
-
+        Task<bool> SupplierExistsAsync(string supplierCode);
         Task<IEnumerable<Supplier>> GetAllSupplierAsync();
 
         Task DisposeAsync();

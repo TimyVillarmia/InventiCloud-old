@@ -29,4 +29,7 @@ public class Supplier
     public string City { get; set; }
     public string Region { get; set; }
 
+    public virtual ICollection<PurchaseOrder> PurchaseOrders { get; set; }
+
+
 }

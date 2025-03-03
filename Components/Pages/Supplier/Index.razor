@@ -79,7 +79,7 @@ else
 
     [SupplyParameterFromForm]
     private Supplier supplier { get; set; } = new();
-    string searchString = null;
+    string? searchString;
     private IEnumerable<Supplier>? _supplier;
 
     protected override async Task OnInitializedAsync()
@@ -91,7 +91,7 @@ else
     private async Task AddSupplier()
     {
         // await context.AttributeSet.AddAsync(attributeSet);
-        await SupplierService.AddSupplier(supplier);
+        await SupplierService.AddSupplierAsync(supplier);
 
         supplier = new();
         await dataGrid.ReloadServerData();
@@ -122,7 +122,7 @@ else
             }
             catch (Exception ex)
             {
-                Snackbar.Add("An error occurred while deleting the Supplier.", Severity.Error);
+                Snackbar.Add(ex.Message, Severity.Error);
             }
         }
 
