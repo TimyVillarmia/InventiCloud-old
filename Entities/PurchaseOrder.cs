@@ -15,16 +15,16 @@ public class PurchaseOrder
     public int SupplierID { get; set; }
 
     [Required,
-     ForeignKey("Branch")]
-    public int DestinationBranch { get; set; }
+     ForeignKey("DestinationBranch")]
+    public int DestinationBranchId { get; set; }
 
     [Required,
      ForeignKey("PurchaseOrderStatus")]
     public int StatusId { get; set; }
 
     [Required,
-     ForeignKey("ApplicationUser")]
-    public string CreatedBy { get; set; }
+     ForeignKey("CreatedBy")]
+    public string CreatedById { get; set; }
 
 
     [Required]
@@ -35,10 +35,10 @@ public class PurchaseOrder
     public DateTime? ReceivedDate { get; set; }
 
 
-    public virtual ApplicationUser ApplicationUser { get; set; }
+    public virtual ApplicationUser CreatedBy { get; set; }
 
     public virtual Supplier Supplier { get; set; }
-    public virtual Branch Branch { get; set; }
+    public virtual Branch DestinationBranch { get; set; }
     public virtual PurchaseOrderStatus PurchaseOrderStatus { get; set; }
     public virtual ICollection<PurchaseOrderItem> PurchaseOrderItems { get; set; }
 
