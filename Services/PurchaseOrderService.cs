@@ -6,7 +6,8 @@ using System.Collections;
 
 namespace InventiCloud.Services
 {
-    public class PurchaseOrderService(ILogger<PurchaseOrderService> _logger, IDbContextFactory<InventiCloud.Data.ApplicationDbContext> DbFactory) : IPurchaseOrderService
+    public class PurchaseOrderService(ILogger<PurchaseOrderService> _logger,
+        IDbContextFactory<InventiCloud.Data.ApplicationDbContext> DbFactory) : IPurchaseOrderService
     {
         public async Task AddPurchaseOrderAsync(PurchaseOrder purchaseOrder, ICollection<PurchaseOrderItem> purchaseOrderItems)
         {
@@ -119,27 +120,118 @@ namespace InventiCloud.Services
                 .ToListAsync();
         }
 
-        public Task PurchaseOrderToCancelAsync(PurchaseOrder purchaseorder)
+        public async Task PurchaseOrderToCancelAsync(PurchaseOrder purchaseOrder)
         {
-            throw new NotImplementedException();
+            // Added a check to ensure that the purchase order is in the "Ordered" state
+            // before allowing it to be marked as "Cancelled."
+            if (purchaseOrder.PurchaseOrderStatus.StatusName != "Ordered")
+            {
+                throw new InvalidOperationException("Purchase order must be in 'Ordered' status to be marked as 'Cancelled'.");
+            }
+            await UpdatePurchaseOrderStatusAsync(purchaseOrder, 4, "Cancelled"); 
         }
 
-        public Task PurchaseOrderToCompleteAsync(PurchaseOrder purchaseorder)
+        public async Task PurchaseOrderToCompleteAsync(PurchaseOrder purchaseOrder)
         {
-            throw new NotImplementedException();
+            // Added a check to ensure that the purchase order is in the "Ordered" state
+            // before allowing it to be marked as "Completed."
+            if (purchaseOrder.PurchaseOrderStatus.StatusName != "Ordered")
+            {
+                throw new InvalidOperationException("Purchase order must be in 'Ordered' status to be marked as 'Completed'.");
+            }
+            await UpdatePurchaseOrderStatusAsync(purchaseOrder, 3, "Completed"); 
+        }
+
+        public async Task PurchaseOrderToOrderedAsync(PurchaseOrder purchaseOrder)
+        {
+            // Added a check to ensure that the purchase order is in the "Draft" state
+            // before allowing it to be marked as "Ordered."
+            if (purchaseOrder.PurchaseOrderStatus.StatusName != "Draft") 
+            {
+                throw new InvalidOperationException("Purchase order must be in 'Draft' status to be marked as 'Ordered'.");
+            }
+
+            await UpdatePurchaseOrderStatusAsync(purchaseOrder, 2, "Ordered");
+        }
+
+        public async Task UpdatePurchaseOrderStatusAsync(PurchaseOrder purchaseOrder, int statusId, string statusName)
+        {
+            if (purchaseOrder == null)
+            {
+                throw new ArgumentNullException(nameof(purchaseOrder), "Purchase order cannot be null.");
+            }
+
+            try
+            {
+                using var context = DbFactory.CreateDbContext();
+
+                purchaseOrder.StatusId = statusId;
+
+                context.PurchaseOrders.Update(purchaseOrder);
+                await context.SaveChangesAsync();
+
+                _logger.LogInformation("Purchase order {PurchaseOrderId} status updated to '{StatusName}'.", purchaseOrder.PurchaseOrderId, statusName);
+            }
+            catch (DbUpdateException ex)
+            {
+                _logger.LogError(ex, "Database error updating purchase order {PurchaseOrderId} to '{StatusName}'.", purchaseOrder.PurchaseOrderId, statusName);
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating purchase order {PurchaseOrderId} to '{StatusName}'.", purchaseOrder.PurchaseOrderId, statusName);
+                throw;
+            }
         }
 
 
-
-        public Task PurchaseOrderToOrderedAsync(PurchaseOrder purchaseorder)
+        public async Task UpdatePurchaseOrderAsync(PurchaseOrder purchaseOrder)
         {
-            throw new NotImplementedException();
+            if (purchaseOrder == null)
+            {
+                throw new ArgumentNullException(nameof(purchaseOrder), "Purchase order cannot be null.");
+            }
+
+            try
+            {
+                using var context = DbFactory.CreateDbContext();
+
+                // Load the existing purchase order from the database to check its status.
+                var existingPurchaseOrder = await context.PurchaseOrders.FindAsync(purchaseOrder.PurchaseOrderId);
+
+                if (existingPurchaseOrder == null)
+                {
+                    throw new InvalidOperationException($"Purchase order with ID {purchaseOrder.PurchaseOrderId} not found.");
+                }
+
+                if (existingPurchaseOrder.PurchaseOrderStatus.StatusName != "Draft") 
+                {
+                    throw new InvalidOperationException("Cannot update purchase order. It is not in 'Draft' status.");
+                }
+
+                // Update the existing purchase order with the new values.
+                context.Entry(existingPurchaseOrder).CurrentValues.SetValues(purchaseOrder);
+
+                await context.SaveChangesAsync();
+
+                _logger.LogInformation("Purchase order {PurchaseOrderId} updated.", purchaseOrder.PurchaseOrderId);
+            }
+            catch (InvalidOperationException ex)
+            {
+                _logger.LogError(ex, "Invalid operation while updating purchase order {PurchaseOrderId}.", purchaseOrder.PurchaseOrderId);
+                throw;
+            }
+            catch (DbUpdateException ex)
+            {
+                _logger.LogError(ex, "Database error updating purchase order {PurchaseOrderId}.", purchaseOrder.PurchaseOrderId);
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating purchase order {PurchaseOrderId}.", purchaseOrder.PurchaseOrderId);
+                throw;
+            }
         }
 
-
-        public Task UpdatePurchaseOrderAsync(PurchaseOrder purchaseorder)
-        {
-            throw new NotImplementedException();
-        }
     }
 }

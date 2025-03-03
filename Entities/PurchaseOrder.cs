@@ -20,7 +20,7 @@ public class PurchaseOrder
 
     [Required,
      ForeignKey("PurchaseOrderStatus")]
-    public int StatusId { get; set; }
+    public int StatusId { get; set; } = 1;
 
     [Required,
      ForeignKey("CreatedBy")]
