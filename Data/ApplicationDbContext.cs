@@ -29,4 +29,58 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<StockTransferDetail> StockTransferDetails { get; set; }
     public DbSet<StockTransferStatus> StockTransferStatuses { get; set; }
     public DbSet<Supplier> Suppliers { get; set; }
+
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+
+        // Seed PurchaseOrderStatus data
+        modelBuilder.Entity<PurchaseOrderStatus>().HasData(
+            new PurchaseOrderStatus { PurchaseOrderStatusId = 1, StatusName = "Draft" },
+            new PurchaseOrderStatus { PurchaseOrderStatusId = 2, StatusName = "Ordered" },
+            new PurchaseOrderStatus { PurchaseOrderStatusId = 3, StatusName = "Completed" },
+            new PurchaseOrderStatus { PurchaseOrderStatusId = 4, StatusName = "Cancelled" }
+        );
+
+        // Seed Branch data
+        modelBuilder.Entity<Branch>().HasData(
+            new Branch
+            {
+                BranchId = 1,
+                BranchName = "Main Warehouse",
+                Country = "USA",
+                Address = "123 Main St",
+                PostalCode = "12345",
+                City = "Anytown",
+                Region = "State",
+                PhoneNumber = "555-123-4567",
+                Email = "warehouse@example.com"
+            },
+            new Branch
+            {
+                BranchId = 2,
+                BranchName = "Retail Store A",
+                Country = "Canada",
+                Address = "456 Oak Ave",
+                PostalCode = "A1B 2C3",
+                City = "Springfield",
+                Region = "Province",
+                PhoneNumber = "123-456-7890",
+                Email = "retailA@example.com"
+            },
+            new Branch
+            {
+                BranchId = 3,
+                BranchName = "Distribution Center",
+                Country = "UK",
+                Address = "789 Pine Ln",
+                PostalCode = "SW1A 1AA",
+                City = "London",
+                Region = "England",
+                PhoneNumber = "+44 20 1234 5678",
+                Email = "distribution@example.com"
+            }
+        );
+    }
 }

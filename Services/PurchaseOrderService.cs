@@ -63,9 +63,42 @@ namespace InventiCloud.Services
             }
         }
 
-        public Task DeletePurchaseOrderAsync(PurchaseOrder purchaseorder)
+        public async Task DeletePurchaseOrderAsync(PurchaseOrder purchaseorder)
         {
-            throw new NotImplementedException();
+
+            if (purchaseorder == null)
+            {
+                throw new ArgumentNullException(nameof(purchaseorder), "Purchase order cannot be null.");
+            }
+
+            try
+            {
+                using var context = DbFactory.CreateDbContext();
+
+                // Assuming PurchaseOrderStatus is a navigation property and loaded
+                if (purchaseorder.PurchaseOrderStatus?.StatusName != "Draft")
+                {
+                    throw new InvalidOperationException("Cannot delete purchase order. It is not in 'Draft' status.");
+                }
+
+                context.PurchaseOrders.Remove(purchaseorder);
+                await context.SaveChangesAsync();
+            }
+            catch (InvalidOperationException ex)
+            {
+                _logger.LogError(ex, "Invalid operation while deleting purchase order. Purchase order not in draft status. PurchaseOrderId: {PurchaseOrderId}", purchaseorder.PurchaseOrderId);
+                throw;
+            }
+            catch (DbUpdateException ex)
+            {
+                _logger.LogError(ex, "Database error occurred while deleting purchase order. PurchaseOrderId: {PurchaseOrderId}", purchaseorder.PurchaseOrderId);
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An unexpected error occurred while deleting purchase order. PurchaseOrderId: {PurchaseOrderId}", purchaseorder.PurchaseOrderId);
+                throw;
+            }
         }
 
         public async Task DisposeAsync()
@@ -86,10 +119,23 @@ namespace InventiCloud.Services
                 .ToListAsync();
         }
 
-        public Task SetPurchaseOrderStatusAsync(PurchaseOrder purchaseorder, string statusName)
+        public Task PurchaseOrderToCancelAsync(PurchaseOrder purchaseorder)
         {
             throw new NotImplementedException();
         }
+
+        public Task PurchaseOrderToCompleteAsync(PurchaseOrder purchaseorder)
+        {
+            throw new NotImplementedException();
+        }
+
+
+
+        public Task PurchaseOrderToOrderedAsync(PurchaseOrder purchaseorder)
+        {
+            throw new NotImplementedException();
+        }
+
 
         public Task UpdatePurchaseOrderAsync(PurchaseOrder purchaseorder)
         {

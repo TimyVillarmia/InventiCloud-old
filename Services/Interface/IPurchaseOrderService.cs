@@ -7,7 +7,9 @@ namespace InventiCloud.Services.Interface
         Task AddPurchaseOrderAsync(PurchaseOrder purchaseorder, ICollection<PurchaseOrderItem> purchaseorderItems);
         Task DeletePurchaseOrderAsync(PurchaseOrder purchaseorder);
         Task UpdatePurchaseOrderAsync(PurchaseOrder purchaseorder);
-        Task SetPurchaseOrderStatusAsync(PurchaseOrder purchaseorder, string statusName);
+        Task PurchaseOrderToOrderedAsync(PurchaseOrder purchaseorder);
+        Task PurchaseOrderToCompleteAsync(PurchaseOrder purchaseorder);
+        Task PurchaseOrderToCancelAsync(PurchaseOrder purchaseorder);
 
         Task<IEnumerable<PurchaseOrder>> GetAllPurchaseOrderAsync();
 
