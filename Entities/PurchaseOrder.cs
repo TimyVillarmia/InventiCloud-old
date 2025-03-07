@@ -2,6 +2,7 @@ using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using InventiCloud.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace InventiCloud.Entities;
 
@@ -25,6 +26,10 @@ public class PurchaseOrder
     [Required,
      ForeignKey("CreatedBy")]
     public string CreatedById { get; set; }
+
+    [Required,
+    Precision(19, 2)]
+    public decimal TotalAmount { get; set; }
 
 
     public string? ReferenceNumber { get; set; }

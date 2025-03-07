@@ -26,6 +26,11 @@ namespace InventiCloud.Services
 
             try
             {
+                // Add items to the PO and calculate total amount.
+                purchaseOrder.PurchaseOrderItems = purchaseOrderItems;
+                purchaseOrder.TotalAmount = purchaseOrder.PurchaseOrderItems.Sum(item => item.Quantity * item.SubTotal);
+
+
                 // Add the purchase order to the context first.
                 context.PurchaseOrders.Add(purchaseOrder);
                 await context.SaveChangesAsync(); // Generate PurchaseOrderId
@@ -45,21 +50,24 @@ namespace InventiCloud.Services
                 await context.SaveChangesAsync();
 
                 await transaction.CommitAsync();
+
+                _logger.LogInformation("Purchase order {PurchaseOrderId} added successfully.", purchaseOrder.PurchaseOrderId);
             }
             catch (DbUpdateException ex)
             {
                 await transaction.RollbackAsync();
                 if (ex.InnerException != null && ex.InnerException.Message.Contains("UNIQUE constraint failed"))
                 {
+                    _logger.LogError(ex, "Unique constraint violation adding purchase order {PurchaseOrderId}.", purchaseOrder.PurchaseOrderId);
                     throw new InvalidOperationException("A unique constraint violation occurred (e.g., duplicate reference number).", ex);
                 }
-                _logger.LogError(ex, "Error adding purchase order (DbUpdateException).");
+                _logger.LogError(ex, "Database error adding purchase order {PurchaseOrderId}.", purchaseOrder.PurchaseOrderId);
                 throw;
             }
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                _logger.LogError(ex, "Error adding purchase order.");
+                _logger.LogError(ex, "Error adding purchase order {PurchaseOrderId}.", purchaseOrder.PurchaseOrderId);
                 throw;
             }
         }
