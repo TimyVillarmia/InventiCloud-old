@@ -8,6 +8,7 @@
 @inject IDbContextFactory<InventiCloud.Data.ApplicationDbContext> DbFactory
 @inject IDialogService DialogService
 @inject IPurchaseOrderService PurchaseOrderService
+@inject IProductService ProductService
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
 
@@ -20,60 +21,85 @@
         <MudText Typo="Typo.h6">DETAILS</MudText>
     </MudItem>
 
-    @* <MudItem xs="12" sm="6">
-        <MudNumericField @bind-Value="Supplier.Supplier" HideSpinButtons="true" Label="Supplier" For="@(() => PurchaseOrder.Supplier)" Variant="Variant.Outlined" @bind-Value:after="After" />
-        <MudNumericField @bind-Value="Branch.BranchName" HideSpinButtons="true" Label="Destination Branch" For="@(() => Branch.BranchName)" Variant="Variant.Outlined" @bind-Value:after="After" />
+    <MudItem xs="12" sm="6">
+        <MudNumericField @bind-Value="PurchaseOrder.SupplierID" HideSpinButtons="true" Label="Supplier" For="@(() => PurchaseOrder.SupplierID)" Variant="Variant.Outlined" />
+        <MudNumericField @bind-Value="PurchaseOrder.DestinationBranchId" HideSpinButtons="true" Label="Destination Branch" For="@(() => PurchaseOrder.DestinationBranchId)" Variant="Variant.Outlined" />
     </MudItem>
     <MudItem xs="12" sm="6">
-        <MudTextField @bind-Value="PurchaseOrder.PurchaseOrder" HideSpinButtons="true" Label="Purchase Order Number" For="@(() => PurchaseOrder.PurchaseOrder)" Variant="Variant.Outlined" @bind-Value:after="After" />
-        <MudDatePicker id="Margin" Variant="Variant.Outlined" Label="Estimated Arrival" @bind-Value="Margin" Immediate="true" ReadOnly="true"/>
+        <MudTextField @bind-Value="PurchaseOrder.ReferenceNumber" HideSpinButtons="true" Label="Purchase Order Number" ReadOnly="true" Disabled="true" For="@(() => PurchaseOrder.ReferenceNumber)" Variant="Variant.Outlined" />
+        <MudDatePicker Label="Estimated Arrival" Editable="true" @bind-Date="PurchaseOrder.EstimatedArrival" Mask="@(new DateMask("MM/dd/yyyy"))" DateFormat="MM/dd/yyyy" Placeholder="Estimated Arrival" Variant="Variant.Outlined" />
     </MudItem>
     <MudItem xs="12">
         <MudText Typo="Typo.h6">PRODUCTS</MudText>
     </MudItem>
     <MudItem xs="12" sm="6">
-        <MudTextField id="Profit" Variant="Variant.Outlined" Label="Profit" @bind-Value="Profit" Immediate="true" ReadOnly="true" />
-        <MudTextField id="Quantity" Variant="Variant.Outlined" Label="Quantity" @bind-Value="Quantity" Immediate="true" ReadOnly="true" />
-        <MudTextField id="Price" Variant="Variant.Outlined" Label="Price" @bind-Value="Price" Immediate="true" ReadOnly="true" />
+        <MudAutocomplete T="Product" Label="Products" @bind-Value="NewPurchaseOrderItem.Product"
+        SearchFunc="@Search" ToStringFunc="@(p=> p==null?null : $"{p.ProductName}")" />
+        <MudTextField Variant="Variant.Outlined" Label="Quantity" @bind-Value="NewPurchaseOrderItem.Quantity" Immediate="true" ReadOnly="true" />
+        <MudTextField Variant="Variant.Outlined" Label="Price" @bind-Value="NewPurchaseOrderItem.UnitPrice"/>
+        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Add Product</MudButton>
     </MudItem>
-    <MudDataGrid xs="12" sm="6"> 
-        <MudText Typo="Typo.h6">Product Name</MudText>
-        <MudText Typo="Typo.h6">Quantity</MudText>
-        <MudText Typo="Typo.h6">Price</MudText>
-        <MudText Typo="Typo.h6">Subtotal</MudText>
+    <MudDataGrid Items="BatchPurchaseOrderItem">
+        <Columns>
+            <PropertyColumn Property="poi => poi.Product.ProductName" Title="Product" />
+            <PropertyColumn Property="poi => poi.Quantity" Title="Quantity" />
+            <PropertyColumn Property="poi => poi.UnitPrice" Title="Price" />
+            <PropertyColumn Property="poi => poi.SubTotal" Title="Subtotal" />
+            @* <TemplateColumn CellClass="d-flex justify-end"> delete / remove product icon
+                <CellTemplate>
+                    <MudMenu Icon="@Icons.Material.Filled.MoreVert" AriaLabel="Open user menu">
+                        <MudMenuItem Label="Edit" href="@($"/purchase/orders/{context.Item.ReferenceNumber}")" />
+                    </MudMenu>
+                </CellTemplate>
+            </TemplateColumn> *@
+        </Columns>
     </MudDataGrid>
     <MudItem xs="12" Class="justify-center">
-            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">SAVE AS DRAFT</MudButton>
-        </MudItem>
- *@
+        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">SAVE AS DRAFT</MudButton>
+    </MudItem>
+
 </MudContainer>
 
 @code {
-    MudDataGrid<PurchaseOrder> dataGrid = new();
+    MudDataGrid<PurchaseOrderItem> dataGrid = new();
 
     [SupplyParameterFromForm]
-    private Product Product { get; set; } = new();
-
-
-    private ApplicationDbContext context = default!;
+    private PurchaseOrder PurchaseOrder { get; set; } = new();
+    private Product selectedProduct { get; set; } = new();
+    private PurchaseOrderItem NewPurchaseOrderItem { get; set; } = new();
 
     private List<Supplier> _supplier = new();
     private List<Branch> _branches = new();
-    private PurchaseOrder purchaseorder { get; set; } = new();
-    
-    private IEnumerable<PurchaseOrder>? _purchaseorder; 
+
+    private IEnumerable<Product>? _products;
+
+    private List<PurchaseOrderItem> BatchPurchaseOrderItem = new List<PurchaseOrderItem>();
+
 
     protected override async Task OnInitializedAsync()
     {
-        // context = DbFactory.CreateDbContext();
-        _purchaseorder = await PurchaseOrderService.GetAllPurchaseOrderAsync();
+        _products = await ProductService.GetAllProductAsync();
     }
 
     private async Task AddPurchaseOrder()
     {
         // await PurchaseOrderService.AddPurchaseOrder(purchaseorder);
 
-        purchaseorder = new();
+        PurchaseOrder = new();
         await dataGrid.ReloadServerData();
     }
+
+    private async Task AddBatchPurchaseOrderItem()
+    {
+        NewPurchaseOrderItem.SubTotal = NewPurchaseOrderItem.Quantity * NewPurchaseOrderItem.UnitPrice;
+        BatchPurchaseOrderItem.Add(NewPurchaseOrderItem);
+
+    }
+
+
+    private async Task<IEnumerable<Product>> Search(string value, CancellationToken token)
+    {
+        return _products.Where(p => p.ProductName.Contains(value, StringComparison.InvariantCultureIgnoreCase));
+    }
+
 }
