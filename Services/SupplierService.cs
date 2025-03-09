@@ -68,7 +68,7 @@ namespace InventiCloud.Services
                 using var context = DbFactory.CreateDbContext();
 
                 // Check if the supplier has associated purchase orders.
-                if (await context.PurchaseOrders.AnyAsync(po => po.SupplierID == supplier.SupplierId))
+                if (await context.PurchaseOrders.AnyAsync(po => po.SupplierCode == supplier.SupplierCode))
                 {
                     throw new InvalidOperationException($"Cannot delete supplier '{supplier.SupplierName}'. It has associated purchase orders.");
                 }

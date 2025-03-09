@@ -13,7 +13,7 @@ public class PurchaseOrder
 
     [Required,
      ForeignKey("Supplier")]
-    public int SupplierID { get; set; }
+    public string SupplierCode { get; set; }
 
     [Required,
      ForeignKey("DestinationBranch")]

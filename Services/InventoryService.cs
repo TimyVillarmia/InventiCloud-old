@@ -74,5 +74,18 @@ namespace InventiCloud.Services
                 .Include(i => i.Product)
                 .ToListAsync();
         }
+
+        public async Task<IEnumerable<Inventory>> GetAllInventoryByBranchAsync(int branchId)
+        {
+            using var context = DbFactory.CreateDbContext();
+            return await context.Inventories
+                .Include(i => i.Branch)
+                .Include(i => i.Product)
+                .Where(i => i.BranchID == branchId)
+                .ToListAsync()
+                ;
+        }
+
+
     }
 }

@@ -8,6 +8,7 @@ namespace InventiCloud.Services.Interface
         Task DeleteInventoryAsync(Inventory inventory);
 
         Task<IEnumerable<Inventory>> GetAllInventoryAsync();
+        Task<IEnumerable<Inventory>> GetAllInventoryByBranchAsync(int branchId);
 
         Task DisposeAsync();
     }

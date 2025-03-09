@@ -7,10 +7,8 @@ namespace InventiCloud.Entities;
 [Index(nameof(SupplierCode), IsUnique = true)]
 public class Supplier
 {
-    [Key]
-    public int SupplierId { get; set; }
 
-    [Required]
+    [Key]
     public string SupplierCode { get; set; }
 
     public string SupplierName { get; set; }

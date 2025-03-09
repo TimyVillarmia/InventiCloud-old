@@ -1,4 +1,5 @@
-@page "/inventory/products"
+@page "/products/list"
+@using InventiCloud.Components.UI
 @using InventiCloud.Services.Interface
 @using Microsoft.EntityFrameworkCore
 @using InventiCloud.Entities
@@ -7,89 +8,81 @@
 @inject IProductService ProductService
 @inject IInventoryService InventoryService
 @inject ICategoryService CategoryService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
 
 <PageTitle>Index</PageTitle>
 
 <MudText Class="bold mb-2" Typo="Typo.h4">Products</MudText>
-@if (_products == null)
+@if (!_products.Any())
 {
-    <MudContainer Class="d-flex justify-center align-items-center" Style="height: 100vh;">
-        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
-    </MudContainer>
+    <MudPaper Height="500px" Class="justify-center align-content-center">
+        <MudText Class="bol" Typo="Typo.h6" Align="Align.Center">Add your products</MudText>
+        <MudText Typo="Typo.body1" Align="Align.Center">
+            Your product catalog is currently empty. Click the "Add Product"
+            button to get started.
+        </MudText>
+        <MudContainer Class="d-flex justify-center mt-2">
+            <MudButton Variant="Variant.Filled" Href="inventory/products/create" Color="Color.Primary" Class="text-uppercase">
+                Add Product
+            </MudButton>
+        </MudContainer>
+    </MudPaper>
 }
 else
 {
-    @if (!_products.Any())
-    {
+    <MudGrid>
+        <MudItem sm="6">
+            <MudStack Row="true" AlignItems="AlignItems.Center">
+                <div>
+                    <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                                  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+                </div>
+                <div>
+                    <MudSelect Label="Category" @bind-Value="selectedCategory" @bind-Value:after="OnSelect" Variant="Variant.Outlined">
+                        <MudSelectItem T="int" Value="0">All</MudSelectItem>
+                        @foreach (Category category in _categories)
+                        {
+                            <MudSelectItem Value="@category.CategoryId">@category.CategoryName</MudSelectItem>
+                        }
+                    </MudSelect>
+  
+                </div>
+            </MudStack>
 
-        <MudPaper Height="500px" Class="justify-center align-content-center">
-            <MudText Class="bol" Typo="Typo.h6" Align="Align.Center">Add your products</MudText>
-            <MudText Typo="Typo.body1" Align="Align.Center">
-                Your product catalog is currently empty. Click the "Add Product"
-                button to get started.
-            </MudText>
-            <MudContainer Class="d-flex justify-center mt-2">
-                <MudButton Variant="Variant.Filled" Href="inventory/products/create" Color="Color.Primary" Class="text-uppercase">
-                    Add Product
-                </MudButton>
-            </MudContainer>
-        </MudPaper>
-    }
-    else
-    {
+        </MudItem>
 
-        <MudGrid>
-            <MudItem sm="6">
-                <MudStack Row="true" AlignItems="AlignItems.Center">
-                    <div>
-                        <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
-                                      AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
-                    </div>
-                    <div>
-                        <MudSelect @bind-Value="@selectedCategoryId" Variant="Variant.Outlined">
-                            <MudSelectItem Value="0">All</MudSelectItem>
+        <MudItem sm="6">
+            <MudButton Variant="Variant.Filled" Href="products/create" Color="Color.Primary" Class="text-uppercase">
+                Add Product
+            </MudButton>
+        </MudItem>
 
-                            @foreach (Category b in _categories)
-                            {
-                                <MudSelectItem Value="@b.CategoryId">@b.CategoryName</MudSelectItem>
-                            }
-                        </MudSelect>
-                    </div>
-                </MudStack>
+    </MudGrid>
 
-            </MudItem>
+    <MudDataGrid @ref="dataGrid" T="Product" ServerData="ServerReload" MultiSelection="true">
+        <Columns>
+            <PropertyColumn Property="product => product.SKU" />
+            <PropertyColumn Property="product => product.ProductName" Title="Product Name" />
+            <PropertyColumn Property="product => product.Category.CategoryName" Title="Category" />
+            <PropertyColumn Property="product => product.Brand" Title="Brand" />
+            <PropertyColumn Property="product => product.UnitPrice" Title="Price" />
+            <PropertyColumn Property="product => product.UnitCost" Title="Cost" />
+            <TemplateColumn CellClass="d-flex justify-end">
+                <CellTemplate>
+                    <MudMenu Icon="@Icons.Material.Filled.MoreVert" AriaLabel="Open user menu">
+                        <MudMenuItem Label="Edit" href="@($"/products/{context.Item.SKU}")" />
+                        <MudMenuItem Label="Delete" Class="red-text" OnClick="@(() => OpenDialogAsync(context.Item))" />
 
-            <MudItem sm="6">
-                <MudButton Variant="Variant.Filled" Href="inventory/products/create" Color="Color.Primary" Class="text-uppercase">
-                    Add Product
-                </MudButton>
-            </MudItem>
-
-        </MudGrid>
-
-        <MudDataGrid @ref="dataGrid" T="Product" ServerData="ServerReload" MultiSelection="true">
-            <Columns>
-                <PropertyColumn Property="product => product.SKU" />
-                <PropertyColumn Property="product => product.ProductName" Title="Product Name"/>
-                <PropertyColumn Property="product => product.Category.CategoryName" Title="Category" />
-                <PropertyColumn Property="product => product.UnitCost" Title="Cost" />
-                <PropertyColumn Property="product => product.UnitPrice" Title="Price" />
-                <TemplateColumn CellClass="d-flex justify-end">
-                    <CellTemplate>
-                        <MudMenu Icon="@Icons.Material.Filled.MoreVert" AriaLabel="Open user menu">
-                            <MudMenuItem Label="Edit" href="@($"/inventory/products/{context.Item.SKU}")" />
-                        </MudMenu>
-                    </CellTemplate>
-                </TemplateColumn>
-            </Columns>
-            <PagerContent>
-                <MudDataGridPager T="Product" />
-            </PagerContent>
-        </MudDataGrid>
-
-
-
-    }
+                    </MudMenu>
+                </CellTemplate>
+            </TemplateColumn>
+        </Columns>
+        <PagerContent>
+            <MudDataGridPager T="Product" />
+        </PagerContent>
+    </MudDataGrid>
 
 }
 
@@ -97,12 +90,11 @@ else
 
 @code {
     string searchString = null;
-    private int selectedBranchId;
-    private int selectedCategoryId;
+    private int selectedCategory = 0;
 
 
-    private IEnumerable<Product>? _products;
-    private IEnumerable<Category> _categories;
+    private IEnumerable<Product> _products = new List<Product>();
+    private IEnumerable<Category>? _categories = new List<Category>();
 
     MudDataGrid<Product> dataGrid = new();
 
@@ -116,15 +108,16 @@ else
 
     private async Task<GridData<Product>> ServerReload(GridState<Product> state)
     {
-        _products = await ProductService.GetAllProductAsync();
+        IEnumerable<Product> _filteredproducts = _products; // Start with all products
 
-        _products = _products.Where(product =>
+        if (selectedCategory != 0) // If not "All" category
+        {
+            _filteredproducts = _products.Where(p => p.CategoryId == selectedCategory);
+        }
+
+        _filteredproducts = _filteredproducts.Where(product =>
         {
             if (string.IsNullOrWhiteSpace(searchString))
-                return true;
-            if (selectedCategoryId == 0)
-                return true;
-            if (selectedBranchId == 0)
                 return true;
             if (product.SKU.Contains(searchString, StringComparison.OrdinalIgnoreCase))
                 return true;
@@ -132,29 +125,25 @@ else
                 return true;
             if (product.Brand.Contains(searchString, StringComparison.OrdinalIgnoreCase))
                 return true;
-            if (product.Category.CategoryName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
-                return true;
-            if (product.CategoryId.Equals(selectedCategoryId))
-                return true;
             return false;
         }).ToArray();
-        var totalItems = _products.Count();
+        var totalItems = _filteredproducts.Count();
 
         var sortDefinition = state.SortDefinitions.FirstOrDefault();
         if (sortDefinition != null)
         {
             switch (sortDefinition.SortBy)
             {
-                case nameof(Product.ProductName):
-                    _products = _products.OrderByDirection(
+                case nameof(Product.UnitPrice):
+                    _filteredproducts = _filteredproducts.OrderByDirection(
                         sortDefinition.Descending ? SortDirection.Descending : SortDirection.Ascending,
-                        o => o.ProductName
+                        p => p.UnitPrice
                     );
                     break;
             }
         }
 
-        var pagedData = _products.Skip(state.Page * state.PageSize).Take(state.PageSize).ToArray();
+        var pagedData = _filteredproducts.Skip(state.Page * state.PageSize).Take(state.PageSize).ToArray();
         return new GridData<Product>
             {
                 TotalItems = totalItems,
@@ -162,6 +151,37 @@ else
             };
     }
 
+    // events
+    async Task OpenDialogAsync(Product product)
+    {
+        var parameters = new DialogParameters<DialogComponent>
+        {
+            {x => x.ContentText, $"Are you sure you want to delete the product '{product.ProductName}'? This action cannot be undone."}
+        };
+
+        var dialog = await DialogService.ShowAsync<DialogComponent>("Delete Product", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            try
+            {
+                await ProductService.DeleteProductAsync(product);
+                Snackbar.Add("Product Deleted", Severity.Success);
+                await dataGrid.ReloadServerData();
+
+            }
+            catch (InvalidOperationException ex)
+            {
+                Snackbar.Add(ex.Message, Severity.Error);
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add("An error occurred while deleting the product.", Severity.Error);
+            }
+        }
+
+    }
 
 
 
@@ -171,6 +191,11 @@ else
         return dataGrid.ReloadServerData();
     }
 
+    private Task OnSelect()
+    {
+        return dataGrid.ReloadServerData();
+    }
 
-    public async ValueTask DisposeAsync() => await ProductService.DisposeAsync();
+
+    public async ValueTask DisposeAsync() => await InventoryService.DisposeAsync();
 }

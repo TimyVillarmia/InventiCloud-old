@@ -50,34 +50,46 @@ namespace InventiCloud.Services
             }
         }
 
-        
+
 
         public async Task DeleteProductAsync(Product product)
         {
+            if (product == null)
+            {
+                throw new ArgumentNullException(nameof(product), "Product cannot be null.");
+            }
+
             try
             {
                 using var context = DbFactory.CreateDbContext();
 
-                if (await context.PurchaseOrderItems.AnyAsync(poi => poi.Product == product))
-                       //await context.StockTransfers.AnyAsync(st => st.ProductId == product.Id) ||
-                       //await context.StockAdjustments.AnyAsync(sa => sa.ProductId == product.Id) ||
-                       //await context.SalesOrderDetails.AnyAsync(sod => sod.ProductId == product.Id))
+                // Check if there are any associated PurchaseOrderItems
+                if (await context.PurchaseOrderItems.AnyAsync(poi => poi.ProductID == product.ProductId))
                 {
-                    throw new InvalidOperationException("Cannot delete category. It has associated products.");
+                    throw new InvalidOperationException("Cannot delete product. It has associated purchase order items.");
                 }
 
-                context.Products.Remove(product!);
+                // Check if any inventory quantities are not zero
+                var inventory = await context.Inventories.FirstOrDefaultAsync(i => i.ProductID == product.ProductId);
+                if (inventory != null && (inventory.OnHandquantity != 0 && inventory.IncomingQuantity != 0 && inventory.AvailableQuantity != 0 && inventory.OutgoingQuantity != 0))
+                {
+                    throw new InvalidOperationException("Unable to delete. Please adjust inventory to zero before deleting this product.");
+                }
+
+                // Remove the product if no associated data is found
+                context.Products.Remove(product);
                 await context.SaveChangesAsync();
 
+                _logger.LogInformation("Product {ProductId} deleted successfully.", product.ProductId);
             }
             catch (InvalidOperationException ex)
             {
-                _logger.LogError(ex, "An error occurred while deleting the category.", product);
+                _logger.LogError(ex, "Failed to delete product {ProductId}: {Message}", product.ProductId, ex.Message);
                 throw; // Re-throw the exception to be handled in the calling method
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "An error occurred while deleting the category.", product);
+                _logger.LogError(ex, "An unexpected error occurred while deleting product {ProductId}.", product.ProductId);
                 throw; // Re-throw the exception to be handled in the calling method
             }
         }

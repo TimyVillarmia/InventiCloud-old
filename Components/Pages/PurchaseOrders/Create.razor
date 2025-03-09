@@ -8,6 +8,7 @@
 @inject IDbContextFactory<InventiCloud.Data.ApplicationDbContext> DbFactory
 @inject IDialogService DialogService
 @inject IPurchaseOrderService PurchaseOrderService
+@inject IBranchService BranchService
 @inject IProductService ProductService
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
@@ -17,46 +18,70 @@
         <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" aria-label="delete" Href="/catalog/products"/>
         <MudText Typo="Typo.h4">ADD PURCHASE ORDERS</MudText>
     </div>
-    <MudItem xs="12">
-        <MudText Typo="Typo.h6">DETAILS</MudText>
-    </MudItem>
+    <MudGrid>
+        <MudItem sm="12">
+            <MudText Typo="Typo.h6">DETAILS</MudText>
+        </MudItem>
 
-    <MudItem xs="12" sm="6">
-        <MudNumericField @bind-Value="PurchaseOrder.SupplierID" HideSpinButtons="true" Label="Supplier" For="@(() => PurchaseOrder.SupplierID)" Variant="Variant.Outlined" />
-        <MudNumericField @bind-Value="PurchaseOrder.DestinationBranchId" HideSpinButtons="true" Label="Destination Branch" For="@(() => PurchaseOrder.DestinationBranchId)" Variant="Variant.Outlined" />
-    </MudItem>
-    <MudItem xs="12" sm="6">
-        <MudTextField @bind-Value="PurchaseOrder.ReferenceNumber" HideSpinButtons="true" Label="Purchase Order Number" ReadOnly="true" Disabled="true" For="@(() => PurchaseOrder.ReferenceNumber)" Variant="Variant.Outlined" />
-        <MudDatePicker Label="Estimated Arrival" Editable="true" @bind-Date="PurchaseOrder.EstimatedArrival" Mask="@(new DateMask("MM/dd/yyyy"))" DateFormat="MM/dd/yyyy" Placeholder="Estimated Arrival" Variant="Variant.Outlined" />
-    </MudItem>
-    <MudItem xs="12">
-        <MudText Typo="Typo.h6">PRODUCTS</MudText>
-    </MudItem>
-    <MudItem xs="12" sm="6">
-        <MudAutocomplete T="Product" Label="Products" @bind-Value="NewPurchaseOrderItem.Product"
-        SearchFunc="@Search" ToStringFunc="@(p=> p==null?null : $"{p.ProductName}")" />
-        <MudTextField Variant="Variant.Outlined" Label="Quantity" @bind-Value="NewPurchaseOrderItem.Quantity" Immediate="true" ReadOnly="true" />
-        <MudTextField Variant="Variant.Outlined" Label="Price" @bind-Value="NewPurchaseOrderItem.UnitPrice"/>
-        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Add Product</MudButton>
-    </MudItem>
-    <MudDataGrid Items="BatchPurchaseOrderItem">
-        <Columns>
-            <PropertyColumn Property="poi => poi.Product.ProductName" Title="Product" />
-            <PropertyColumn Property="poi => poi.Quantity" Title="Quantity" />
-            <PropertyColumn Property="poi => poi.UnitPrice" Title="Price" />
-            <PropertyColumn Property="poi => poi.SubTotal" Title="Subtotal" />
-            @* <TemplateColumn CellClass="d-flex justify-end"> delete / remove product icon
+        <MudItem xs="12" sm="6">
+            <MudTextField Class="mb-4" @bind-Value="PurchaseOrder.SupplierCode" Label="Supplier" For="@(() => PurchaseOrder.SupplierCode)" Variant="Variant.Outlined" />
+            <MudTextField Class="mb-4" @bind-Value="PurchaseOrder.ReferenceNumber" HideSpinButtons="true" Label="Purchase Order Number" ReadOnly="true" Disabled="true" For="@(() => PurchaseOrder.ReferenceNumber)" Variant="Variant.Outlined" />
+         </MudItem>
+
+        <MudItem xs="12" sm="6">
+            <MudAutocomplete T="Branch" Label="Destination Branch" @bind-Value="PurchaseOrder.DestinationBranch"
+                             SearchFunc="@SearchBranch" ToStringFunc="@(b=> b==null?null : $"{b.BranchName}")" For="@(() => PurchaseOrder.DestinationBranch)" Variant="Variant.Outlined" />
+            <MudDatePicker Label="Estimated Arrival" Editable="true" @bind-Date="PurchaseOrder.EstimatedArrival" Mask="@(new DateMask("MM/dd/yyyy"))" DateFormat="MM/dd/yyyy" Placeholder="Estimated Arrival" Variant="Variant.Outlined" />
+        </MudItem>
+
+        <MudItem sm="12">
+            <MudText Typo="Typo.h6">PRODUCTS</MudText>
+        </MudItem>
+
+        <MudItem xs="12" sm="5">
+            <MudAutocomplete T="Product" Label="Products" @bind-Value="NewPurchaseOrderItem.Product"
+                             SearchFunc="@SearchProduct" ToStringFunc="@(p=> p==null?null : $"{p.ProductName}")" Variant="Variant.Outlined" />
+        </MudItem>
+
+        <MudItem xs="12" sm="3">
+            <MudTextField Variant="Variant.Outlined" Label="Quantity" @bind-Value="NewPurchaseOrderItem.Quantity" Immediate="true" ReadOnly="true" />
+        </MudItem>
+
+        <MudItem xs="12" sm="3">
+            <MudTextField Variant="Variant.Outlined" Label="Price" @bind-Value="NewPurchaseOrderItem.UnitPrice" />
+        </MudItem>
+
+
+        <MudItem xs="12" sm="1">
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Add</MudButton>
+
+        </MudItem>
+
+        <MudItem sm="12">
+            <MudDataGrid Items="BatchPurchaseOrderItem">
+                <Columns>
+                    <PropertyColumn Property="poi => poi.Product.ProductName" Title="Product" />
+                    <PropertyColumn Property="poi => poi.Quantity" Title="Quantity" />
+                    <PropertyColumn Property="poi => poi.UnitPrice" Title="Price" />
+                    <PropertyColumn Property="poi => poi.SubTotal" Title="Subtotal" />
+                    @* <TemplateColumn CellClass="d-flex justify-end"> delete / remove product icon
                 <CellTemplate>
                     <MudMenu Icon="@Icons.Material.Filled.MoreVert" AriaLabel="Open user menu">
                         <MudMenuItem Label="Edit" href="@($"/purchase/orders/{context.Item.ReferenceNumber}")" />
                     </MudMenu>
                 </CellTemplate>
             </TemplateColumn> *@
-        </Columns>
-    </MudDataGrid>
-    <MudItem xs="12" Class="justify-center">
-        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">SAVE AS DRAFT</MudButton>
-    </MudItem>
+                </Columns>
+            </MudDataGrid>
+        </MudItem>
+
+        <MudItem xs="12" Class="justify-center">
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">SAVE AS DRAFT</MudButton>
+        </MudItem>
+    </MudGrid>
+    
+  
+ 
 
 </MudContainer>
 
@@ -69,7 +94,7 @@
     private PurchaseOrderItem NewPurchaseOrderItem { get; set; } = new();
 
     private List<Supplier> _supplier = new();
-    private List<Branch> _branches = new();
+    private IEnumerable<Branch>? _branches;
 
     private IEnumerable<Product>? _products;
 
@@ -79,6 +104,7 @@
     protected override async Task OnInitializedAsync()
     {
         _products = await ProductService.GetAllProductAsync();
+        _branches = await BranchService.GetAllBranchAsync();
     }
 
     private async Task AddPurchaseOrder()
@@ -97,9 +123,25 @@
     }
 
 
-    private async Task<IEnumerable<Product>> Search(string value, CancellationToken token)
+    private async Task<IEnumerable<Product>> SearchProduct(string value, CancellationToken token)
     {
+
+        if (string.IsNullOrEmpty(value))
+        {
+            return _products; 
+        }
+
         return _products.Where(p => p.ProductName.Contains(value, StringComparison.InvariantCultureIgnoreCase));
+    }
+
+    private async Task<IEnumerable<Branch>> SearchBranch(string value, CancellationToken token)
+    {
+        if (string.IsNullOrEmpty(value))
+        {
+            return _branches;
+        }
+
+        return _branches.Where(b => b.BranchName.Contains(value, StringComparison.InvariantCultureIgnoreCase));
     }
 
 }

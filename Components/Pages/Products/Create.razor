@@ -1,8 +1,13 @@
-@page "/inventory/products/create"
+@page "/products/create"
 @using InventiCloud.Data
+@using InventiCloud.Services.Interface
 @using InventiCloud.Utils
 @using Microsoft.EntityFrameworkCore
 @using InventiCloud.Entities
+@inject ICategoryService CategoryService
+@inject IAttributeSetService AttributeSetService
+@inject IBranchService BranchService
+@inject IProductService ProductService
 @inject IDbContextFactory<InventiCloud.Data.ApplicationDbContext> DbFactory
 @inject NavigationManager NavigationManager
 
@@ -24,9 +29,9 @@
                 <MudTextField @bind-Value="Product.Brand" Label="Brand" For="@(() => Product.Brand)" Variant="Variant.Outlined" />
                 <MudTextField @bind-Value="Product.SKU" Label="SKU" For="@(() => Product.SKU)" Variant="Variant.Outlined" />
                 <MudSelect Label="Category" @bind-Value="Product.CategoryId" For="@(() => Product.CategoryId)"
-                           Variant="Variant.Outlined">
+                Variant="Variant.Outlined">
                     <MudSelectItem T="int" Value="0" Disabled="true">Select Category</MudSelectItem>
-                    @foreach (var category in _categories)
+                    @foreach (Category category in _categories)
                     {
                         <MudSelectItem Value="@category.CategoryId">@category.CategoryName</MudSelectItem>
                     }
@@ -73,33 +78,7 @@
                 }
             </MudItem> *@
 
-            <MudItem xs="12">
-                <MudText Typo="Typo.h6">INVENTORY</MudText>
-            </MudItem>
 
-            <MudItem xs="12">
-                <MudSimpleTable Style="overflow-x: auto;">
-                    <thead>
-                        <tr>
-                            @foreach (var h in headings)
-                            {
-                                <th>@h</th>
-                            }
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var row in rows)
-                        {
-                            <tr>
-                                @foreach (var x in row.Split())
-                                {
-                                    <td>@x</td>
-                                }
-                            </tr>
-                        }
-                    </tbody>
-                </MudSimpleTable>
-            </MudItem>
         </MudGrid>
 
         <MudItem xs="12" Class="justify-center">
@@ -124,15 +103,7 @@
 
     string _searchBrand;
     private List<string?> _brands = new();
-    private string[] Units = {
-        "kg",
-        "lbs",
-        "oz",
-        "g"
-     };
 
-    string[] headings = { "Branch", "Location", "Onhand", "Incoming", "Unavailable" };
-    string[] rows = {};
 
 
     [SupplyParameterFromForm]
@@ -141,35 +112,28 @@
 
     private ApplicationDbContext context = default!;
 
-    private List<Category> _categories = new();
-    private List<AttributeSet> _attributesets = new();
-    private List<Inventory> _inventories = new();
-    private List<Branch> _branches = new();
+    private IEnumerable<Category> _categories = new List<Category>();
+    private IEnumerable<AttributeSet> _attributesets = new List<AttributeSet>();
+    private IEnumerable<Inventory> _inventories;
+    private IEnumerable<Branch> _branches;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        using var context = DbFactory.CreateDbContext();
 
-        _categories = context.Categories.ToList();
-        _attributesets = context.AttributeSets.ToList();
-        _branches = context.Branches.ToList();
-
-        foreach (var branch in _branches)
-        {
-            rows.Append($"{branch.BranchName} {GetFullAddressUtil.GetFullAddress(branch)} 0 0 0");
-        }
+        _categories = await CategoryService.GetAllCategoryAsync();
+        _attributesets = await AttributeSetService.GetAllAttributeSetAsync();
+        _branches = await BranchService.GetAllBranchAsync();
 
     }
 
     // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
     private async Task AddProduct()
     {
-        context = DbFactory.CreateDbContext();
-        context.Products.Add(Product);
-        await context.SaveChangesAsync();
+
+        await ProductService.AddProductAsync(Product);
 
         
-        NavigationManager.NavigateTo("/inventory/products");
+        NavigationManager.NavigateTo("/products/list");
     }
 
     private string Profit = "--";
