@@ -94,6 +94,7 @@ else
 
 
     private IEnumerable<Product> _products = new List<Product>();
+    private IEnumerable<Product> _filteredproducts = new List<Product>();
     private IEnumerable<Category>? _categories = new List<Category>();
 
     MudDataGrid<Product> dataGrid = new();
@@ -108,7 +109,7 @@ else
 
     private async Task<GridData<Product>> ServerReload(GridState<Product> state)
     {
-        IEnumerable<Product> _filteredproducts = _products; // Start with all products
+       _filteredproducts = _products; // Start with all products
 
         if (selectedCategory != 0) // If not "All" category
         {

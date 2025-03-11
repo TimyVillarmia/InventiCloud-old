@@ -58,7 +58,7 @@ else
 
         </MudGrid>
 
-        <MudDataGrid @ref="dataGrid" T="Inventory" ServerData="ServerReload" MultiSelection="true">
+        <MudDataGrid @ref="dataGrid" T="Inventory" ServerData="ServerReload" MultiSelection="true" Filterable="false">
             <Columns>
                 <PropertyColumn Property="inventory => inventory.Product.SKU" />
                 <PropertyColumn Property="inventory => inventory.Product.ProductName" Title="Product Name"/>
@@ -68,7 +68,7 @@ else
                 <PropertyColumn Property="inventory => inventory.OutgoingQuantity" Title="Outgoing" />
             </Columns>
             <PagerContent>
-                <MudDataGridPager T="Product" />
+                <MudDataGridPager T="Inventory" />
             </PagerContent>
         </MudDataGrid>
 
@@ -87,6 +87,7 @@ else
 
 
     private IEnumerable<Inventory> _inventories = new List<Inventory>();
+    private IEnumerable<Inventory> _filteredinventories = new List<Inventory>();
     private IEnumerable<Branch> _branches = new List<Branch>();
 
     MudDataGrid<Inventory> dataGrid = new();
@@ -102,9 +103,9 @@ else
 
     private async Task<GridData<Inventory>> ServerReload(GridState<Inventory> state)
     {
-        _inventories = _inventories.Where(b => b.BranchID == selectedBranch);
+        _filteredinventories = _inventories.Where(b => b.BranchID == selectedBranch);
 
-        _inventories = _inventories.Where(inventory =>
+        _filteredinventories = _filteredinventories.Where(inventory =>
         {
             if (string.IsNullOrWhiteSpace(searchString))
                 return true;
@@ -116,7 +117,7 @@ else
                 return true;
             return false;
         }).ToArray();
-        var totalItems = _inventories.Count();
+        var totalItems = _filteredinventories.Count();
 
         var sortDefinition = state.SortDefinitions.FirstOrDefault();
         if (sortDefinition != null)
@@ -124,7 +125,7 @@ else
             switch (sortDefinition.SortBy)
             {
                 case nameof(Inventory.OnHandquantity):
-                    _inventories = _inventories.OrderByDirection(
+                    _filteredinventories = _inventories.OrderByDirection(
                         sortDefinition.Descending ? SortDirection.Descending : SortDirection.Ascending,
                         i => i.OnHandquantity
                     );
@@ -132,7 +133,7 @@ else
             }
         }
 
-        var pagedData = _inventories.Skip(state.Page * state.PageSize).Take(state.PageSize).ToArray();
+        var pagedData = _filteredinventories.Skip(state.Page * state.PageSize).Take(state.PageSize).ToArray();
         return new GridData<Inventory>
             {
                 TotalItems = totalItems,

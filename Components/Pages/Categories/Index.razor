@@ -82,7 +82,8 @@ else
 
     [SupplyParameterFromForm]
     private Category Category { get; set; } = new();
-    private IEnumerable<Category>? _categories;
+    private IEnumerable<Category> _categories = new List<Category>();
+    private IEnumerable<Category> _filteredcategories = new List<Category>();
     private string? searchString;
 
     protected override async Task OnInitializedAsync()
@@ -165,9 +166,10 @@ else
     private async Task<GridData<Category>> ServerReload(GridState<Category> state)
     {
 
-        _categories = await CategoryService.GetAllCategoryAsync();
-        await Task.Delay(300); // simulate long query
-        _categories = _categories.Where(category =>
+        _filteredcategories = _categories;
+
+
+        _filteredcategories = _filteredcategories.Where(category =>
         {
             if (string.IsNullOrWhiteSpace(searchString))
                 return true;
@@ -183,7 +185,7 @@ else
             switch (sortDefinition.SortBy)
             {
                 case nameof(Category.CategoryName):
-                    _categories = _categories.OrderByDirection(
+                    _filteredcategories = _filteredcategories.OrderByDirection(
                         sortDefinition.Descending ? SortDirection.Descending : SortDirection.Ascending,
                         o => o.CategoryName
                     );
@@ -191,7 +193,7 @@ else
             }
         }
 
-        var pagedData = _categories.Skip(state.Page * state.PageSize).Take(state.PageSize).ToArray();
+        var pagedData = _filteredcategories.Skip(state.Page * state.PageSize).Take(state.PageSize).ToArray();
         return new GridData<Category>
             {
                 TotalItems = totalItems,
