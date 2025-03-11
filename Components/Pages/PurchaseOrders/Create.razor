@@ -26,11 +26,11 @@
         <MudItem xs="12" sm="6">
             <MudTextField Class="mb-4" @bind-Value="PurchaseOrder.SupplierCode" Label="Supplier" For="@(() => PurchaseOrder.SupplierCode)" Variant="Variant.Outlined" />
             <MudTextField Class="mb-4" @bind-Value="PurchaseOrder.ReferenceNumber" HideSpinButtons="true" Label="Purchase Order Number" ReadOnly="true" Disabled="true" For="@(() => PurchaseOrder.ReferenceNumber)" Variant="Variant.Outlined" />
-         </MudItem>
+        </MudItem>
 
         <MudItem xs="12" sm="6">
             <MudAutocomplete T="Branch" Label="Destination Branch" @bind-Value="PurchaseOrder.DestinationBranch"
-                             SearchFunc="@SearchBranch" ToStringFunc="@(b=> b==null?null : $"{b.BranchName}")" For="@(() => PurchaseOrder.DestinationBranch)" Variant="Variant.Outlined" />
+            SearchFunc="@SearchBranch" ToStringFunc="@(b=> b==null?null : $"{b.BranchName}")" For="@(() => PurchaseOrder.DestinationBranch)" Variant="Variant.Outlined" />
             <MudDatePicker Label="Estimated Arrival" Editable="true" @bind-Date="PurchaseOrder.EstimatedArrival" Mask="@(new DateMask("MM/dd/yyyy"))" DateFormat="MM/dd/yyyy" Placeholder="Estimated Arrival" Variant="Variant.Outlined" />
         </MudItem>
 
@@ -40,11 +40,11 @@
 
         <MudItem xs="12" sm="5">
             <MudAutocomplete T="Product" Label="Products" @bind-Value="NewPurchaseOrderItem.Product"
-                             SearchFunc="@SearchProduct" ToStringFunc="@(p=> p==null?null : $"{p.ProductName}")" Variant="Variant.Outlined" />
+            SearchFunc="@SearchProduct" ToStringFunc="@(p=> p==null?null : $"{p.ProductName}")" Variant="Variant.Outlined" />
         </MudItem>
 
         <MudItem xs="12" sm="3">
-            <MudTextField Variant="Variant.Outlined" Label="Quantity" @bind-Value="NewPurchaseOrderItem.Quantity" Immediate="true" ReadOnly="true" />
+            <MudTextField Variant="Variant.Outlined" Label="Quantity" @bind-Value="NewPurchaseOrderItem.Quantity" />
         </MudItem>
 
         <MudItem xs="12" sm="3">
@@ -53,8 +53,7 @@
 
 
         <MudItem xs="12" sm="1">
-            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Add</MudButton>
-
+            <MudButton ButtonType="ButtonType.Submit" OnClick="AddBatchPurchaseOrderItem" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Add</MudButton>
         </MudItem>
 
         <MudItem sm="12">
@@ -64,13 +63,13 @@
                     <PropertyColumn Property="poi => poi.Quantity" Title="Quantity" />
                     <PropertyColumn Property="poi => poi.UnitPrice" Title="Price" />
                     <PropertyColumn Property="poi => poi.SubTotal" Title="Subtotal" />
-                    @* <TemplateColumn CellClass="d-flex justify-end"> delete / remove product icon
-                <CellTemplate>
-                    <MudMenu Icon="@Icons.Material.Filled.MoreVert" AriaLabel="Open user menu">
-                        <MudMenuItem Label="Edit" href="@($"/purchase/orders/{context.Item.ReferenceNumber}")" />
-                    </MudMenu>
-                </CellTemplate>
-            </TemplateColumn> *@
+                    <TemplateColumn CellClass="d-flex justify-end">
+                        <CellTemplate>
+                            <MudStack Row>
+                                <MudIconButton Icon="@Icons.Material.Filled.Close" Color="Color.Error" aria-label="delete" OnClick="@(() => RemoveBatchProduct(context.Item))" />
+                            </MudStack>
+                        </CellTemplate>
+                    </TemplateColumn>
                 </Columns>
             </MudDataGrid>
         </MudItem>
@@ -79,9 +78,9 @@
             <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">SAVE AS DRAFT</MudButton>
         </MudItem>
     </MudGrid>
-    
-  
- 
+
+
+
 
 </MudContainer>
 
@@ -143,5 +142,14 @@
 
         return _branches.Where(b => b.BranchName.Contains(value, StringComparison.InvariantCultureIgnoreCase));
     }
+
+    // events
+    Task RemoveBatchProduct(PurchaseOrderItem item)
+    {
+        BatchPurchaseOrderItem.Remove(item);
+        return dataGrid.ReloadServerData();
+
+    }
+
 
 }
