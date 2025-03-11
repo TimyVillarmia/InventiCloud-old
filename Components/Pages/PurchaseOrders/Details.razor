@@ -1,5 +1,12 @@
-﻿<h3>Details</h3>
+﻿
+@page "/purchase/orders/{ReferenceNumber}"
+
+<h3>Details</h3>
 
 @code {
+
+
+    [Parameter]
+    public string ReferenceNumber { get; set; }
 
 }

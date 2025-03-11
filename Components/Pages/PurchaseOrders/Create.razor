@@ -9,6 +9,7 @@
 @inject IDialogService DialogService
 @inject IPurchaseOrderService PurchaseOrderService
 @inject IBranchService BranchService
+@inject ISupplierService SupplierService
 @inject IProductService ProductService
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
@@ -24,7 +25,8 @@
         </MudItem>
 
         <MudItem xs="12" sm="6">
-            <MudTextField Class="mb-4" @bind-Value="PurchaseOrder.SupplierCode" Label="Supplier" For="@(() => PurchaseOrder.SupplierCode)" Variant="Variant.Outlined" />
+            <MudAutocomplete T="Supplier" Label="Supplier" @bind-Value="PurchaseOrder.Supplier"
+            SearchFunc="@SearchSupplier" ToStringFunc="@(s=> s==null?null : $"{s.SupplierName}")" Variant="Variant.Outlined" />
             <MudTextField Class="mb-4" @bind-Value="PurchaseOrder.ReferenceNumber" HideSpinButtons="true" Label="Purchase Order Number" ReadOnly="true" Disabled="true" For="@(() => PurchaseOrder.ReferenceNumber)" Variant="Variant.Outlined" />
         </MudItem>
 
@@ -72,10 +74,13 @@
                     </TemplateColumn>
                 </Columns>
             </MudDataGrid>
+            <MudText Typo="Typo.h5">@BatchPurchaseOrderItem.Sum(item => item.SubTotal)</MudText>
+
         </MudItem>
 
         <MudItem xs="12" Class="justify-center">
-            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">SAVE AS DRAFT</MudButton>
+            <MudButton  Variant="Variant.Filled" Color="Color.Default" Class="ml-auto">CANCEL</MudButton>
+            <MudButton ButtonType="ButtonType.Submit" OnClick="AddPurchaseOrderToDraft" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">SAVE AS DRAFT</MudButton>
         </MudItem>
     </MudGrid>
 
@@ -87,14 +92,12 @@
 @code {
     MudDataGrid<PurchaseOrderItem> dataGrid = new();
 
-    [SupplyParameterFromForm]
     private PurchaseOrder PurchaseOrder { get; set; } = new();
     private Product selectedProduct { get; set; } = new();
     private PurchaseOrderItem NewPurchaseOrderItem { get; set; } = new();
 
-    private List<Supplier> _supplier = new();
+    private IEnumerable<Supplier>? _suppliers;
     private IEnumerable<Branch>? _branches;
-
     private IEnumerable<Product>? _products;
 
     private List<PurchaseOrderItem> BatchPurchaseOrderItem = new List<PurchaseOrderItem>();
@@ -104,11 +107,16 @@
     {
         _products = await ProductService.GetAllProductAsync();
         _branches = await BranchService.GetAllBranchAsync();
+        _suppliers = await SupplierService.GetAllSupplierAsync();
     }
 
-    private async Task AddPurchaseOrder()
+    private async Task AddPurchaseOrderToDraft()
     {
-        // await PurchaseOrderService.AddPurchaseOrder(purchaseorder);
+        PurchaseOrder.CreatedById = "your-user-id-1"; // for testing
+        await PurchaseOrderService.AddPurchaseOrderAsync(PurchaseOrder, BatchPurchaseOrderItem);
+
+        NavigationManager.NavigateTo($"/purchase/orders/{PurchaseOrder.ReferenceNumber}");
+
 
         PurchaseOrder = new();
         await dataGrid.ReloadServerData();
@@ -118,6 +126,8 @@
     {
         NewPurchaseOrderItem.SubTotal = NewPurchaseOrderItem.Quantity * NewPurchaseOrderItem.UnitPrice;
         BatchPurchaseOrderItem.Add(NewPurchaseOrderItem);
+
+        NewPurchaseOrderItem = new();
 
     }
 
@@ -131,6 +141,17 @@
         }
 
         return _products.Where(p => p.ProductName.Contains(value, StringComparison.InvariantCultureIgnoreCase));
+    }
+
+    private async Task<IEnumerable<Supplier>> SearchSupplier(string value, CancellationToken token)
+    {
+
+        if (string.IsNullOrEmpty(value))
+        {
+            return _suppliers;
+        }
+
+        return _suppliers.Where(s => s.SupplierName.Contains(value, StringComparison.InvariantCultureIgnoreCase));
     }
 
     private async Task<IEnumerable<Branch>> SearchBranch(string value, CancellationToken token)

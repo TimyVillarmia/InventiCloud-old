@@ -28,17 +28,21 @@ namespace InventiCloud.Services
             {
                 // Add items to the PO and calculate total amount.
                 purchaseOrder.PurchaseOrderItems = purchaseOrderItems;
-                purchaseOrder.TotalAmount = purchaseOrder.PurchaseOrderItems.Sum(item => item.Quantity * item.SubTotal);
+                purchaseOrder.TotalAmount = purchaseOrder.PurchaseOrderItems.Sum(item => item.SubTotal);
 
 
                 // Add the purchase order to the context first.
                 context.PurchaseOrders.Add(purchaseOrder);
                 await context.SaveChangesAsync(); // Generate PurchaseOrderId
 
+                await UpdatePurchaseOrderStatusAsync(purchaseOrder, 1, "Draft"); //set po to draft
+
+
                 // Generate Reference Number after PurchaseOrderId is generated.
                 purchaseOrder.ReferenceNumber = PurchaseOrderGenerateReferenceNumber.GenerateReferenceNumber(purchaseOrder.PurchaseOrderId);
                 context.PurchaseOrders.Update(purchaseOrder);
                 await context.SaveChangesAsync();
+
 
                 // Set PurchaseOrderID for items and add them.
                 foreach (var item in purchaseOrderItems)

@@ -1,4 +1,5 @@
 using InventiCloud.Entities;
+using InventiCloud.Utils;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -42,6 +43,38 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             new PurchaseOrderStatus { PurchaseOrderStatusId = 3, StatusName = "Completed" },
             new PurchaseOrderStatus { PurchaseOrderStatusId = 4, StatusName = "Cancelled" }
         );
+
+        modelBuilder.Entity<ApplicationUser>().HasData(
+            new ApplicationUser
+            {
+                Id = "your-user-id-1", // Generate a unique ID (GUID)
+                UserName = "admin",
+                NormalizedUserName = "ADMIN",
+                Email = "admin@example.com",
+                NormalizedEmail = "ADMIN@EXAMPLE.COM",
+                EmailConfirmed = true,
+                PasswordHash = PasswordHasherUtility.HashPassword("YourSecurePassword123!"),
+                SecurityStamp = Guid.NewGuid().ToString(), // Generate a unique SecurityStamp
+            }
+        );
+
+
+        modelBuilder.Entity<Supplier>().HasData(
+           new Supplier
+           {
+               SupplierCode = "SUP001",
+               SupplierName = "Global Electronics",
+               Company = "Global Tech Inc.",
+               ContactPerson = "John Doe",
+               Email = "john.doe@globaltech.com",
+               PhoneNumber = "+15551234567",
+               Country = "USA",
+               Address = "123 Main St",
+               PostalCode = "12345",
+               City = "New York",
+               Region = "NY"
+           }
+         );
 
         // Seed Branch data
         modelBuilder.Entity<Branch>().HasData(
