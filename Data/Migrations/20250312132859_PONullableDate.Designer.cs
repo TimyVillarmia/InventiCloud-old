@@ -4,6 +4,7 @@ using InventiCloud.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace InventiCloud.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250312132859_PONullableDate")]
+    partial class PONullableDate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -91,15 +94,15 @@ namespace InventiCloud.Migrations
                         {
                             Id = "your-user-id-1",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "ad04d457-eff5-4d96-afb6-0f9063b9ea27",
+                            ConcurrencyStamp = "ce9e0c94-5885-4079-9b77-fdd5b62f5c94",
                             Email = "admin@example.com",
                             EmailConfirmed = true,
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN@EXAMPLE.COM",
                             NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAEKa0U/uFFE9xPmTkvdv41jKUTt2jE06LmOjrIYw0vjVgB1G7sXAHPzFztF8ehmPKOA==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEEX/fBHChLdzWrnI1qUjFTOpO2J15fVm/iSRgoy/CdpgrT7A4SFszQWmikTGHQ8LQQ==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "652c3c0b-773b-4051-b2d9-11adbfab7114",
+                            SecurityStamp = "a3d5bd5c-16da-45f1-8b08-8f1bdca0d4e2",
                             TwoFactorEnabled = false,
                             UserName = "admin"
                         });
@@ -511,12 +514,12 @@ namespace InventiCloud.Migrations
                         .HasColumnType("int");
 
                     b.Property<decimal>("SubTotal")
-                        .HasPrecision(19, 2)
-                        .HasColumnType("decimal(19,2)");
+                        .HasPrecision(19, 4)
+                        .HasColumnType("decimal(19,4)");
 
                     b.Property<decimal>("UnitPrice")
-                        .HasPrecision(19, 2)
-                        .HasColumnType("decimal(19,2)");
+                        .HasPrecision(19, 4)
+                        .HasColumnType("decimal(19,4)");
 
                     b.HasKey("PurchaseOrderItemId");
 

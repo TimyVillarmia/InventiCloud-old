@@ -35,7 +35,7 @@ public class PurchaseOrder
     public string? ReferenceNumber { get; set; }
     public DateTime? EstimatedArrival { get; set; }
     public DateTime DateCreated { get; set; } = DateTime.UtcNow;
-    public DateTime PurchasedDate { get; set; } 
+    public DateTime? PurchasedDate { get; set; } 
     public DateTime? ReceivedDate { get; set; }
 
 

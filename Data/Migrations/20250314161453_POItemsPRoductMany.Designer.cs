@@ -4,6 +4,7 @@ using InventiCloud.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace InventiCloud.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250314161453_POItemsPRoductMany")]
+    partial class POItemsPRoductMany
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -91,15 +94,15 @@ namespace InventiCloud.Migrations
                         {
                             Id = "your-user-id-1",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "ad04d457-eff5-4d96-afb6-0f9063b9ea27",
+                            ConcurrencyStamp = "a9c2eed7-0676-420a-b1ca-4181d8c4e1e3",
                             Email = "admin@example.com",
                             EmailConfirmed = true,
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN@EXAMPLE.COM",
                             NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAEKa0U/uFFE9xPmTkvdv41jKUTt2jE06LmOjrIYw0vjVgB1G7sXAHPzFztF8ehmPKOA==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEOWcvQiZC/mJzfY45MkbIRH0HLYdMC+ZhywpCvwSiba5PhIdCq25Gc6okYWwvXUDgg==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "652c3c0b-773b-4051-b2d9-11adbfab7114",
+                            SecurityStamp = "dc255fb5-61fe-4727-bc4d-fb681dbd89ee",
                             TwoFactorEnabled = false,
                             UserName = "admin"
                         });
@@ -511,12 +514,12 @@ namespace InventiCloud.Migrations
                         .HasColumnType("int");
 
                     b.Property<decimal>("SubTotal")
-                        .HasPrecision(19, 2)
-                        .HasColumnType("decimal(19,2)");
+                        .HasPrecision(19, 4)
+                        .HasColumnType("decimal(19,4)");
 
                     b.Property<decimal>("UnitPrice")
-                        .HasPrecision(19, 2)
-                        .HasColumnType("decimal(19,2)");
+                        .HasPrecision(19, 4)
+                        .HasColumnType("decimal(19,4)");
 
                     b.HasKey("PurchaseOrderItemId");
 
@@ -1074,7 +1077,7 @@ namespace InventiCloud.Migrations
             modelBuilder.Entity("InventiCloud.Entities.PurchaseOrderItem", b =>
                 {
                     b.HasOne("InventiCloud.Entities.Product", "Product")
-                        .WithMany()
+                        .WithMany("PurchaseOrderItems")
                         .HasForeignKey("ProductID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1255,6 +1258,8 @@ namespace InventiCloud.Migrations
                     b.Navigation("Inventories");
 
                     b.Navigation("ProductAttributeValues");
+
+                    b.Navigation("PurchaseOrderItems");
                 });
 
             modelBuilder.Entity("InventiCloud.Entities.PurchaseOrder", b =>

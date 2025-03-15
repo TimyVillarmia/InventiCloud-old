@@ -44,10 +44,10 @@ else
                         AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
                     </div>
                     <div>
-                        <MudSelect @bind-Value="@selectedBranch" Variant="Variant.Outlined">
+                        <MudSelect @bind-Value="@selectedBranch" @bind-Value:after="OnSelect" Variant="Variant.Outlined">
                             @foreach (Branch branch in _branches)
                             {
-                                <MudSelectItem Value="@branch.BranchId">@branch.BranchName"</MudSelectItem>
+                                <MudSelectItem Value="@branch.BranchId">@branch.BranchName</MudSelectItem>
                             }
                         </MudSelect>
                        
@@ -86,7 +86,7 @@ else
     private int selectedCategory;
 
 
-    private IEnumerable<Inventory> _inventories = new List<Inventory>();
+    private IEnumerable<Inventory>? _inventories;
     private IEnumerable<Inventory> _filteredinventories = new List<Inventory>();
     private IEnumerable<Branch> _branches = new List<Branch>();
 
@@ -148,6 +148,12 @@ else
         searchString = text;
         return dataGrid.ReloadServerData();
     }
+
+    private Task OnSelect()
+    {
+        return dataGrid.ReloadServerData();
+    }
+
 
 
     public async ValueTask DisposeAsync() => await InventoryService.DisposeAsync();

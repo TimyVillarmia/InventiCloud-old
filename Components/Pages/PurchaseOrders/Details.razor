@@ -1,12 +1,374 @@
-﻿
-@page "/purchase/orders/{ReferenceNumber}"
+﻿@page "/purchase/orders/details/{ReferenceNumber}"
+@using InventiCloud.Components.UI
+@using InventiCloud.Services
+@using InventiCloud.Services.Interface
+@using InventiCloud.Utils
+@using Microsoft.EntityFrameworkCore
+@using InventiCloud.Entities
+@using InventiCloud.Data
+@inject IDbContextFactory<InventiCloud.Data.ApplicationDbContext> DbFactory
+@inject IDialogService DialogService
+@inject IPurchaseOrderService PurchaseOrderService
+@inject IBranchService BranchService
+@inject ISupplierService SupplierService
+@inject IProductService ProductService
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
 
-<h3>Details</h3>
+<MudContainer Class="pt-5" MaxWidth="MaxWidth.Large">
+    <div class="d-flex gap-4 align-items-center mb-4">
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" aria-label="delete" Href="/purchase/orders" />
+        <MudText Typo="Typo.h4">@ReferenceNumber</MudText>
+        <MudChip T="string" Color="@SelectedColor">@Status</MudChip>
+
+    </div>
+    <MudGrid>
+        <MudItem sm="12">
+            <MudText Typo="Typo.h6">DETAILS</MudText>
+        </MudItem>
+
+        <MudItem xs="12" sm="6">
+            <MudAutocomplete T="Supplier" Label="Supplier" @bind-Value="PurchaseOrder.Supplier" ReadOnly="@(isDraft ? false : true)"
+            SearchFunc="@SearchSupplier" ToStringFunc="@(s=> s==null?null : $"{s.SupplierName}")" Variant="Variant.Outlined" />
+            <MudTextField Class="mb-4" @bind-Value="PurchaseOrder.ReferenceNumber" HideSpinButtons="true" Label="Purchase Order Number" ReadOnly="true" Disabled="true" For="@(() => PurchaseOrder.ReferenceNumber)" Variant="Variant.Outlined" />
+        </MudItem>
+
+        <MudItem xs="12" sm="6">
+            <MudAutocomplete T="Branch" Label="Destination Branch" @bind-Value="PurchaseOrder.DestinationBranch" ReadOnly="@(isDraft ? false : true)"
+            SearchFunc="@SearchBranch" ToStringFunc="@(b=> b==null?null : $"{b.BranchName}")" For="@(() => PurchaseOrder.DestinationBranch)" Variant="Variant.Outlined" />
+            <MudDatePicker Label="Estimated Arrival" Editable="true" ReadOnly="@(isDraft ? false : true)" @bind-Date="PurchaseOrder.EstimatedArrival" Mask="@(new DateMask("MM/dd/yyyy"))" DateFormat="MM/dd/yyyy" Placeholder="Estimated Arrival" Variant="Variant.Outlined" />
+        </MudItem>
+
+        <MudItem sm="12">
+            <MudText Typo="Typo.h6">PRODUCTS</MudText>
+        </MudItem>
+
+        <MudItem xs="12" sm="5" class="@(isDraft ? "" : "d-none")">
+            <MudAutocomplete T="Product" Label="Products" @bind-Value="NewPurchaseOrderItem.Product"
+            SearchFunc="@SearchProduct" ToStringFunc="@(p=> p==null?null : $"{p.ProductName}")" Variant="Variant.Outlined" />
+        </MudItem>
+
+        <MudItem xs="12" sm="3" class="@(isDraft ? "" : "d-none")">
+            <MudTextField Variant="Variant.Outlined" Label="Quantity" @bind-Value="NewPurchaseOrderItem.Quantity" />
+        </MudItem>
+
+        <MudItem xs="12" sm="3" class="@(isDraft ? "" : "d-none")">
+            <MudTextField Variant="Variant.Outlined" Label="Price" @bind-Value="NewPurchaseOrderItem.UnitPrice" />
+        </MudItem>
+
+
+        <MudItem xs="12" sm="1" class="@(isDraft ? "" : "d-none")">
+            <MudButton ButtonType="ButtonType.Submit" OnClick="AddPurchaseOrderItem" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Add</MudButton>
+        </MudItem>
+
+        <MudItem sm="12">
+            <MudDataGrid @ref="dataGrid" T="PurchaseOrderItem" ServerData="ServerReload">
+                <Columns>
+                    <PropertyColumn Property="poi => poi.Product.ProductName" Title="Product" />
+                    <PropertyColumn Property="poi => poi.Quantity" Title="Quantity" />
+                    <PropertyColumn Property="poi => poi.UnitPrice" Title="Price" />
+                    <PropertyColumn Property="poi => poi.SubTotal" Title="Subtotal" />
+                    @if (isDraft)
+                    {
+                        <TemplateColumn CellClass="d-flex justify-end">
+                            <CellTemplate>
+                                <MudStack Row>
+                                    <MudIconButton Icon="@Icons.Material.Filled.Close" Color="Color.Error" aria-label="delete"
+                                    OnClick="@(() => RemovePurchaseOrderItem(context.Item))" />
+                                </MudStack>
+                            </CellTemplate>
+                        </TemplateColumn>
+                    }
+                </Columns>
+            </MudDataGrid>
+            <MudText Typo="Typo.h5">@PurchaseOrderItems.Sum(item => item.SubTotal)</MudText>
+        </MudItem>
+
+
+        <MudItem xs="12" Class="justify-center">
+            @if (Status.ToLower() == "draft")
+            {
+                <MudButton  ButtonType="ButtonType.Submit" OnClick="DeletePurchaseOrder" Variant="Variant.Outlined" Color="Color.Error" Class="ml-auto">DELETE</MudButton>
+                <MudButton ButtonType="ButtonType.Submit" OnClick="MarkAsOrdered" Variant="Variant.Outlined" Color="Color.Info" Class="ml-auto">MARK AS ORDERED</MudButton>
+                <MudButton ButtonType="ButtonType.Submit" OnClick="SaveChanges" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">SAVE CHANGES</MudButton>
+            }
+            else if (Status.ToLower() == "ordered")
+            {
+                <MudButton ButtonType="ButtonType.Submit" OnClick="CancelOrder"  Variant="Variant.Outlined" Color="Color.Error" Class="ml-auto">CANCEL ORDER</MudButton>
+                <MudButton ButtonType="ButtonType.Submit" OnClick="CompleteOrder" Variant="Variant.Filled" Color="Color.Success" Class="ml-auto">COMPLETE ORDER</MudButton>
+            }
+        </MudItem>
+    </MudGrid>
+
+
+
+
+</MudContainer>
 
 @code {
 
-
     [Parameter]
     public string ReferenceNumber { get; set; }
+
+
+    MudDataGrid<PurchaseOrderItem> dataGrid = new();
+
+
+
+    private PurchaseOrder PurchaseOrder { get; set; } = new();
+    private string? Status = "Draft";
+    public Color SelectedColor;
+    public bool isDraft = true;
+
+
+    private Product selectedProduct { get; set; } = new();
+    private PurchaseOrderItem NewPurchaseOrderItem { get; set; } = new();
+
+    private IEnumerable<Supplier>? _suppliers;
+    private IEnumerable<Branch>? _branches;
+    private IEnumerable<Product>? _products;
+
+    private IEnumerable<PurchaseOrderItem> PurchaseOrderItems = new List<PurchaseOrderItem>();
+
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        PurchaseOrder = await PurchaseOrderService.GetPurchaseOrderByReferenceNumberAsync(ReferenceNumber);
+        await dataGrid.ReloadServerData();
+
+        if (PurchaseOrder is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+
+
+        Status = PurchaseOrder.PurchaseOrderStatus.StatusName;
+        PurchaseOrderItems = PurchaseOrder.PurchaseOrderItems.ToList();
+
+        switch (Status.ToLower()) // Use ToLower() for case-insensitive comparison
+        {
+            case "draft":
+                SelectedColor = Color.Default;
+                isDraft = true;
+                break;
+            case "ordered":
+                SelectedColor = Color.Info;
+                isDraft = false;
+                break;
+            case "completed":
+                SelectedColor = Color.Success;
+                isDraft = false;
+                break;
+            case "cancelled":
+                SelectedColor = Color.Error;
+                isDraft = false;
+                break;
+            default:
+                SelectedColor = Color.Default; // Or some other default color
+                break;
+        }
+
+
+
+        _products = await ProductService.GetAllProductAsync();
+        _branches = await BranchService.GetAllBranchAsync();
+        _suppliers = await SupplierService.GetAllSupplierAsync();
+
+
+
+    }
+
+    private async Task MarkAsOrdered()
+    {
+
+        // todo dialog to notify that marking it to ordered will update the inventory incoming count
+        var parameters = new DialogParameters<DialogComponent>
+        {
+            { "ContentText", "Marking this purchase order as 'Ordered' will update the inventory incoming count. Do you want to proceed?" },
+            { "Button1Text", "Yes" },
+            { "Button2Text", "No" },
+            { "Color", Color.Info }
+        };
+
+        var dialog = await DialogService.ShowAsync<DialogComponent>("Mark Purchase Order as Ordered", parameters);
+        var result = await dialog.Result;
+
+
+        if (!result.Canceled)
+        {
+            await PurchaseOrderService.PurchaseOrderToOrderedAsync(PurchaseOrder);
+            NavigationManager.NavigateTo($"/purchase/orders/details/{PurchaseOrder.ReferenceNumber}", forceLoad: true);
+        }
+
+
+
+
+    }
+
+    private async Task SaveChanges()
+    {
+
+        await PurchaseOrderService.UpdatePurchaseOrderAsync(PurchaseOrder);
+        NavigationManager.NavigateTo($"/purchase/orders/details/{PurchaseOrder.ReferenceNumber}", forceLoad: true);
+
+    } 
+
+    private async Task CancelOrder()
+    {
+        var parameters = new DialogParameters<DialogComponent>
+        {
+            { "ContentText", "Are you sure you want to cancel this purchase order?" },
+            { "Button1Text", "Confirm Cancellation" },
+            { "Button2Text", "Cancel" },
+            { "Color", Color.Info }
+        };
+
+        var dialog = await DialogService.ShowAsync<DialogComponent>("Cancel Purchase Order", parameters);
+        var result = await dialog.Result;
+
+
+        if (!result.Canceled)
+        {
+            await PurchaseOrderService.PurchaseOrderToCancelAsync(PurchaseOrder);
+            NavigationManager.NavigateTo($"/purchase/orders/details/{PurchaseOrder.ReferenceNumber}", forceLoad: true);
+        }
+
+    }
+
+    private async Task CompleteOrder()
+    {
+
+
+
+        // todo dialog to notify that marking it to complete will update the inventory onhand
+        var parameters = new DialogParameters<DialogComponent>
+        {
+            { "ContentText", "Marking this purchase order as 'Completed' will update the inventory on-hand count. Do you want to proceed?" },
+            { "Button1Text", "Yes" },
+            { "Button2Text", "No" },
+            { "Color", Color.Info }
+        };
+
+        var dialog = await DialogService.ShowAsync<DialogComponent>("Complete Purchase Order", parameters);
+        var result = await dialog.Result;
+
+
+        if (!result.Canceled)
+        {
+            await PurchaseOrderService.PurchaseOrderToCompleteAsync(PurchaseOrder);
+            NavigationManager.NavigateTo($"/purchase/orders/details/{PurchaseOrder.ReferenceNumber}", forceLoad: true);
+        }
+
+
+
+    }
+
+    private async Task DeletePurchaseOrder()
+    {
+
+        await PurchaseOrderService.DeletePurchaseOrderAsync(PurchaseOrder);
+        NavigationManager.NavigateTo($"/purchase/orders/details/");
+
+        // todo snack bar deleted msg
+
+    }
+
+
+
+    private async Task AddPurchaseOrderItem()
+    {
+
+
+        NewPurchaseOrderItem.SubTotal = NewPurchaseOrderItem.Quantity * NewPurchaseOrderItem.UnitPrice;
+
+
+        await PurchaseOrderService.AddPurchaseOrderItemAsync(NewPurchaseOrderItem);
+
+        NewPurchaseOrderItem = new();
+
+        await dataGrid.ReloadServerData();
+
+    }
+
+    async Task RemovePurchaseOrderItem(PurchaseOrderItem item)
+    {
+
+        await PurchaseOrderService.DeletePurchaseOrderItemAsync(item);
+
+        await dataGrid.ReloadServerData();
+
+    }
+
+    private async Task<GridData<PurchaseOrderItem>> ServerReload(GridState<PurchaseOrderItem> state)
+    {
+
+
+
+        var totalItems = PurchaseOrderItems.Count();
+
+        var sortDefinition = state.SortDefinitions.FirstOrDefault();
+        if (sortDefinition != null)
+        {
+            switch (sortDefinition.SortBy)
+            {
+                case nameof(PurchaseOrderItem.Quantity):
+                    PurchaseOrderItems = PurchaseOrderItems.OrderByDirection(
+                        sortDefinition.Descending ? SortDirection.Descending : SortDirection.Ascending,
+                        o => o.Quantity
+                    );
+                    break;
+            }
+        }
+
+        var pagedData = PurchaseOrderItems.Skip(state.Page * state.PageSize).Take(state.PageSize).ToArray();
+        return new GridData<PurchaseOrderItem>
+            {
+                TotalItems = totalItems,
+                Items = pagedData
+            };
+    }
+
+
+
+
+    private async Task<IEnumerable<Product>> SearchProduct(string value, CancellationToken token)
+    {
+
+        if (string.IsNullOrEmpty(value))
+        {
+            // Return all available products excluding already added ones.
+            return _products.Where(p => !PurchaseOrderItems.Any(poi => poi.Product.ProductId == p.ProductId));
+        }
+
+        // Filter products based on search value and exclude already added ones.
+        return _products
+            .Where(p => p.ProductName.Contains(value, StringComparison.InvariantCultureIgnoreCase) ||
+                        p.SKU.Contains(value, StringComparison.InvariantCultureIgnoreCase)) // Add other search properties if needed
+            .Where(p => !PurchaseOrderItems.Any(poi => poi.Product.ProductId == p.ProductId));
+    }
+
+    private async Task<IEnumerable<Supplier>> SearchSupplier(string value, CancellationToken token)
+    {
+
+        if (string.IsNullOrEmpty(value))
+        {
+            return _suppliers;
+        }
+
+        return _suppliers.Where(s => s.SupplierName.Contains(value, StringComparison.InvariantCultureIgnoreCase));
+    }
+
+    private async Task<IEnumerable<Branch>> SearchBranch(string value, CancellationToken token)
+    {
+        if (string.IsNullOrEmpty(value))
+        {
+            return _branches;
+        }
+
+        return _branches.Where(b => b.BranchName.Contains(value, StringComparison.InvariantCultureIgnoreCase));
+    }
+
+
 
 }

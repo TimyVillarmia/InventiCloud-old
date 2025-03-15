@@ -20,9 +20,9 @@ public class PurchaseOrderItem
     public int ProductID { get; set; }
     public int Quantity { get; set; }
 
-    [Precision(19, 4)]
+    [Precision(19, 2)]
     public decimal UnitPrice { get; set; }
-    [Precision(19, 4)]
+    [Precision(19, 2)]
     public decimal SubTotal { get; set; }
 
     public virtual PurchaseOrder PurchaseOrder { get; set; }

@@ -157,6 +157,8 @@
         using var context = DbFactory.CreateDbContext();
         Product = await context.Products.FirstAsync(m => m.SKU == SKU);
 
+
+
         if (Product is null)
         {
             NavigationManager.NavigateTo("notfound");

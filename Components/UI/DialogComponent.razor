@@ -10,8 +10,8 @@
         <MudText>@ContentText</MudText>
     </DialogContent>
     <DialogActions>
-        <MudButton OnClick="Cancel">Cancel</MudButton>
-        <MudButton Color="Color.Error" OnClick="OnSubmit">Delete</MudButton>
+        <MudButton Color="Color.Default" OnClick="Cancel">@Button2Text</MudButton>
+        <MudButton Color="@Color" Variant="Variant.Filled" OnClick="OnSubmit">@Button1Text</MudButton>
     </DialogActions>
 </MudDialog>
 @code {
@@ -23,6 +23,14 @@
 
     [Parameter]
     public string ContentText { get; set; }
+    [Parameter] 
+    public string Button1Text { get; set; } = "OK";
+    [Parameter] 
+    public string Button2Text { get; set; } = "Cancel";
+    [Parameter] 
+    public Color Color { get; set; }
+
+
 
     private async Task OnSubmit()
     {

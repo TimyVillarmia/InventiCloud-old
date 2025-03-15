@@ -44,13 +44,13 @@ else
             <MudItem sm="6">
                 <MudStack Row="true" AlignItems="AlignItems.Center">
                     <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
-                                  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+                    AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
                 </MudStack>
 
             </MudItem>
 
             <MudItem sm="6">
-                <MudButton Variant="Variant.Filled" Href="inventory/products/create" Color="Color.Primary" Class="text-uppercase">
+                <MudButton Variant="Variant.Filled" Href="/purchase/orders/create" Color="Color.Primary" Class="text-uppercase">
                     Create Purchase Order
                 </MudButton>
             </MudItem>
@@ -62,19 +62,28 @@ else
                 <PropertyColumn Property="po => po.ReferenceNumber" Title="Reference Number" />
                 <PropertyColumn Property="po => po.Supplier.SupplierName" Title="Supplier"/>
                 <PropertyColumn Property="po => po.DestinationBranch.BranchName" Title="Destination" />
-                <PropertyColumn Property="po => po.PurchaseOrderStatus.StatusName" Title="Status" />
+                <TemplateColumn Title="Status">
+                    <CellTemplate>
+                        <MudChip Color="@GetChipColor(context.Item.PurchaseOrderStatus.StatusName)" Size="Size.Small">@context.Item.PurchaseOrderStatus.StatusName</MudChip>
+                    </CellTemplate>
+                </TemplateColumn>
                 <PropertyColumn Property="po => po.EstimatedArrival" Title="Estimated Arrival" />
                 <PropertyColumn Property="po => po.TotalAmount" Title="Total" />
                 <TemplateColumn CellClass="d-flex justify-end">
                     <CellTemplate>
                         <MudMenu Icon="@Icons.Material.Filled.MoreVert" AriaLabel="Open user menu">
-                            <MudMenuItem Label="Edit" href="@($"/purchase/orders/{context.Item.ReferenceNumber}")" />
+                            <MudMenuItem Label="Edit" href="@($"/purchase/orders/details/{context.Item.ReferenceNumber}")" />
+                            @if(context.Item.PurchaseOrderStatus.StatusName.ToLower() == "draft")
+                            {
+                                <MudMenuItem Label="Delete" Class="red-text" OnClick="@(() => OpenDialogAsync(context.Item))" />
+
+                            }
                         </MudMenu>
                     </CellTemplate>
                 </TemplateColumn>
             </Columns>
             <PagerContent>
-                <MudDataGridPager T="Product" />
+                <MudDataGridPager T="PurchaseOrder" />
             </PagerContent>
         </MudDataGrid>
 
@@ -88,7 +97,8 @@ else
 @code {
     string searchString = null;
 
-    private IEnumerable<PurchaseOrder>? _purchaseorders;
+    private IEnumerable<PurchaseOrder>? _purchaseorders = new List<PurchaseOrder>();
+    private IEnumerable<PurchaseOrder>? _filteredpurchaseorders = new List<PurchaseOrder>();
 
     MudDataGrid<PurchaseOrder> dataGrid = new();
 
@@ -97,6 +107,24 @@ else
 
         _purchaseorders = await PurchaseOrderService.GetAllPurchaseOrderAsync();
 
+
+    }
+
+    private Color GetChipColor(string status)
+    {
+        switch (status.ToLower())
+        {
+            case "draft":
+                return Color.Default;
+            case "ordered":
+                return Color.Info;
+            case "completed":
+                return Color.Success;
+            case "cancelled":
+                return Color.Error;
+            default:
+                return Color.Default;
+        }
     }
 
     async Task OpenDialogAsync(PurchaseOrder purchaseorder)
@@ -105,7 +133,7 @@ else
         {
             {x => x.ContentText, $"Are you sure you want to delete the Purchase Order '{purchaseorder.PurchaseOrderId}'? This action cannot be undone."}
         };
-         
+
         var dialog = await DialogService.ShowAsync<DialogComponent>("Delete Purchase Order", parameters);
         var result = await dialog.Result;
 
@@ -132,9 +160,9 @@ else
 
     private async Task<GridData<PurchaseOrder>> ServerReload(GridState<PurchaseOrder> state)
     {
-        _purchaseorders = await PurchaseOrderService.GetAllPurchaseOrderAsync();
+        _filteredpurchaseorders = _purchaseorders;
 
-        _purchaseorders = _purchaseorders.Where(po =>
+        _filteredpurchaseorders = _filteredpurchaseorders.Where(po =>
         {
             if (string.IsNullOrWhiteSpace(searchString))
                 return true;
@@ -146,23 +174,24 @@ else
                 return true;
             return false;
         }).ToArray();
-        var totalItems = _purchaseorders.Count();
+        var totalItems = _filteredpurchaseorders.Count();
 
         var sortDefinition = state.SortDefinitions.FirstOrDefault();
         if (sortDefinition != null)
         {
             switch (sortDefinition.SortBy)
             {
-                case nameof(Product.ProductName):
-                    _purchaseorders = _purchaseorders.OrderByDirection(
+                case nameof(PurchaseOrder.ReferenceNumber):
+                    _filteredpurchaseorders = _filteredpurchaseorders.OrderByDirection(
                         sortDefinition.Descending ? SortDirection.Descending : SortDirection.Ascending,
                         po => po.ReferenceNumber
                     );
                     break;
+
             }
         }
 
-        var pagedData = _purchaseorders.Skip(state.Page * state.PageSize).Take(state.PageSize).ToArray();
+        var pagedData = _filteredpurchaseorders.Skip(state.Page * state.PageSize).Take(state.PageSize).ToArray();
         return new GridData<PurchaseOrder>
             {
                 TotalItems = totalItems,

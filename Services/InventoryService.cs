@@ -86,6 +86,36 @@ namespace InventiCloud.Services
                 ;
         }
 
+        public async Task<Inventory> GetInventoryByProductIdAndBranchIdAsync(int productId, int branchId)
+        {
 
+            using var context = DbFactory.CreateDbContext();
+
+            try
+            {
+                return await context.Inventories.FirstAsync(i => i.ProductID == productId && i.BranchID == branchId);
+            }
+            catch (Exception ex)
+            {
+                // Log the exception (use your logging framework)
+                // _logger.LogError(ex, "Error retrieving inventory by ProductId and BranchId.");
+                Console.WriteLine($"Error retrieving inventory by ProductId and BranchId: {ex.Message}");
+                return null; // Or re-throw the exception if appropriate
+            }
+        }
+
+        public async Task UpdateInventoryAsync(Inventory inventory)
+        {
+            if (inventory == null)
+            {
+                throw new ArgumentNullException(nameof(inventory));
+            }
+
+            using var context = DbFactory.CreateDbContext();
+
+
+            context.Inventories.Update(inventory);
+            await context.SaveChangesAsync();
+        }
     }
 }

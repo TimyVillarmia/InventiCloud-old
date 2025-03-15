@@ -105,6 +105,8 @@ else
         _products = await ProductService.GetAllProductAsync();
         _categories = await CategoryService.GetAllCategoryAsync();
 
+
+
     }
 
     private async Task<GridData<Product>> ServerReload(GridState<Product> state)

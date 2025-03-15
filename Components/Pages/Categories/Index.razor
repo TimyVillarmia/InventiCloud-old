@@ -122,7 +122,10 @@ else
     {
         var parameters = new DialogParameters<DialogComponent>
         {
-            {x => x.ContentText, $"Are you sure you want to delete the category '{category.CategoryName}'? This action cannot be undone."}
+            {x => x.ContentText, $"Are you sure you want to delete the category '{category.CategoryName}'? This action cannot be undone."},
+            { "Button1Text", "Delete" },
+            { "Button2Text", "Cancel" },
+            { "Color", Color.Error }
         };
 
         var dialog = await DialogService.ShowAsync<DialogComponent>("Delete Category", parameters);
