@@ -16,11 +16,11 @@
 
 <MudContainer Class="pt-5" MaxWidth="MaxWidth.Large">
     <div class="d-flex gap-4 align-items-center mb-4">
-        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" aria-label="delete" Href="/catalog/products" />
+        @* <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" aria-label="delete" Href="/purchase/orders" /> *@
         <MudText Typo="Typo.h4">ADD PURCHASE ORDERS</MudText>
     </div>
     <MudGrid>
-        <MudItem sm="12">
+        <MudItem sm="12" Class="bold">
             <MudText Typo="Typo.h6">DETAILS</MudText>
         </MudItem>
 
@@ -36,32 +36,35 @@
             <MudDatePicker Label="Estimated Arrival" Editable="true" @bind-Date="PurchaseOrder.EstimatedArrival" Mask="@(new DateMask("MM/dd/yyyy"))" DateFormat="MM/dd/yyyy" Placeholder="Estimated Arrival" Variant="Variant.Outlined" />
         </MudItem>
 
-        <MudItem sm="12">
+        <MudItem sm="12" Class="bold">
             <MudText Typo="Typo.h6">PRODUCTS</MudText>
         </MudItem>
+        <MudItem Class="d-flex align-center flex-wrap flex-grow-1 gap-2">
+            <MudItem xs="12" sm="6">
+                <MudAutocomplete T="Product" Label="Products" @bind-Value="NewPurchaseOrderItem.Product"
+                                 SearchFunc="@SearchProduct" ToStringFunc="@(p=> p==null?null : $"{p.ProductName}")" Variant="Variant.Outlined" />
+            </MudItem>
 
-        <MudItem xs="12" sm="5">
-            <MudAutocomplete T="Product" Label="Products" @bind-Value="NewPurchaseOrderItem.Product"
-                             SearchFunc="@SearchProduct" ToStringFunc="@(p=> p==null?null : $"{p.ProductName}")" Variant="Variant.Outlined" />
+            <MudItem xs="12" sm="2" Class="ml-5">
+                <MudTextField Variant="Variant.Outlined" Label="Quantity" @bind-Value="NewPurchaseOrderItem.Quantity" />
+            </MudItem>
+
+            <MudItem xs="12" sm="2" Class="ml-5">
+                <MudTextField Variant="Variant.Outlined" Label="Price" @bind-Value="NewPurchaseOrderItem.UnitPrice" />
+            </MudItem>
+
+
+            <MudItem xs="6" sm="1" Class="ml-5">
+                <MudButton ButtonType="ButtonType.Submit" OnClick="AddBatchPurchaseOrderItem" Variant="Variant.Filled" Color="Color.Primary">Add</MudButton>
+            </MudItem>
         </MudItem>
 
-        <MudItem xs="12" sm="3">
-            <MudTextField Variant="Variant.Outlined" Label="Quantity" @bind-Value="NewPurchaseOrderItem.Quantity" />
-        </MudItem>
-
-        <MudItem xs="12" sm="3">
-            <MudTextField Variant="Variant.Outlined" Label="Price" @bind-Value="NewPurchaseOrderItem.UnitPrice" />
-        </MudItem>
-
-
-        <MudItem xs="12" sm="1">
-            <MudButton ButtonType="ButtonType.Submit" OnClick="AddBatchPurchaseOrderItem" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Add</MudButton>
-        </MudItem>
+       
 
         <MudItem sm="12">
             <MudDataGrid Items="BatchPurchaseOrderItem">
                 <Columns>
-                    <PropertyColumn Property="poi => poi.Product.ProductName" Title="Product" />
+                    <PropertyColumn Property="poi => poi.Product.ProductName" Title="Product Name" />
                     <PropertyColumn Property="poi => poi.Quantity" Title="Quantity" />
                     <PropertyColumn Property="poi => poi.UnitPrice" Title="Price" />
                     <PropertyColumn Property="poi => poi.SubTotal" Title="Subtotal" />
@@ -78,9 +81,9 @@
 
         </MudItem>
 
-        <MudItem xs="12" Class="justify-center">
-            <MudButton Variant="Variant.Filled" Color="Color.Default" Class="ml-auto">CANCEL</MudButton>
-            <MudButton ButtonType="ButtonType.Submit" OnClick="AddPurchaseOrderToDraft" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">SAVE AS DRAFT</MudButton>
+        <MudItem xs="12" Class="d-flex align-end mt-12">
+            <MudButton Variant="Variant.Filled" Color="Color.Default" Href="/purchase/orders" Class="ml-auto">CANCEL</MudButton>
+            <MudButton ButtonType="ButtonType.Submit" OnClick="AddPurchaseOrderToDraft" Variant="Variant.Filled" Color="Color.Primary" Class="ml-2">SAVE AS DRAFT</MudButton>
         </MudItem>
     </MudGrid>
 

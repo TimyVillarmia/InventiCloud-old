@@ -20,13 +20,13 @@ else
 {
     <MudGrid>
         <MudItem sm="6">
-            <MudButton Variant="Variant.Filled" Href="branches/create" Color="Color.Primary" Class="text-uppercase">
-                Add Branch
-            </MudButton>
-        </MudItem>
-        <MudItem sm="6">
             <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
                           AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+        </MudItem>
+        <MudItem sm="6" Class="align-end">
+            <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Href="branches/create" Color="Color.Primary" Class="text-uppercase">
+                Add Branch
+            </MudButton>
         </MudItem>
     </MudGrid>
     <MudDataGrid @ref="dataGrid" T="Branch" ServerData="ServerReload" RowClick="@RowClicked">
@@ -52,6 +52,46 @@ else
 
 
 <MudText Class="bold mb-2" Typo="Typo.h4">Branch Accounts</MudText>
+@if (!_branches.Any())
+{
+
+    <MudContainer Class="d-flex justify-center align-items-center" Style="height: 100vh;">
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    </MudContainer>
+}
+else
+{
+    <MudGrid>
+        <MudItem sm="6">
+            <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                          AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+        </MudItem>
+        <MudItem sm="6" Class="align-end">
+            <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Href="branches/create" Color="Color.Primary" Class="text-uppercase">
+                Add Branch Account
+            </MudButton>
+        </MudItem>
+    </MudGrid>
+    <MudDataGrid @ref="dataGrid" T="Branch" ServerData="ServerReload" RowClick="@RowClicked">
+        <Columns>
+            <PropertyColumn Property="branch => branch.BranchName" Title="Branch Name" />
+            <PropertyColumn Property="branch => branch.Address" Title="Location" />
+            <PropertyColumn Property="branch => branch.PhoneNumber" Title="Phone Number" />
+            <PropertyColumn Property="branch => branch.Email" Title="Email" />
+            <TemplateColumn CellClass="d-flex justify-end">
+                <CellTemplate>
+                    <MudStack Row>
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" aria-label="delete" OnClick="@(() => OpenDialogAsync(context.Item))" />
+                    </MudStack>
+                </CellTemplate>
+            </TemplateColumn>
+        </Columns>
+        <PagerContent>
+            <MudDataGridPager T="Category" />
+        </PagerContent>
+    </MudDataGrid>
+
+}
 
 
 
