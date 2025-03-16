@@ -1,0 +1,62 @@
+﻿@page "/branches/create"
+@using InventiCloud.Data
+@using InventiCloud.Utils
+@using Microsoft.EntityFrameworkCore
+@using InventiCloud.Entities
+@using InventiCloud.Components.UI
+@using InventiCloud.Services
+@using InventiCloud.Services.Interface
+@using InventiCloud.Entities
+@inject IDbContextFactory<InventiCloud.Data.ApplicationDbContext> DbFactory
+@inject IBranchService BranchService
+@inject NavigationManager NavigationManager
+
+
+
+<MudContainer Class="pt-5" MaxWidth="MaxWidth.Large">
+    <div class="d-flex gap-4 align-items-center mb-4">
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" aria-label="delete" Href="/branches" />
+        <MudText Typo="Typo.h4">CREATE BRANCH</MudText>
+    </div>
+
+    <EditForm method="post" Model="Branch" OnValidSubmit="AddBranch" FormName="create" Enhance>
+        <DataAnnotationsValidator />
+        <MudGrid>
+            <MudItem xs="12">
+                <MudText Typo="Typo.h6">BRANCH DETAILS</MudText>
+            </MudItem>
+            <MudTextField @bind-Value="Branch.BranchName" Label="Branch Name" For="@(() => Branch.BranchName)" Variant="Variant.Outlined" />
+            <MudTextField @bind-Value="Branch.Address" Label="Address" For="@(() => Branch.Address)" Variant="Variant.Outlined" />
+            <MudItem xs="12" sm="6">
+                <MudNumericField @bind-Value="Branch.Country" HideSpinButtons="true" Label="Country" For="@(() => Branch.Country)" Variant="Variant.Outlined" />
+                <MudNumericField @bind-Value="Branch.City" HideSpinButtons="true" Label="City" For="@(() => Branch.City)" Variant="Variant.Outlined" />
+                <MudNumericField @bind-Value="Branch.PostalCode" HideSpinButtons="true" Label="Postal Code" For="@(() => Branch.PostalCode)" Variant="Variant.Outlined" />
+            </MudItem>
+            <MudTextField @bind-Value="Branch.Email" Label="Email Address" For="@(() => Branch.Email)" Variant="Variant.Outlined" />
+            <MudTextField @bind-Value="Branch.PhoneNumber" Label="Phone Number" For="@(() => Branch.PhoneNumber)" Variant="Variant.Outlined" />
+        </MudGrid>
+        <MudItem xs="12" Class="d-flex align-end mt-12">
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">CREATE BRANCH</MudButton>
+        </MudItem>
+    </EditForm>
+</MudContainer>
+
+
+@code {
+    [SupplyParameterFromForm]
+    private Branch Branch { get; set; } = new();
+
+    private ApplicationDbContext context = default!;
+
+
+    private async Task AddBranch()
+    {
+        context = DbFactory.CreateDbContext();
+        context.Branches.Add(Branch);
+        await context.SaveChangesAsync();
+
+
+        NavigationManager.NavigateTo("/branches");
+    }
+
+}

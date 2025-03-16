@@ -33,10 +33,9 @@ else
                 <MudStack Row="true" AlignItems="AlignItems.Center">
                     <div>
                         <MudTextField @bind-Value="Category.CategoryName" Label="Category Name" For="@(() => Category.CategoryName)" Variant="Variant.Outlined" />
-
                     </div>
                     <div>
-                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Add Category</MudButton>
+                        <MudButton ButtonType="ButtonType.Submit" StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Add Category</MudButton>
                     </div>
                 </MudStack>
             </EditForm>

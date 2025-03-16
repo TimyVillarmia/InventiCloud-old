@@ -1,0 +1,21 @@
+﻿@page "/inventory/stock-transfer"
+@using InventiCloud.Components.UI
+@using InventiCloud.Services
+@using InventiCloud.Services.Interface
+@using InventiCloud.Entities
+@inject IBranchService BranchService
+
+
+
+@code {
+    MudDataGrid<StockTransfer> dataGrid = new();
+    private string? searchString;
+
+    private IEnumerable<Branch>? _branches;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        _branches = await BranchService.GetAllBranchAsync();
+    }
+}
