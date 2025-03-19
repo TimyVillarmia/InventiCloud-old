@@ -14,7 +14,7 @@
 <PageTitle>Index</PageTitle>
 
 <MudText Class="bold mb-2" Typo="Typo.h4">Suppliers</MudText>
-@if (_supplier == null)
+@if (_suppliers == null)
 {
     <MudContainer Class="d-flex justify-center align-items-center" Style="height: 100vh;">
         <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
@@ -22,40 +22,50 @@
 }
 else
 {
-    <MudGrid>
-        <MudItem sm="6">
-            <EditForm method="post" Model="supplier" OnValidSubmit="AddSupplier" FormName="create" Enhance>
-                <DataAnnotationsValidator />
-                <MudStack Row="true" AlignItems="AlignItems.Center">
-                    <div>
-                        <MudTextField @bind-Value="supplier.SupplierName" Label="Supplier Name" For="@(() => supplier.SupplierName)" Variant="Variant.Outlined" />
 
-                    </div>
-                    <div>
-                        <MudButton ButtonType="ButtonType.Submit" StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Add Supplier</MudButton>
-                    </div>
-                </MudStack>
-            </EditForm>
-        </MudItem>
-        <MudItem sm="6">
-            <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
-                          AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
-        </MudItem>
-    </MudGrid>
-    @if (!_supplier.Any())
+    @if (!_suppliers.Any())
     {
 
         <MudPaper Height="500px" Class="justify-center align-content-center">
-            <MudText Class="bold" Typo="Typo.h6" Align="Align.Center">Add Suppliers</MudText>
-            <MudText Typo="Typo.body1" Align="Align.Center">Your supplier catalog is currently empty. Click the "ADD SUPPLIERS" button to get started.</MudText>
-        </MudPaper>
+            <MudText Class="bol" Typo="Typo.h6" Align="Align.Center">No Suppliers Found</MudText>
+            <MudText Typo="Typo.body1" Align="Align.Center">
+                You don't have any suppliers yet. Click the "Add Supplier" button to get started.
+            </MudText>
+            <MudContainer Class="d-flex justify-center mt-2">
+                <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Href="/purchase/suppliers/create" Color="Color.Primary" Class="text-uppercase">
+                    Add Supplier
+                </MudButton>
+            </MudContainer>
+        </MudPaper>        
     }
+
     else
     {
+
+        <MudGrid>
+            <MudItem sm="6">
+                <MudStack Row="true" AlignItems="AlignItems.Center">
+                    <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                    AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+                </MudStack>
+
+            </MudItem>
+
+            <MudItem sm="6">
+                <MudButton Variant="Variant.Filled" Href="/purchase/suppliers/create" Color="Color.Primary" Class="text-uppercase">
+                    Create Supplier
+                </MudButton>
+            </MudItem>
+
+        </MudGrid>
+
+
         <MudDataGrid @ref="dataGrid" T="Supplier" ServerData="ServerReload" RowClick="@RowClicked">
             <Columns>
+                <PropertyColumn Property="supplier => supplier.SupplierCode" Title="Supplier Code" />
                 <PropertyColumn Property="supplier => supplier.SupplierName" Title="Supplier Name" />
-                @* <PropertyColumn Property="supplier => supplier.Attributes.Count()" Title="Attributes" /> *@
+                <PropertyColumn Property="supplier => supplier.City" Title="City" />
+                <PropertyColumn Property="supplier => supplier.Country" Title="Country" />
                 <TemplateColumn CellClass="d-flex justify-end">
                     <CellTemplate>
                         <MudStack Row>
@@ -74,37 +84,30 @@ else
 }
 
 @code {
-    private string? _searchString;
+    string? searchString;
+
     MudDataGrid<Supplier> dataGrid = new();
 
-    [SupplyParameterFromForm]
-    private Supplier supplier { get; set; } = new();
-    string? searchString;
-    private IEnumerable<Supplier>? _supplier;
+    private IEnumerable<Supplier> _suppliers = new List<Supplier>();
+    private IEnumerable<Supplier> _filteredsuppliers = new List<Supplier>();
 
     protected override async Task OnInitializedAsync()
     {
-        // context = DbFactory.CreateDbContext();
-        _supplier = await SupplierService.GetAllSupplierAsync();
-    }
-
-    private async Task AddSupplier()
-    {
-        // await context.AttributeSet.AddAsync(attributeSet);
-        await SupplierService.AddSupplierAsync(supplier);
-
-        supplier = new();
-        await dataGrid.ReloadServerData();
+        _suppliers = await SupplierService.GetAllSupplierAsync();
     }
 
     async Task OpenDialogAsync(Supplier supplier)
     {
+
         var parameters = new DialogParameters<DialogComponent>
         {
-            {x => x.ContentText, $"Are you sure you want to delete the supplier '{supplier.SupplierName}'? This action cannot be undone."}
+            {x => x.ContentText, $"Are you sure you want to delete the supplier '{supplier.SupplierName}'? This action cannot be undone."},
+            { "Button1Text", "Confirm" },
+            { "Button2Text", "Cancel" },
+            { "Color", Color.Error }
         };
 
-        var dialog = await DialogService.ShowAsync<DialogComponent>("Delete Supplier Name", parameters);
+        var dialog = await DialogService.ShowAsync<DialogComponent>("Delete Supplier", parameters);
         var result = await dialog.Result;
 
         if (!result.Canceled)
@@ -112,7 +115,7 @@ else
             try
             {
                 await SupplierService.DeleteSupplierAsync(supplier);
-                Snackbar.Add("Supplier Name Deleted", Severity.Success);
+                Snackbar.Add("Supplier Deleted", Severity.Success);
                 await dataGrid.ReloadServerData();
 
             }
@@ -144,17 +147,24 @@ else
     private async Task<GridData<Supplier>> ServerReload(GridState<Supplier> state)
     {
 
-        _supplier = await SupplierService.GetAllSupplierAsync();
-        await Task.Delay(300);
-        _supplier = _supplier.Where(supplier =>
+        _filteredsuppliers = _suppliers;
+
+
+        _filteredsuppliers = _filteredsuppliers.Where(supplier =>
         {
             if (string.IsNullOrWhiteSpace(searchString))
                 return true;
+            if (supplier.SupplierCode.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+                return true;
             if (supplier.SupplierName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+                return true;
+            if (supplier.City.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+                return true;
+            if (supplier.Country.Contains(searchString, StringComparison.OrdinalIgnoreCase))
                 return true;
             return false;
         }).ToArray();
-        var totalItems = _supplier.Count();
+        var totalItems = _filteredsuppliers.Count();
 
         var sortDefinition = state.SortDefinitions.FirstOrDefault();
         if (sortDefinition != null)
@@ -162,7 +172,7 @@ else
             switch (sortDefinition.SortBy)
             {
                 case nameof(Supplier.SupplierName):
-                    _supplier = _supplier.OrderByDirection(
+                    _filteredsuppliers = _filteredsuppliers.OrderByDirection(
                         sortDefinition.Descending ? SortDirection.Descending : SortDirection.Ascending,
                         o => o.SupplierName
                     );
@@ -170,7 +180,7 @@ else
             }
         }
 
-        var pagedData = _supplier.Skip(state.Page * state.PageSize).Take(state.PageSize).ToArray();
+        var pagedData = _filteredsuppliers.Skip(state.Page * state.PageSize).Take(state.PageSize).ToArray();
         return new GridData<Supplier>
             {
                 TotalItems = totalItems,

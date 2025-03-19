@@ -97,7 +97,7 @@ else
 @code {
     string searchString = null;
 
-    private IEnumerable<PurchaseOrder>? _purchaseorders = new List<PurchaseOrder>();
+    private IEnumerable<PurchaseOrder>? _purchaseorders;
     private IEnumerable<PurchaseOrder>? _filteredpurchaseorders = new List<PurchaseOrder>();
 
     MudDataGrid<PurchaseOrder> dataGrid = new();

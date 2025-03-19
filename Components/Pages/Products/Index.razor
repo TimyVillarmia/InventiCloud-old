@@ -15,76 +15,87 @@
 <PageTitle>Index</PageTitle>
 
 <MudText Class="bold mb-2" Typo="Typo.h4">Products</MudText>
-@if (!_products.Any())
+
+@if (_products == null)
 {
-    <MudPaper Height="500px" Class="justify-center align-content-center">
-        <MudText Class="bol" Typo="Typo.h6" Align="Align.Center">Add your products</MudText>
-        <MudText Typo="Typo.body1" Align="Align.Center">
-            Your product catalog is currently empty. Click the "Add Product"
-            button to get started.
-        </MudText>
-        <MudContainer Class="d-flex justify-center mt-2">
-            <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Href="inventory/products/create" Color="Color.Primary" Class="bold text-uppercase">
-                Add Product
-            </MudButton>
-        </MudContainer>
-    </MudPaper>
+    <MudContainer Class="d-flex justify-center align-items-center" Style="height: 100vh;">
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    </MudContainer>
 }
 else
 {
-    <MudGrid>
-        <MudItem sm="6">
-            <MudStack Row="true" AlignItems="AlignItems.Center">
-                <div>
-                    <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
-                                  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
-                </div>
-                <div>
-                    <MudSelect Label="Category" @bind-Value="selectedCategory" @bind-Value:after="OnSelect" Variant="Variant.Outlined">
-                        <MudSelectItem T="int" Value="0">All</MudSelectItem>
-                        @foreach (Category category in _categories)
-                        {
-                            <MudSelectItem Value="@category.CategoryId">@category.CategoryName</MudSelectItem>
-                        }
-                    </MudSelect>
-  
-                </div>
-            </MudStack>
+    @if (!_products.Any())
+    {
+        <MudPaper Height="500px" Class="justify-center align-content-center">
+            <MudText Class="bol" Typo="Typo.h6" Align="Align.Center">Add your products</MudText>
+            <MudText Typo="Typo.body1" Align="Align.Center">
+                Your product catalog is currently empty. Click the "Add Product"
+                button to get started.
+            </MudText>
+            <MudContainer Class="d-flex justify-center mt-2">
+                <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Href="/products/create" Color="Color.Primary" Class="bold text-uppercase">
+                    Add Product
+                </MudButton>
+            </MudContainer>
+        </MudPaper>
+    }
+    else
+    {
+        <MudGrid>
+            <MudItem sm="6">
+                <MudStack Row="true" AlignItems="AlignItems.Center">
+                    <div>
+                        <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                                      AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+                    </div>
+                    <div>
+                        <MudSelect Label="Category" @bind-Value="selectedCategory" @bind-Value:after="OnSelect" Variant="Variant.Outlined">
+                            <MudSelectItem T="int" Value="0">All</MudSelectItem>
+                            @foreach (Category category in _categories)
+                            {
+                                <MudSelectItem Value="@category.CategoryId">@category.CategoryName</MudSelectItem>
+                            }
+                        </MudSelect>
 
-        </MudItem>
+                    </div>
+                </MudStack>
 
-        <MudItem sm="6">
-            <MudButton Variant="Variant.Filled" Href="products/create" Color="Color.Primary" Class="text-uppercase">
-                Add Product
-            </MudButton>
-        </MudItem>
+            </MudItem>
 
-    </MudGrid>
+            <MudItem sm="6">
+                <MudButton Variant="Variant.Filled" Href="products/create" Color="Color.Primary" Class="text-uppercase">
+                    Add Product
+                </MudButton>
+            </MudItem>
 
-    <MudDataGrid @ref="dataGrid" T="Product" ServerData="ServerReload" MultiSelection="true">
-        <Columns>
-            <PropertyColumn Property="product => product.SKU" />
-            <PropertyColumn Property="product => product.ProductName" Title="Product Name" />
-            <PropertyColumn Property="product => product.Category.CategoryName" Title="Category" />
-            <PropertyColumn Property="product => product.Brand" Title="Brand" />
-            <PropertyColumn Property="product => product.UnitPrice" Title="Price" />
-            <PropertyColumn Property="product => product.UnitCost" Title="Cost" />
-            <TemplateColumn CellClass="d-flex justify-end">
-                <CellTemplate>
-                    <MudMenu Icon="@Icons.Material.Filled.MoreVert" AriaLabel="Open user menu">
-                        <MudMenuItem Label="Edit" href="@($"/products/{context.Item.SKU}")" />
-                        <MudMenuItem Label="Delete" Class="red-text" OnClick="@(() => OpenDialogAsync(context.Item))" />
+        </MudGrid>
 
-                    </MudMenu>
-                </CellTemplate>
-            </TemplateColumn>
-        </Columns>
-        <PagerContent>
-            <MudDataGridPager T="Product" />
-        </PagerContent>
-    </MudDataGrid>
+        <MudDataGrid @ref="dataGrid" T="Product" ServerData="ServerReload" MultiSelection="true">
+            <Columns>
+                <PropertyColumn Property="product => product.SKU" />
+                <PropertyColumn Property="product => product.ProductName" Title="Product Name" />
+                <PropertyColumn Property="product => product.Category.CategoryName" Title="Category" />
+                <PropertyColumn Property="product => product.Brand" Title="Brand" />
+                <PropertyColumn Property="product => product.UnitPrice" Title="Price" />
+                <PropertyColumn Property="product => product.UnitCost" Title="Cost" />
+                <TemplateColumn CellClass="d-flex justify-end">
+                    <CellTemplate>
+                        <MudMenu Icon="@Icons.Material.Filled.MoreVert" AriaLabel="Open user menu">
+                            <MudMenuItem Label="Edit" href="@($"/products/{context.Item.SKU}")" />
+                            <MudMenuItem Label="Delete" Class="red-text" OnClick="@(() => OpenDialogAsync(context.Item))" />
 
+                        </MudMenu>
+                    </CellTemplate>
+                </TemplateColumn>
+            </Columns>
+            <PagerContent>
+                <MudDataGridPager T="Product" />
+            </PagerContent>
+        </MudDataGrid>
+
+    }
 }
+
 
 
 
@@ -93,7 +104,7 @@ else
     private int selectedCategory = 0;
 
 
-    private IEnumerable<Product> _products = new List<Product>();
+    private IEnumerable<Product>? _products;
     private IEnumerable<Product> _filteredproducts = new List<Product>();
     private IEnumerable<Category>? _categories = new List<Category>();
 
