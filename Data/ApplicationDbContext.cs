@@ -72,7 +72,6 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                Address = "123 Main St",
                PostalCode = "12345",
                City = "New York",
-               Region = "NY"
            }
          );
 

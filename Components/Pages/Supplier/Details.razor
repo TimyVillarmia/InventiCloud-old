@@ -1,46 +1,58 @@
-﻿@page "/supplier/details"
+﻿@page "/purchase/suppliers/{SupplierCode}"
 @using InventiCloud.Components.UI
 @using InventiCloud.Data
 @using InventiCloud.Services.Interface
 @using InventiCloud.Utils
 @using Microsoft.EntityFrameworkCore
 @using InventiCloud.Entities
-@inject IDbContextFactory<InventiCloud.Data.ApplicationDbContext> DbFactory
 @inject ISupplierService SupplierService
 @inject NavigationManager NavigationManager
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
 
+
 <PageTitle>Create</PageTitle>
 
-<MudContainer Class="pt-5" MaxWidth="MaxWidth.Large">
+<MudContainer Class="pt-5" MaxWidth="MaxWidth.Medium">
     <div class="d-flex gap-4 align-items-center mb-4">
         <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" aria-label="delete" Href="/catalog/products" />
-        <MudText Typo="Typo.h4" @bind-Value="Supplier.SupplierName" Label="Supplier Name" For="@(() => Supplier.SupplierName)"/>
+        <MudText Typo="Typo.h4">CREATE SUPPLIER</MudText>
     </div>
 
-    <EditForm method="post" Model="Supplier" OnValidSubmit="UpdateSupplier" FormName="create" Enhance>
+    <EditForm method="post" Model="Supplier" OnValidSubmit="SaveChanges" FormName="update" Enhance>
         <DataAnnotationsValidator />
         <MudGrid>
             <MudItem xs="12">
                 <MudText Typo="Typo.h6">SUPPLIER DETAILS</MudText>
+                <MudTextField @bind-Value="Supplier.SupplierName" Label="Supplier Name" For="@(() => Supplier.SupplierName)" Variant="Variant.Outlined" />
+                <MudTextField @bind-Value="Supplier.SupplierCode" Label="Supplier Code" For="@(() => Supplier.SupplierCode)" Variant="Variant.Outlined" />
+                <MudTextField @bind-Value="Supplier.Company" Label="Company Name" For="@(() => Supplier.Company)" Variant="Variant.Outlined" />
+                <MudTextField @bind-Value="Supplier.Address" Label="Address" For="@(() => Supplier.Address)" Variant="Variant.Outlined" />
             </MudItem>
-            <MudTextField @bind-Value="Supplier.SupplierName" Label="Supplier Name" For="@(() => Supplier.SupplierName)" Variant="Variant.Outlined" />
-            <MudTextField @bind-Value="Supplier.SupplierCode" Label="Supplier Code" For="@(() => Supplier.SupplierCode)" Variant="Variant.Outlined" />
-            <MudTextField @bind-Value="Supplier.Company" Label="Company Name" For="@(() => Supplier.Company)" Variant="Variant.Outlined" />
-            <MudItem xs="12" sm="6">
-                <MudNumericField @bind-Value="Supplier.Country" HideSpinButtons="true" Label="Country" For="@(() => Supplier.Country)" Variant="Variant.Outlined" />
-                <MudNumericField @bind-Value="Supplier.City" HideSpinButtons="true" Label="City" For="@(() => Supplier.City)" Variant="Variant.Outlined" />
+
+
+            <MudItem xs="12" sm="4">
+                <MudTextField @bind-Value="Supplier.City" Label="City" For="@(() => Supplier.City)" Variant="Variant.Outlined" />
+            </MudItem>
+
+            <MudItem xs="12" sm="4">
+                <MudTextField @bind-Value="Supplier.Country" Label="Country" For="@(() => Supplier.Country)" Variant="Variant.Outlined" />
+            </MudItem>
+            <MudItem xs="12" sm="4">
                 <MudNumericField @bind-Value="Supplier.PostalCode" HideSpinButtons="true" Label="Postal Code" For="@(() => Supplier.PostalCode)" Variant="Variant.Outlined" />
             </MudItem>
-            <MudTextField @bind-Value="Supplier.ContactPerson   " Label="Contact Person" For="@(() => Supplier.ContactPerson)" Variant="Variant.Outlined" />
-            <MudTextField @bind-Value="Supplier.Email" Label="Email Address" For="@(() => Supplier.Email)" Variant="Variant.Outlined" />
-            <MudTextField @bind-Value="Supplier.PhoneNumber" Label="Phone Number" For="@(() => Supplier.PhoneNumber)" Variant="Variant.Outlined" />
+
+            <MudItem xs="12">
+                <MudTextField @bind-Value="Supplier.ContactPerson   " Label="Contact Person" For="@(() => Supplier.ContactPerson)" Variant="Variant.Outlined" />
+                <MudTextField @bind-Value="Supplier.Email" Label="Email Address" For="@(() => Supplier.Email)" Variant="Variant.Outlined" />
+                <MudTextField @bind-Value="Supplier.PhoneNumber" Label="Phone Number" For="@(() => Supplier.PhoneNumber)" Variant="Variant.Outlined" />
+            </MudItem>
+
         </MudGrid>
         <MudItem xs="12" Class="justify-center">
-            <MudButton ButtonType="ButtonType.Button" Variant="Variant.Filled" Color="Color.Error" Class="ml-auto" OnClick="@(() => OpenDialogAsync())">DELETE</MudButton>
-            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">CREATE SUPPLIER</MudButton>
-        </MudItem> 
+            <MudButton  OnClick="() => OpenDialogAsync()" Variant="Variant.Outlined" Color="Color.Error" Class="ml-auto">DELETE</MudButton>
+            <MudButton ButtonType="ButtonType.Submit" OnClick="SaveChanges" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">SAVE CHANGES</MudButton>
+        </MudItem>
     </EditForm>
 </MudContainer>
 
@@ -48,13 +60,55 @@
     [SupplyParameterFromForm]
     private Supplier Supplier { get; set; } = new();
 
-    private ApplicationDbContext context = default!;
 
+    [Parameter]
+    public string SupplierCode { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Supplier = await SupplierService.GetSupplierByCodeAsync(SupplierCode);
+
+        if (Supplier is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+
+    }
+
+    private async Task SaveChanges()
+    {
+
+
+        try
+        {
+            await SupplierService.UpdateSupplierAsync(Supplier);
+            Snackbar.Add($"{Supplier.SupplierName} Updated", Severity.Success);
+            NavigationManager.NavigateTo("/purchase/suppliers");
+
+        }
+        catch (InvalidOperationException ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+
+    }
+
+
+
+
+    // events
     async Task OpenDialogAsync()
     {
         var parameters = new DialogParameters<DialogComponent>
         {
-            {x => x.ContentText, $"Are you sure you want to delete the Supplier '{Supplier.SupplierName}'? This action cannot be undone."}
+            {x => x.ContentText, $"Are you sure you want to delete the category '{Supplier.SupplierName}'? This action cannot be undone."},
+            { "Button1Text", "Delete" },
+            { "Button2Text", "Cancel" },
+            { "Color", Color.Error }
         };
 
         var dialog = await DialogService.ShowAsync<DialogComponent>("Delete Supplier", parameters);
@@ -66,6 +120,8 @@
             {
                 await SupplierService.DeleteSupplierAsync(Supplier);
                 Snackbar.Add("Supplier Deleted", Severity.Success);
+                NavigationManager.NavigateTo($"/purchase/suppliers");
+
 
             }
             catch (InvalidOperationException ex)
@@ -74,23 +130,9 @@
             }
             catch (Exception ex)
             {
-                Snackbar.Add("An error occurred while deleting the Supplier.", Severity.Error);
+                Snackbar.Add("An error occurred while deleting the category.", Severity.Error);
             }
         }
 
-    }
-
-    private async Task UpdateSupplier()
-    {
-        try
-        {
-            await SupplierService.UpdateSupplierAsync(Supplier);
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add("An error occurred while deleting the Supplier.", Severity.Error);
-
-        }
-        NavigationManager.NavigateTo("/supplier/details");
     }
 }

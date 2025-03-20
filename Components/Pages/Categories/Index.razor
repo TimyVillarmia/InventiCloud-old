@@ -81,7 +81,7 @@ else
 
     [SupplyParameterFromForm]
     private Category Category { get; set; } = new();
-    private IEnumerable<Category> _categories = new List<Category>();
+    private IEnumerable<Category>? _categories ;
     private IEnumerable<Category> _filteredcategories = new List<Category>();
     private string? searchString;
 
@@ -163,6 +163,7 @@ else
         NavigationManager.NavigateTo($"/product-setup/categories/{args.Item.CategoryName}");
 
     }
+
 
 
     private async Task<GridData<Category>> ServerReload(GridState<Category> state)
