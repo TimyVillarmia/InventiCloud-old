@@ -115,8 +115,8 @@ else
             try
             {
                 await SupplierService.DeleteSupplierAsync(supplier);
-                Snackbar.Add("Supplier Deleted", Severity.Success);
                 await dataGrid.ReloadServerData();
+                Snackbar.Add("Supplier Deleted", Severity.Success);
 
             }
             catch (InvalidOperationException ex)
@@ -140,7 +140,7 @@ else
             return;
         }
 
-        NavigationManager.NavigateTo($"/supplier/{args.Item.SupplierName}");
+        NavigationManager.NavigateTo($"/purchase/suppliers/{args.Item.SupplierCode}");
 
     }
 

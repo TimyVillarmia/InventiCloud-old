@@ -9,6 +9,7 @@ namespace InventiCloud.Services.Interface
         Task DeleteSupplierAsync(Supplier supplier);
         Task<bool> SupplierExistsAsync(string supplierCode);
         Task<IEnumerable<Supplier>> GetAllSupplierAsync();
+        Task<Supplier> GetSupplierByCodeAsync(string supplierCode);
 
         Task DisposeAsync();
     }

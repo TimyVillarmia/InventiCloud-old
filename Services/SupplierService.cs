@@ -109,6 +109,12 @@ namespace InventiCloud.Services
                 .ToListAsync();
         }
 
+        public async Task<Supplier> GetSupplierByCodeAsync(string supplierCode)
+        {
+            using var context = DbFactory.CreateDbContext();
+            return await context.Suppliers.FirstAsync(s => s.SupplierCode == supplierCode);
+        }
+
         public async Task<bool> SupplierExistsAsync(string supplierCode)
         {
             using var context = DbFactory.CreateDbContext();
