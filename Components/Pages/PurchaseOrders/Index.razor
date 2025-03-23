@@ -57,7 +57,7 @@ else
 
         </MudGrid>
 
-        <MudDataGrid @ref="dataGrid" T="PurchaseOrder" ServerData="ServerReload" MultiSelection="true">
+        <MudDataGrid @ref="dataGrid" T="PurchaseOrder" ServerData="ServerReload" MultiSelection="true" RowClick="@RowClicked">
             <Columns>
                 <PropertyColumn Property="po => po.ReferenceNumber" Title="Reference Number" />
                 <PropertyColumn Property="po => po.Supplier.SupplierName" Title="Supplier"/>
@@ -207,6 +207,19 @@ else
     {
         searchString = text;
         return dataGrid.ReloadServerData();
+    }
+
+    void RowClicked(DataGridRowClickEventArgs<PurchaseOrder> args)
+    {
+
+
+        if (args.Item == null)
+        {
+            return;
+        }
+
+        NavigationManager.NavigateTo($"/purchase/orders/{args.Item.ReferenceNumber}");
+
     }
 
 
