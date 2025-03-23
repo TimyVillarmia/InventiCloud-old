@@ -5,6 +5,7 @@
 @using Microsoft.EntityFrameworkCore
 @using InventiCloud.Entities
 @using InventiCloud.Data
+@using System.ComponentModel.DataAnnotations
 @inject IDbContextFactory<InventiCloud.Data.ApplicationDbContext> DbFactory
 @inject IDialogService DialogService
 @inject IPurchaseOrderService PurchaseOrderService
@@ -15,95 +16,141 @@
 @inject ISnackbar Snackbar
 
 <MudContainer Class="pt-5" MaxWidth="MaxWidth.Large">
-    <div class="d-flex gap-4 align-items-center mb-4">
-        @* <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" aria-label="delete" Href="/purchase/orders" /> *@
-        <MudText Typo="Typo.h4">ADD PURCHASE ORDERS</MudText>
+
+    <div class="d-flex align-items-center mb-4">
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" aria-label="delete" Href="/purchase/orders" />
+        <MudText Typo="Typo.h4">CREATE PURCHASE ORDERS</MudText>
     </div>
-    <MudGrid>
-        <MudItem sm="12" Class="bold">
-            <MudText Typo="Typo.h6">DETAILS</MudText>
-        </MudItem>
 
-        <MudItem xs="12" sm="6">
-            <MudAutocomplete T="Supplier" Label="Supplier" @bind-Value="PurchaseOrder.Supplier"
-                             SearchFunc="@SearchSupplier" ToStringFunc="@(s=> s==null?null : $"{s.SupplierName}")" Variant="Variant.Outlined" />
-            <MudTextField Class="mb-4" @bind-Value="PurchaseOrder.ReferenceNumber" HideSpinButtons="true" Label="Purchase Order Number" ReadOnly="true" Disabled="true" For="@(() => PurchaseOrder.ReferenceNumber)" Variant="Variant.Outlined" />
-        </MudItem>
+    <EditForm method="post" Model="@PurchaseOrder" Context="PurchaseOrderForm" OnValidSubmit="@AddPurchaseOrderToDraft" FormName="createPurchaseOrder" Enhance>
+        <DataAnnotationsValidator />
+        <MudText Typo="Typo.h6">DETAILS</MudText>
+        <MudGrid>
 
-        <MudItem xs="12" sm="6">
-            <MudAutocomplete T="Branch" Label="Destination Branch" @bind-Value="PurchaseOrder.DestinationBranch"
-                             SearchFunc="@SearchBranch" ToStringFunc="@(b=> b==null?null : $"{b.BranchName}")" For="@(() => PurchaseOrder.DestinationBranch)" Variant="Variant.Outlined" />
-            <MudDatePicker Label="Estimated Arrival" Editable="true" @bind-Date="PurchaseOrder.EstimatedArrival" Mask="@(new DateMask("MM/dd/yyyy"))" DateFormat="MM/dd/yyyy" Placeholder="Estimated Arrival" Variant="Variant.Outlined" />
-        </MudItem>
-
-        <MudItem sm="12" Class="bold">
-            <MudText Typo="Typo.h6">PRODUCTS</MudText>
-        </MudItem>
-        <MudItem Class="d-flex align-center flex-wrap flex-grow-1 gap-2">
             <MudItem xs="12" sm="6">
-                <MudAutocomplete T="Product" Label="Products" @bind-Value="NewPurchaseOrderItem.Product"
-                                 SearchFunc="@SearchProduct" ToStringFunc="@(p=> p==null?null : $"{p.ProductName}")" Variant="Variant.Outlined" />
+                <MudAutocomplete T="string" Label="Supplier" @bind-Value="PurchaseOrder.SuplierName" For="@(()=> PurchaseOrder.SuplierName)"
+                                 SearchFunc="@SearchSupplier" ToStringFunc="@(supplier=> supplier==null?null : $"{supplier}")" Variant="Variant.Outlined" />
+                <MudTextField T="string" Class="mb-4" Label="Purchase Order Number" ReadOnly="true" Disabled="true" Variant="Variant.Outlined" />
             </MudItem>
 
-            <MudItem xs="12" sm="2" Class="ml-5">
-                <MudTextField Variant="Variant.Outlined" Label="Quantity" @bind-Value="NewPurchaseOrderItem.Quantity" />
+            <MudItem xs="12" sm="6">
+                <MudAutocomplete T="string" Label="Destination Branch" @bind-Value="PurchaseOrder.DestinationBranch"
+                                 SearchFunc="@SearchBranch" ToStringFunc="@(branch=> branch==null?null : $"{branch}")" For="@(() => PurchaseOrder.DestinationBranch)" Variant="Variant.Outlined" />
+                <MudDatePicker Label="Estimated Arrival" Editable="true" @bind-Date="PurchaseOrder.EstimatedArrival"
+                               Mask="@(new DateMask("MM/dd/yyyy"))" DateFormat="MM/dd/yyyy" Placeholder="Estimated Arrival" Variant="Variant.Outlined" />
             </MudItem>
 
-            <MudItem xs="12" sm="2" Class="ml-5">
-                <MudTextField Variant="Variant.Outlined" Label="Price" @bind-Value="NewPurchaseOrderItem.UnitPrice" />
-            </MudItem>
+
+        </MudGrid>
+
+        <EditForm method="post" Model="@PurchaseOrderItem" Context="PurchaseOrderItemForm" OnValidSubmit="@AddBatchPurchaseOrderItem" FormName="createPurchaseOrderItem" Enhance>
+            <DataAnnotationsValidator />
+            <MudText Typo="Typo.h6">PRODUCTS</MudText>
+            <MudGrid>
+                <MudItem sm="12">
+                    <MudGrid Class="d-flex align-center flex-wrap flex-grow-1">
+                        <MudItem xs="12" sm="5">
+                            <MudAutocomplete T="string" Label="Products" @bind-Value="PurchaseOrderItem.Product" For="@(() => PurchaseOrderItem.Product)"
+                                             SearchFunc="@SearchProduct" ToStringFunc="@(product=> product==null?null : $"{product}")" Variant="Variant.Outlined" />
+                        </MudItem>
+
+                        <MudItem xs="12" sm="3">
+                            <MudNumericField HideSpinButtons="true" T="int" Variant="Variant.Outlined" Label="Quantity" For="@(() => PurchaseOrderItem.Quantity)"
+                                             @bind-Value="PurchaseOrderItem.Quantity" />
+                        </MudItem>
+
+                        <MudItem xs="12" sm="3">
+                            <MudNumericField HideSpinButtons="true" T="decimal" Variant="Variant.Outlined" Label="Price" For="@(() => PurchaseOrderItem.UnitPrice)"
+                                             @bind-Value="PurchaseOrderItem.UnitPrice" />
+                        </MudItem>
 
 
-            <MudItem xs="6" sm="1" Class="ml-5">
-                <MudButton ButtonType="ButtonType.Submit" OnClick="AddBatchPurchaseOrderItem" Variant="Variant.Filled" Color="Color.Primary">Add</MudButton>
-            </MudItem>
-        </MudItem>
+                        <MudItem xs="6" sm="1">
+                            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary">Add</MudButton>
+                        </MudItem>
+                    </MudGrid>
 
-       
+                </MudItem>
+            </MudGrid>
 
-        <MudItem sm="12">
-            <MudDataGrid Items="BatchPurchaseOrderItem">
-                <Columns>
-                    <PropertyColumn Property="poi => poi.Product.ProductName" Title="Product Name" />
-                    <PropertyColumn Property="poi => poi.Quantity" Title="Quantity" />
-                    <PropertyColumn Property="poi => poi.UnitPrice" Title="Price" />
-                    <PropertyColumn Property="poi => poi.SubTotal" Title="Subtotal" />
-                    <TemplateColumn CellClass="d-flex justify-end">
-                        <CellTemplate>
-                            <MudStack Row>
-                                <MudIconButton Icon="@Icons.Material.Filled.Close" Color="Color.Error" aria-label="delete" OnClick="@(() => RemoveBatchProduct(context.Item))" />
-                            </MudStack>
-                        </CellTemplate>
-                    </TemplateColumn>
-                </Columns>
-            </MudDataGrid>
-            <MudText Typo="Typo.h5">@BatchPurchaseOrderItem.Sum(item => item.SubTotal)</MudText>
+        </EditForm>
 
-        </MudItem>
+        <MudDataGrid Items="PurchaseOrderItems" Class="mt-4">
+            <Columns>
+                <PropertyColumn Property="poi => poi.Product" Title="Product" />
+                <PropertyColumn Property="poi => poi.Quantity" Title="Quantity" />
+                <PropertyColumn Property="poi => poi.UnitPrice" Title="Price" />
+                <PropertyColumn Property="poi => poi.SubTotal" Title="Subtotal" />
+                <TemplateColumn CellClass="d-flex justify-end">
+                    <CellTemplate>
+                        <MudStack Row>
+                            <MudIconButton Icon="@Icons.Material.Filled.Close" Color="Color.Error" aria-label="delete" OnClick="@(() => RemoveBatchProduct(context.Item))" />
+                        </MudStack>
+                    </CellTemplate>
+                </TemplateColumn>
+            </Columns>
+        </MudDataGrid>
+        <MudText Typo="Typo.h5">@PurchaseOrderItems.Sum(item => item.SubTotal)</MudText>
 
-        <MudItem xs="12" Class="d-flex align-end mt-12">
+
+        <div class="d-flex align-end mt-12">
             <MudButton Variant="Variant.Filled" Color="Color.Default" Href="/purchase/orders" Class="ml-auto">CANCEL</MudButton>
-            <MudButton ButtonType="ButtonType.Submit" OnClick="AddPurchaseOrderToDraft" Variant="Variant.Filled" Color="Color.Primary" Class="ml-2">SAVE AS DRAFT</MudButton>
-        </MudItem>
-    </MudGrid>
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-2">SAVE AS DRAFT</MudButton>
 
+        </div>
 
-
+    </EditForm>
 
 </MudContainer>
 
 @code {
     MudDataGrid<PurchaseOrderItem> dataGrid = new();
 
-    private PurchaseOrder PurchaseOrder { get; set; } = new();
-    private Product selectedProduct { get; set; } = new();
-    private PurchaseOrderItem NewPurchaseOrderItem { get; set; } = new();
+    [SupplyParameterFromForm(FormName = "createPurchaseOrder")]
+    private PurchaseOrderViewModel PurchaseOrder { get; set; } = new();
 
+    [SupplyParameterFromForm(FormName = "createPurchaseOrderItem")]
+    private PurchaseOrderItemViewModel PurchaseOrderItem { get; set; } = new();
+
+
+    private List<PurchaseOrderItemViewModel> PurchaseOrderItems = new List<PurchaseOrderItemViewModel>();
+    
     private IEnumerable<Supplier>? _suppliers;
     private IEnumerable<Branch>? _branches;
     private IEnumerable<Product>? _products;
 
-    private List<PurchaseOrderItem> BatchPurchaseOrderItem = new List<PurchaseOrderItem>();
+
+
+    class PurchaseOrderViewModel
+    {
+        [Required(ErrorMessage = "Supplier is required.")]
+        public string SuplierName { get; set; }
+
+        [Required(ErrorMessage = "Destination Branch is required.")]
+        public string DestinationBranch { get; set; }
+
+        public DateTime? EstimatedArrival { get; set; }
+    }
+
+    class PurchaseOrderItemViewModel
+    {
+
+        [Required(ErrorMessage = "Product is required.")]
+        public string Product { get; set; }
+
+        [Range(1, int.MaxValue, ErrorMessage = "Quantity must be greater than 0.")]
+        [Required(ErrorMessage = "Quantity is required.")]
+        public int Quantity { get; set; }
+
+        [Required(ErrorMessage = "Price is required.")]
+        [Precision(19, 2)]
+        [Range(0.01, double.MaxValue, ErrorMessage = "Price must be greater than 0.")]
+        public decimal UnitPrice { get; set; }
+
+        [Required, Precision(19, 2)]
+        public decimal SubTotal { get; set; }
+    }
+
 
 
     protected override async Task OnInitializedAsync()
@@ -113,93 +160,107 @@
         _suppliers = await SupplierService.GetAllSupplierAsync();
     }
 
-    private async Task AddPurchaseOrderToDraft()
-    {
-
-        var purchaseOrder = new PurchaseOrder
-            {
-                SupplierCode = PurchaseOrder.Supplier.SupplierCode,
-                DestinationBranchId = PurchaseOrder.DestinationBranch.BranchId,
-                CreatedById = "your-user-id-1", // for testing,
-                TotalAmount = BatchPurchaseOrderItem.Sum(item => item.SubTotal),
-                EstimatedArrival = PurchaseOrder.EstimatedArrival,
-
-            };
-
-        // Map DTOs back to PurchaseOrderItem entities for the service
-        var purchaseOrderItems = BatchPurchaseOrderItem.Select(vm => new PurchaseOrderItem
-            {
-                ProductID = vm.Product.ProductId,
-                Quantity = vm.Quantity,
-                UnitPrice = vm.UnitPrice,
-                SubTotal = vm.SubTotal,
-            }).ToList();
-
-
-        await PurchaseOrderService.AddPurchaseOrderAsync(purchaseOrder, purchaseOrderItems);
-
-
-
-        PurchaseOrder = new();
-        await dataGrid.ReloadServerData();
-    }
-
-
-    private async Task AddBatchPurchaseOrderItem()
+    private async Task AddPurchaseOrderToDraft(EditContext context)
     {
 
 
-        NewPurchaseOrderItem.SubTotal = NewPurchaseOrderItem.Quantity * NewPurchaseOrderItem.UnitPrice;
+
+        if (context.Validate())
+        {
+            try
+            {
 
 
-        BatchPurchaseOrderItem.Add(NewPurchaseOrderItem);
+                var po_data = new PurchaseOrder
+                {
+                        SupplierCode = _suppliers.First(s => s.SupplierName == PurchaseOrder.SuplierName).SupplierCode,
+                        DestinationBranchId = _branches.First(b => b.BranchName == PurchaseOrder.DestinationBranch).BranchId,
+                        CreatedById = "your-user-id-1", // Replace with actual user ID
+                        TotalAmount = PurchaseOrderItems.Sum(item => item.SubTotal),
+                        EstimatedArrival = PurchaseOrder.EstimatedArrival,
 
-        NewPurchaseOrderItem = new();
+                 };
+
+                var poi_data = PurchaseOrderItems.Select(vm => new PurchaseOrderItem
+                {
+                        ProductID = _products.First(p => p.ProductName == vm.Product).ProductId,
+                        Quantity = vm.Quantity,
+                        UnitPrice = vm.UnitPrice,
+                        SubTotal = vm.SubTotal,
+                }).ToList();
+
+                await PurchaseOrderService.AddPurchaseOrderAsync(po_data, poi_data);
+                Snackbar.Add("Purchase order added to draft.", Severity.Success);
+                PurchaseOrder = new(); // Reset
+                await dataGrid.ReloadServerData(); // Reload grid if it exists
+            }
+            catch (InvalidOperationException ex)
+            {
+                Snackbar.Add(ex.Message, Severity.Error);
+            }
+        }
 
     }
 
 
-    private async Task<IEnumerable<Product>> SearchProduct(string value, CancellationToken token)
+    private Task AddBatchPurchaseOrderItem(EditContext context)
+    {
+
+
+        if (context.Validate())
+        {
+            PurchaseOrderItem.SubTotal = PurchaseOrderItem.Quantity * PurchaseOrderItem.UnitPrice;
+            PurchaseOrderItems.Add(PurchaseOrderItem);
+            PurchaseOrderItem = new PurchaseOrderItemViewModel(); // Reset
+        }
+
+        return dataGrid.ReloadServerData();
+
+
+    }
+
+
+    private async Task<IEnumerable<string>> SearchProduct(string value, CancellationToken token)
     {
 
         if (string.IsNullOrEmpty(value))
         {
             // Return all available products excluding already added ones.
-            return _products.Where(p => !BatchPurchaseOrderItem.Any(poi => poi.Product.ProductId == p.ProductId));
+            return _products.Where(p => !PurchaseOrderItems.Any(poi => poi.Product == p.ProductName)).Select(product => product.ProductName);
         }
 
         // Filter products based on search value and exclude already added ones.
         return _products
             .Where(p => p.ProductName.Contains(value, StringComparison.InvariantCultureIgnoreCase) ||
                         p.SKU.Contains(value, StringComparison.InvariantCultureIgnoreCase)) // Add other search properties if needed
-            .Where(p => !BatchPurchaseOrderItem.Any(poi => poi.Product.ProductId == p.ProductId));
+            .Where(p => !PurchaseOrderItems.Any(poi => poi.Product == p.ProductName)).Select(product => product.ProductName);
     }
 
-    private async Task<IEnumerable<Supplier>> SearchSupplier(string value, CancellationToken token)
+    private async Task<IEnumerable<string>> SearchSupplier(string value, CancellationToken token)
     {
 
         if (string.IsNullOrEmpty(value))
         {
-            return _suppliers;
+            return _suppliers.Select(s => s.SupplierName);
         }
 
-        return _suppliers.Where(s => s.SupplierName.Contains(value, StringComparison.InvariantCultureIgnoreCase));
+        return _suppliers.Where(s => s.SupplierName.Contains(value, StringComparison.InvariantCultureIgnoreCase)).Select(s => s.SupplierName);
     }
 
-    private async Task<IEnumerable<Branch>> SearchBranch(string value, CancellationToken token)
+    private async Task<IEnumerable<string>> SearchBranch(string value, CancellationToken token)
     {
         if (string.IsNullOrEmpty(value))
         {
-            return _branches;
+            return _branches.Select(b => b.BranchName);
         }
 
-        return _branches.Where(b => b.BranchName.Contains(value, StringComparison.InvariantCultureIgnoreCase));
+        return _branches.Where(b => b.BranchName.Contains(value, StringComparison.InvariantCultureIgnoreCase)).Select(b => b.BranchName);
     }
 
     // events
-    Task RemoveBatchProduct(PurchaseOrderItem item)
+    Task RemoveBatchProduct(PurchaseOrderItemViewModel item)
     {
-        BatchPurchaseOrderItem.Remove(item);
+        PurchaseOrderItems.Remove(item);
         return dataGrid.ReloadServerData();
 
     }

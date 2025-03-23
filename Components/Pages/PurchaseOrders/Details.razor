@@ -1,4 +1,4 @@
-﻿@page "/purchase/orders/details/{ReferenceNumber}"
+﻿@page "/purchase/orders/{ReferenceNumber}"
 @using InventiCloud.Components.UI
 @using InventiCloud.Services
 @using InventiCloud.Services.Interface
@@ -21,12 +21,9 @@
         <MudText Typo="Typo.h4">@ReferenceNumber</MudText>
         <MudChip T="string" Color="@SelectedColor">@Status</MudChip>
 
-    </div> 
+    </div>
+    <MudText Typo="Typo.h6">DETAILS</MudText>
     <MudGrid>
-        <MudItem sm="12">
-            <MudText Typo="Typo.h6">DETAILS</MudText>
-        </MudItem>
-
         <MudItem xs="12" sm="6">
             <MudAutocomplete T="Supplier" Label="Supplier" @bind-Value="PurchaseOrder.Supplier" ReadOnly="@(isDraft ? false : true)"
             SearchFunc="@SearchSupplier" ToStringFunc="@(s=> s==null?null : $"{s.SupplierName}")" Variant="Variant.Outlined" />
@@ -37,12 +34,12 @@
             <MudAutocomplete T="Branch" Label="Destination Branch" @bind-Value="PurchaseOrder.DestinationBranch" ReadOnly="@(isDraft ? false : true)"
             SearchFunc="@SearchBranch" ToStringFunc="@(b=> b==null?null : $"{b.BranchName}")" For="@(() => PurchaseOrder.DestinationBranch)" Variant="Variant.Outlined" />
             <MudDatePicker Label="Estimated Arrival" Editable="true" ReadOnly="@(isDraft ? false : true)" @bind-Date="PurchaseOrder.EstimatedArrival" Mask="@(new DateMask("MM/dd/yyyy"))" DateFormat="MM/dd/yyyy" Placeholder="Estimated Arrival" Variant="Variant.Outlined" />
-        </MudItem>
+        </MudItem>  
+    </MudGrid>
 
-        <MudItem sm="12">
-            <MudText Typo="Typo.h6">PRODUCTS</MudText>
-        </MudItem>
+    <MudText Typo="Typo.h6">PRODUCTS</MudText>
 
+    <MudGrid Class="d-flex align-center flex-wrap flex-grow-1">
         <MudItem xs="12" sm="5" class="@(isDraft ? "" : "d-none")">
             <MudAutocomplete T="Product" Label="Products" @bind-Value="NewPurchaseOrderItem.Product"
             SearchFunc="@SearchProduct" ToStringFunc="@(p=> p==null?null : $"{p.ProductName}")" Variant="Variant.Outlined" />
@@ -60,49 +57,44 @@
         <MudItem xs="12" sm="1" class="@(isDraft ? "" : "d-none")">
             <MudButton ButtonType="ButtonType.Submit" OnClick="AddPurchaseOrderItem" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Add</MudButton>
         </MudItem>
-
-        <MudItem sm="12">
-            <MudDataGrid @ref="dataGrid" T="PurchaseOrderItem" ServerData="ServerReload">
-                <Columns>
-                    <PropertyColumn Property="poi => poi.Product.ProductName" Title="Product" />
-                    <PropertyColumn Property="poi => poi.Quantity" Title="Quantity" />
-                    <PropertyColumn Property="poi => poi.UnitPrice" Title="Price" />
-                    <PropertyColumn Property="poi => poi.SubTotal" Title="Subtotal" />
-                    @if (isDraft)
-                    {
-                        <TemplateColumn CellClass="d-flex justify-end">
-                            <CellTemplate>
-                                <MudStack Row>
-                                    <MudIconButton Icon="@Icons.Material.Filled.Close" Color="Color.Error" aria-label="delete"
-                                    OnClick="@(() => RemovePurchaseOrderItem(context.Item))" />
-                                </MudStack>
-                            </CellTemplate>
-                        </TemplateColumn>
-                    }
-                </Columns>
-            </MudDataGrid>
-            <MudText Typo="Typo.h5">@PurchaseOrderItems.Sum(item => item.SubTotal)</MudText>
-        </MudItem>
-
-
-        <MudItem xs="12" Class="justify-center">
-            @if (Status.ToLower() == "draft")
-            {
-                <MudButton  ButtonType="ButtonType.Submit" OnClick="DeletePurchaseOrder" Variant="Variant.Outlined" Color="Color.Error" Class="ml-auto">DELETE</MudButton>
-                <MudButton ButtonType="ButtonType.Submit" OnClick="MarkAsOrdered" Variant="Variant.Outlined" Color="Color.Info" Class="ml-auto">MARK AS ORDERED</MudButton>
-                <MudButton ButtonType="ButtonType.Submit" OnClick="SaveChanges" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">SAVE CHANGES</MudButton>
-            }
-            else if (Status.ToLower() == "ordered")
-            {
-                <MudButton ButtonType="ButtonType.Submit" OnClick="CancelOrder"  Variant="Variant.Outlined" Color="Color.Error" Class="ml-auto">CANCEL ORDER</MudButton>
-                <MudButton ButtonType="ButtonType.Submit" OnClick="CompleteOrder" Variant="Variant.Filled" Color="Color.Success" Class="ml-auto">COMPLETE ORDER</MudButton>
-            }
-        </MudItem>
     </MudGrid>
 
 
+    <MudDataGrid @ref="dataGrid" T="PurchaseOrderItem" ServerData="ServerReload" Class="mt-4">
+        <Columns>
+            <PropertyColumn Property="poi => poi.Product.ProductName" Title="Product" />
+            <PropertyColumn Property="poi => poi.Quantity" Title="Quantity" />
+            <PropertyColumn Property="poi => poi.UnitPrice" Title="Price" />
+            <PropertyColumn Property="poi => poi.SubTotal" Title="Subtotal" />
+            @if (isDraft)
+            {
+                <TemplateColumn CellClass="d-flex justify-end">
+                    <CellTemplate>
+                        <MudStack Row>
+                            <MudIconButton Icon="@Icons.Material.Filled.Close" Color="Color.Error" aria-label="delete"
+                            OnClick="@(() => RemovePurchaseOrderItem(context.Item))" />
+                        </MudStack>
+                    </CellTemplate>
+                </TemplateColumn>
+            }
+        </Columns>
+    </MudDataGrid>
+    <MudText Typo="Typo.h5">@PurchaseOrderItems.Sum(item => item.SubTotal)</MudText>
 
+    <div class="d-flex align-end mt-12">
+        @if (Status.ToLower() == "draft")
+        {
+            <MudButton OnClick="DeletePurchaseOrder" Variant="Variant.Outlined" Color="Color.Error" >DELETE</MudButton>
+            <MudButton  OnClick="MarkAsOrdered" Variant="Variant.Outlined" Color="Color.Info" >MARK AS ORDERED</MudButton>
+            <MudButton  OnClick="SaveChanges" Variant="Variant.Filled" Color="Color.Primary">SAVE CHANGES</MudButton>
+        }
+        else if (Status.ToLower() == "ordered")
+        {
+            <MudButton OnClick="CancelOrder" Variant="Variant.Outlined" Color="Color.Error" >CANCEL ORDER</MudButton>
+            <MudButton  OnClick="CompleteOrder" Variant="Variant.Filled" Color="Color.Success" >COMPLETE ORDER</MudButton>
+        }
 
+    </div>
 </MudContainer>
 
 @code {
@@ -198,7 +190,7 @@
         if (!result.Canceled)
         {
             await PurchaseOrderService.PurchaseOrderToOrderedAsync(PurchaseOrder);
-            NavigationManager.NavigateTo($"/purchase/orders/details/{PurchaseOrder.ReferenceNumber}", forceLoad: true);
+            NavigationManager.NavigateTo($"/purchase/orders/{PurchaseOrder.ReferenceNumber}", forceLoad: true);
         }
 
 
@@ -210,9 +202,9 @@
     {
 
         await PurchaseOrderService.UpdatePurchaseOrderAsync(PurchaseOrder);
-        NavigationManager.NavigateTo($"/purchase/orders/details/{PurchaseOrder.ReferenceNumber}", forceLoad: true);
+        NavigationManager.NavigateTo($"/purchase/orders/{PurchaseOrder.ReferenceNumber}", forceLoad: true);
 
-    } 
+    }
 
     private async Task CancelOrder()
     {
@@ -231,7 +223,7 @@
         if (!result.Canceled)
         {
             await PurchaseOrderService.PurchaseOrderToCancelAsync(PurchaseOrder);
-            NavigationManager.NavigateTo($"/purchase/orders/details/{PurchaseOrder.ReferenceNumber}", forceLoad: true);
+            NavigationManager.NavigateTo($"/purchase/orders/{PurchaseOrder.ReferenceNumber}", forceLoad: true);
         }
 
     }
@@ -257,7 +249,7 @@
         if (!result.Canceled)
         {
             await PurchaseOrderService.PurchaseOrderToCompleteAsync(PurchaseOrder);
-            NavigationManager.NavigateTo($"/purchase/orders/details/{PurchaseOrder.ReferenceNumber}", forceLoad: true);
+            NavigationManager.NavigateTo($"/purchase/orders/{PurchaseOrder.ReferenceNumber}", forceLoad: true);
         }
 
 
@@ -266,11 +258,35 @@
 
     private async Task DeletePurchaseOrder()
     {
+        var parameters = new DialogParameters<DialogComponent>
+        {
+            {x => x.ContentText, $"Are you sure you want to delete the Purchase Order '{PurchaseOrder.ReferenceNumber}'? This action cannot be undone."},
+            { "Button1Text", "Delete" },
+            { "Button2Text", "Cancel" },
+            { "Color", Color.Error }
+        };
 
-        await PurchaseOrderService.DeletePurchaseOrderAsync(PurchaseOrder);
-        NavigationManager.NavigateTo($"/purchase/orders/details/");
+        var dialog = await DialogService.ShowAsync<DialogComponent>("Delete Purchase Order", parameters);
+        var result = await dialog.Result;
 
-        // todo snack bar deleted msg
+        if (!result.Canceled)
+        {
+            try
+            {
+                await PurchaseOrderService.DeletePurchaseOrderAsync(PurchaseOrder);
+                NavigationManager.NavigateTo($"/purchase/orders/");
+                Snackbar.Add("Purchase Order Deleted", Severity.Success);
+
+            }
+            catch (InvalidOperationException ex)
+            {
+                Snackbar.Add(ex.Message, Severity.Error);
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add("An error occurred while deleting the Purchase Order.", Severity.Error);
+            }
+        }
 
     }
 
@@ -294,9 +310,18 @@
     async Task RemovePurchaseOrderItem(PurchaseOrderItem item)
     {
 
-        await PurchaseOrderService.DeletePurchaseOrderItemAsync(item);
 
-        await dataGrid.ReloadServerData();
+        try
+        {
+
+            await PurchaseOrderService.DeletePurchaseOrderItemAsync(item);
+
+            await dataGrid.ReloadServerData();
+        }
+        catch (InvalidOperationException ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
 
     }
 

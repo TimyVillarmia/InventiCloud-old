@@ -30,6 +30,7 @@ namespace InventiCloud.Services
 
             try
             {
+
                 purchaseOrder.TotalAmount = purchaseOrderItems.Sum(item => item.SubTotal);
 
                 // Add the purchase order.
@@ -61,7 +62,7 @@ namespace InventiCloud.Services
                 await context.SaveChangesAsync();
 
 
-                NavigationManager.NavigateTo($"/purchase/orders/details/{purchaseOrder.ReferenceNumber}");
+                NavigationManager.NavigateTo($"/purchase/orders/{purchaseOrder.ReferenceNumber}");
 
 
                 _logger.LogInformation("Purchase order {PurchaseOrderId} added successfully.", purchaseOrder.PurchaseOrderId);
@@ -435,11 +436,19 @@ namespace InventiCloud.Services
 
             using var context = DbFactory.CreateDbContext();
             var purchaseOrder = await GetPurchaseOrderByIdAsync(item.PurchaseOrderID);
+            int itemCount = await context.PurchaseOrderItems.CountAsync(poi => poi.PurchaseOrderID == item.PurchaseOrderID);
 
             if (purchaseOrder == null)
             {
                 throw new InvalidOperationException("Purchase Order not found.");
             }
+
+            if (itemCount <= 1)
+            {
+                throw new InvalidOperationException("Purchase order must have at least one item.");
+            }
+
+
 
             context.PurchaseOrderItems.Remove(item);
             await context.SaveChangesAsync();

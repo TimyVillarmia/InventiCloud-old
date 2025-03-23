@@ -127,7 +127,7 @@ namespace InventiCloud.Migrations
 
                     b.HasIndex("AttributeSetId");
 
-                    b.ToTable("Attributes");
+                    b.ToTable("Attributes", (string)null);
                 });
 
             modelBuilder.Entity("InventiCloud.Entities.AttributeSet", b =>
@@ -144,7 +144,7 @@ namespace InventiCloud.Migrations
 
                     b.HasKey("AttributeSetId");
 
-                    b.ToTable("AttributeSets");
+                    b.ToTable("AttributeSets", (string)null);
                 });
 
             modelBuilder.Entity("InventiCloud.Entities.AttributeValue", b =>
@@ -160,7 +160,7 @@ namespace InventiCloud.Migrations
 
                     b.HasKey("AttributeValueId");
 
-                    b.ToTable("AttributeValues");
+                    b.ToTable("AttributeValues", (string)null);
                 });
 
             modelBuilder.Entity("InventiCloud.Entities.Branch", b =>
@@ -205,7 +205,7 @@ namespace InventiCloud.Migrations
 
                     b.HasKey("BranchId");
 
-                    b.ToTable("Branches");
+                    b.ToTable("Branches", (string)null);
 
                     b.HasData(
                         new
@@ -267,7 +267,7 @@ namespace InventiCloud.Migrations
 
                     b.HasIndex("BranchId");
 
-                    b.ToTable("BranchAccounts");
+                    b.ToTable("BranchAccounts", (string)null);
                 });
 
             modelBuilder.Entity("InventiCloud.Entities.Category", b =>
@@ -287,7 +287,7 @@ namespace InventiCloud.Migrations
                     b.HasIndex("CategoryName")
                         .IsUnique();
 
-                    b.ToTable("Categories");
+                    b.ToTable("Categories", (string)null);
                 });
 
             modelBuilder.Entity("InventiCloud.Entities.Customer", b =>
@@ -319,7 +319,7 @@ namespace InventiCloud.Migrations
 
                     b.HasKey("CustomerId");
 
-                    b.ToTable("Customers");
+                    b.ToTable("Customers", (string)null);
                 });
 
             modelBuilder.Entity("InventiCloud.Entities.Inventory", b =>
@@ -354,7 +354,7 @@ namespace InventiCloud.Migrations
 
                     b.HasIndex("ProductID");
 
-                    b.ToTable("Inventories");
+                    b.ToTable("Inventories", (string)null);
                 });
 
             modelBuilder.Entity("InventiCloud.Entities.Product", b =>
@@ -408,7 +408,7 @@ namespace InventiCloud.Migrations
                     b.HasIndex("SKU")
                         .IsUnique();
 
-                    b.ToTable("Products");
+                    b.ToTable("Products", (string)null);
                 });
 
             modelBuilder.Entity("InventiCloud.Entities.ProductAttributeValue", b =>
@@ -436,7 +436,7 @@ namespace InventiCloud.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("ProductAttributeValues");
+                    b.ToTable("ProductAttributeValues", (string)null);
                 });
 
             modelBuilder.Entity("InventiCloud.Entities.PurchaseOrder", b =>
@@ -490,7 +490,7 @@ namespace InventiCloud.Migrations
 
                     b.HasIndex("SupplierCode");
 
-                    b.ToTable("PurchaseOrders");
+                    b.ToTable("PurchaseOrders", (string)null);
                 });
 
             modelBuilder.Entity("InventiCloud.Entities.PurchaseOrderItem", b =>
@@ -524,7 +524,7 @@ namespace InventiCloud.Migrations
 
                     b.HasIndex("PurchaseOrderID");
 
-                    b.ToTable("PurchaseOrderItems");
+                    b.ToTable("PurchaseOrderItems", (string)null);
                 });
 
             modelBuilder.Entity("InventiCloud.Entities.PurchaseOrderStatus", b =>
@@ -541,7 +541,7 @@ namespace InventiCloud.Migrations
 
                     b.HasKey("PurchaseOrderStatusId");
 
-                    b.ToTable("PurchaseOrderStatuses");
+                    b.ToTable("PurchaseOrderStatuses", (string)null);
 
                     b.HasData(
                         new
@@ -595,7 +595,7 @@ namespace InventiCloud.Migrations
 
                     b.HasIndex("StatusId");
 
-                    b.ToTable("StockAdjustments");
+                    b.ToTable("StockAdjustments", (string)null);
                 });
 
             modelBuilder.Entity("InventiCloud.Entities.StockAdjustmentDetail", b =>
@@ -627,7 +627,7 @@ namespace InventiCloud.Migrations
 
                     b.HasIndex("StockAdjustmentId");
 
-                    b.ToTable("StockAdjustmentDetails");
+                    b.ToTable("StockAdjustmentDetails", (string)null);
                 });
 
             modelBuilder.Entity("InventiCloud.Entities.StockAdjustmentReason", b =>
@@ -644,7 +644,7 @@ namespace InventiCloud.Migrations
 
                     b.HasKey("StockAdjustmentReasonId");
 
-                    b.ToTable("StockAdjustmentReasons");
+                    b.ToTable("StockAdjustmentReasons", (string)null);
                 });
 
             modelBuilder.Entity("InventiCloud.Entities.StockAdjustmentStatus", b =>
@@ -661,7 +661,7 @@ namespace InventiCloud.Migrations
 
                     b.HasKey("StockAdjustmentStatusId");
 
-                    b.ToTable("StockAdjustmentStatuses");
+                    b.ToTable("StockAdjustmentStatuses", (string)null);
                 });
 
             modelBuilder.Entity("InventiCloud.Entities.StockTransfer", b =>
@@ -695,7 +695,7 @@ namespace InventiCloud.Migrations
 
                     b.HasIndex("ToBranchId");
 
-                    b.ToTable("StockTransfers");
+                    b.ToTable("StockTransfers", (string)null);
                 });
 
             modelBuilder.Entity("InventiCloud.Entities.StockTransferDetail", b =>
@@ -721,7 +721,7 @@ namespace InventiCloud.Migrations
 
                     b.HasIndex("StockTransferId");
 
-                    b.ToTable("StockTransferDetails");
+                    b.ToTable("StockTransferDetails", (string)null);
                 });
 
             modelBuilder.Entity("InventiCloud.Entities.StockTransferStatus", b =>
@@ -738,7 +738,7 @@ namespace InventiCloud.Migrations
 
                     b.HasKey("StockTransferStatusId");
 
-                    b.ToTable("StockTransferStatuses");
+                    b.ToTable("StockTransferStatuses", (string)null);
                 });
 
             modelBuilder.Entity("InventiCloud.Entities.Supplier", b =>
@@ -787,7 +787,7 @@ namespace InventiCloud.Migrations
                     b.HasIndex("SupplierCode")
                         .IsUnique();
 
-                    b.ToTable("Suppliers");
+                    b.ToTable("Suppliers", (string)null);
 
                     b.HasData(
                         new
