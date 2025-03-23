@@ -72,7 +72,7 @@ else
                 <TemplateColumn CellClass="d-flex justify-end">
                     <CellTemplate>
                         <MudMenu Icon="@Icons.Material.Filled.MoreVert" AriaLabel="Open user menu">
-                            <MudMenuItem Label="Edit" href="@($"/purchase/orders/details/{context.Item.ReferenceNumber}")" />
+                            <MudMenuItem Label="Edit" href="@($"/purchase/orders/{context.Item.ReferenceNumber}")" />
                             @if(context.Item.PurchaseOrderStatus.StatusName.ToLower() == "draft")
                             {
                                 <MudMenuItem Label="Delete" Class="red-text" OnClick="@(() => OpenDialogAsync(context.Item))" />
@@ -129,9 +129,13 @@ else
 
     async Task OpenDialogAsync(PurchaseOrder purchaseorder)
     {
+
         var parameters = new DialogParameters<DialogComponent>
         {
-            {x => x.ContentText, $"Are you sure you want to delete the Purchase Order '{purchaseorder.PurchaseOrderId}'? This action cannot be undone."}
+            {x => x.ContentText, $"Are you sure you want to delete the Purchase Order '{purchaseorder.ReferenceNumber}'? This action cannot be undone."},
+            { "Button1Text", "Delete" },
+            { "Button2Text", "Cancel" },
+            { "Color", Color.Error }
         };
 
         var dialog = await DialogService.ShowAsync<DialogComponent>("Delete Purchase Order", parameters);
