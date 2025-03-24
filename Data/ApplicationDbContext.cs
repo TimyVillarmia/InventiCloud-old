@@ -27,7 +27,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<StockAdjustmentReason> StockAdjustmentReasons { get; set; }
     public DbSet<StockAdjustmentStatus> StockAdjustmentStatuses { get; set; }
     public DbSet<StockTransfer> StockTransfers { get; set; }
-    public DbSet<StockTransferDetail> StockTransferDetails { get; set; }
+    public DbSet<StockTransferItem> StockTransferDetails { get; set; }
     public DbSet<StockTransferStatus> StockTransferStatuses { get; set; }
     public DbSet<Supplier> Suppliers { get; set; }
 
