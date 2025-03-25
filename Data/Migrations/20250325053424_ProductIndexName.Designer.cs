@@ -4,6 +4,7 @@ using InventiCloud.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace InventiCloud.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250325053424_ProductIndexName")]
+    partial class ProductIndexName
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -91,15 +94,15 @@ namespace InventiCloud.Migrations
                         {
                             Id = "your-user-id-1",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "54a73911-995a-46ea-aa35-4ab93472178e",
+                            ConcurrencyStamp = "c8c75510-f428-40fa-bb9c-88557e4926ad",
                             Email = "admin@example.com",
                             EmailConfirmed = true,
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN@EXAMPLE.COM",
                             NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAEF3RDIW7lh+vTP9hXKvfrVBEgLGZ94IQuy5Dyu0qHTRfdjJIjQjRI9HyWxdeZCXuGg==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEOeI9ITVe46SXYc5tWWCKftzkL79uYdD9RZgOurPLIxDfSY4wlhXbQ1Vg6iVuBVELQ==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "73580bc3-9879-4f43-ad0c-989ab5ce9d09",
+                            SecurityStamp = "69ccdb33-ce8b-4b7f-ad30-e721c4c88edb",
                             TwoFactorEnabled = false,
                             UserName = "admin"
                         });
@@ -212,7 +215,7 @@ namespace InventiCloud.Migrations
                         {
                             BranchId = 1,
                             Address = "123 Main St",
-                            BranchName = "Branch A",
+                            BranchName = "Main Warehouse",
                             City = "Anytown",
                             Country = "USA",
                             Email = "warehouse@example.com",
@@ -224,7 +227,7 @@ namespace InventiCloud.Migrations
                         {
                             BranchId = 2,
                             Address = "456 Oak Ave",
-                            BranchName = "Branch B",
+                            BranchName = "Retail Store A",
                             City = "Springfield",
                             Country = "Canada",
                             Email = "retailA@example.com",
@@ -236,7 +239,7 @@ namespace InventiCloud.Migrations
                         {
                             BranchId = 3,
                             Address = "789 Pine Ln",
-                            BranchName = "Branch C",
+                            BranchName = "Distribution Center",
                             City = "London",
                             Country = "UK",
                             Email = "distribution@example.com",
@@ -288,33 +291,6 @@ namespace InventiCloud.Migrations
                         .IsUnique();
 
                     b.ToTable("Categories");
-
-                    b.HasData(
-                        new
-                        {
-                            CategoryId = 1,
-                            CategoryName = "Eyeglasses"
-                        },
-                        new
-                        {
-                            CategoryId = 2,
-                            CategoryName = "Contact Lenses"
-                        },
-                        new
-                        {
-                            CategoryId = 3,
-                            CategoryName = "Reading Glasses"
-                        },
-                        new
-                        {
-                            CategoryId = 4,
-                            CategoryName = "Eye Care Products"
-                        },
-                        new
-                        {
-                            CategoryId = 5,
-                            CategoryName = "Sunglasses"
-                        });
                 });
 
             modelBuilder.Entity("InventiCloud.Entities.Customer", b =>
@@ -439,73 +415,6 @@ namespace InventiCloud.Migrations
                         .IsUnique();
 
                     b.ToTable("Products");
-
-                    b.HasData(
-                        new
-                        {
-                            ProductId = 1,
-                            Brand = "VisionGuard",
-                            CategoryId = 1,
-                            Description = "High-quality glasses to protect your eyes from harmful blue light.",
-                            ImageURL = "glasses_blue_light.jpg",
-                            ProductName = "Premium Blue Light Blocking Glasses",
-                            SKU = "VG-BL-001",
-                            UnitCost = 50.00m,
-                            UnitPrice = 120.00m,
-                            isActive = true
-                        },
-                        new
-                        {
-                            ProductId = 2,
-                            Brand = "AquaView",
-                            CategoryId = 2,
-                            Description = "Comfortable daily disposable contact lenses for clear vision.",
-                            ImageURL = "contact_lenses_daily.jpg",
-                            ProductName = "Daily Disposable Contact Lenses",
-                            SKU = "AV-CD-002",
-                            UnitCost = 15.00m,
-                            UnitPrice = 35.00m,
-                            isActive = true
-                        },
-                        new
-                        {
-                            ProductId = 3,
-                            Brand = "ReadWell",
-                            CategoryId = 3,
-                            Description = "Stylish reading glasses with anti-glare coating for reduced eye strain.",
-                            ImageURL = "reading_glasses_anti_glare.jpg",
-                            ProductName = "Anti-Glare Reading Glasses",
-                            SKU = "RW-RG-003",
-                            UnitCost = 25.00m,
-                            UnitPrice = 60.00m,
-                            isActive = true
-                        },
-                        new
-                        {
-                            ProductId = 4,
-                            Brand = "MoisturePlus",
-                            CategoryId = 4,
-                            Description = "Relief from dry, irritated eyes with these lubricating eye drops.",
-                            ImageURL = "eye_drops_dry_eyes.jpg",
-                            ProductName = "Eye Drops for Dry Eyes",
-                            SKU = "MP-ED-004",
-                            UnitCost = 8.00m,
-                            UnitPrice = 20.00m,
-                            isActive = true
-                        },
-                        new
-                        {
-                            ProductId = 5,
-                            Brand = "SunStyle",
-                            CategoryId = 1,
-                            Description = "Fashionable sunglasses with UV protection for sunny days.",
-                            ImageURL = "designer_sunglasses.jpg",
-                            ProductName = "Designer Sunglasses",
-                            SKU = "SS-SG-005",
-                            UnitCost = 80.00m,
-                            UnitPrice = 200.00m,
-                            isActive = true
-                        });
                 });
 
             modelBuilder.Entity("InventiCloud.Entities.ProductAttributeValue", b =>

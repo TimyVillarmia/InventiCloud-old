@@ -58,6 +58,77 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             }
         );
 
+        modelBuilder.Entity<Category>().HasData(
+             new Category { CategoryId = 1, CategoryName = "Eyeglasses" },
+             new Category { CategoryId = 2, CategoryName = "Contact Lenses" },
+             new Category { CategoryId = 3, CategoryName = "Reading Glasses" },
+             new Category { CategoryId = 4, CategoryName = "Eye Care Products" },
+             new Category { CategoryId = 5, CategoryName = "Sunglasses" }
+        );
+
+        modelBuilder.Entity<Product>().HasData(
+            new Product
+            {
+                ProductId = 1, // Use negative ProductId
+                CategoryId = 1,
+                ProductName = "Premium Blue Light Blocking Glasses",
+                ImageURL = "glasses_blue_light.jpg",
+                Brand = "VisionGuard",
+                Description = "High-quality glasses to protect your eyes from harmful blue light.",
+                UnitCost = 50.00m,
+                UnitPrice = 120.00m,
+                SKU = "VG-BL-001"
+            },
+            new Product
+            {
+                ProductId = 2, // Use negative ProductId
+                CategoryId = 2,
+                ProductName = "Daily Disposable Contact Lenses",
+                ImageURL = "contact_lenses_daily.jpg",
+                Brand = "AquaView",
+                Description = "Comfortable daily disposable contact lenses for clear vision.",
+                UnitCost = 15.00m,
+                UnitPrice = 35.00m,
+                SKU = "AV-CD-002"
+            },
+            new Product
+            {
+                ProductId = 3, // Use negative ProductId
+                CategoryId = 3,
+                ProductName = "Anti-Glare Reading Glasses",
+                ImageURL = "reading_glasses_anti_glare.jpg",
+                Brand = "ReadWell",
+                Description = "Stylish reading glasses with anti-glare coating for reduced eye strain.",
+                UnitCost = 25.00m,
+                UnitPrice = 60.00m,
+                SKU = "RW-RG-003"
+            },
+            new Product
+            {
+                ProductId = 4, // Use negative ProductId
+                CategoryId = 4,
+                ProductName = "Eye Drops for Dry Eyes",
+                ImageURL = "eye_drops_dry_eyes.jpg",
+                Brand = "MoisturePlus",
+                Description = "Relief from dry, irritated eyes with these lubricating eye drops.",
+                UnitCost = 8.00m,
+                UnitPrice = 20.00m,
+                SKU = "MP-ED-004"
+            },
+            new Product
+            {
+                ProductId = 5, // Use negative ProductId
+                CategoryId = 1,
+                ProductName = "Designer Sunglasses",
+                ImageURL = "designer_sunglasses.jpg",
+                Brand = "SunStyle",
+                Description = "Fashionable sunglasses with UV protection for sunny days.",
+                UnitCost = 80.00m,
+                UnitPrice = 200.00m,
+                SKU = "SS-SG-005"
+            }
+        );
+
 
         modelBuilder.Entity<Supplier>().HasData(
            new Supplier
@@ -80,7 +151,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             new Branch
             {
                 BranchId = 1,
-                BranchName = "Main Warehouse",
+                BranchName = "Branch A",
                 Country = "USA",
                 Address = "123 Main St",
                 PostalCode = "12345",
@@ -92,7 +163,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             new Branch
             {
                 BranchId = 2,
-                BranchName = "Retail Store A",
+                BranchName = "Branch B",
                 Country = "Canada",
                 Address = "456 Oak Ave",
                 PostalCode = "A1B 2C3",
@@ -104,7 +175,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             new Branch
             {
                 BranchId = 3,
-                BranchName = "Distribution Center",
+                BranchName = "Branch C",
                 Country = "UK",
                 Address = "789 Pine Ln",
                 PostalCode = "SW1A 1AA",

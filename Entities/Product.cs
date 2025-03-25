@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 namespace InventiCloud.Entities;
 
 [Index(nameof(SKU), IsUnique = true)]
+[Index(nameof(ProductName), IsUnique = true)]
 public class Product
 {
     [Key]
