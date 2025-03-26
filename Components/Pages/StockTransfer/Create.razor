@@ -23,14 +23,14 @@
         <MudGrid>
 
             <MudItem xs="12" sm="6">
-                <MudAutocomplete T="string" Label="Source Branch" @bind-Value="StockTransfer.SourceBranch" For="@(()=> StockTransfer.SourceBranch)"
-                SearchFunc="@SearchBranch" ToStringFunc="@(branch=> branch==null?null : $"{branch}")" Variant="Variant.Outlined" />
+                <MudAutocomplete T="Branch" Label="Source Branch" @bind-Value="StockTransfer.SourceBranch" For="@(()=> StockTransfer.SourceBranch)"
+                SearchFunc="@SearchBranch" ToStringFunc="@(branch=> branch==null?null : $"{branch.BranchName}")" Variant="Variant.Outlined" @bind-Value:after="HandleChangeSourceBranch" />
                 <MudTextField T="string" Class="mb-4" Label="Purchase Order Number" ReadOnly="true" Disabled="true" Variant="Variant.Outlined" />
             </MudItem>
 
             <MudItem xs="12" sm="6">
-                <MudAutocomplete T="string" Label="Destination Branch" @bind-Value="StockTransfer.DestinationBranch"
-                SearchFunc="@SearchBranch" ToStringFunc="@(branch=> branch==null?null : $"{branch}")" For="@(() => StockTransfer.DestinationBranch)" Variant="Variant.Outlined" />
+                <MudAutocomplete T="Branch" Label="Destination Branch" @bind-Value="StockTransfer.DestinationBranch"
+                SearchFunc="@SearchBranch" ToStringFunc="@(branch=> branch==null?null : $"{branch.BranchName}")" For="@(() => StockTransfer.DestinationBranch)" Variant="Variant.Outlined" />
                 <MudDatePicker Label="Estimated Arrival" Editable="true" @bind-Date="StockTransfer.DateCreated"
                 Mask="@(new DateMask("MM/dd/yyyy"))" DateFormat="MM/dd/yyyy" Placeholder="Estimated Arrival" Variant="Variant.Outlined" />
             </MudItem>
@@ -45,8 +45,8 @@
                 <MudItem sm="12">
                     <MudGrid Class="d-flex align-center flex-wrap flex-grow-1">
                         <MudItem xs="12" sm="5">
-                            <MudAutocomplete T="string" Label="Products" @bind-Value="StockTransferItem.Product" For="@(() => StockTransferItem.Product)"
-                            SearchFunc="@SearchProduct" ToStringFunc="@(product=> product==null?null : $"{product}")" Variant="Variant.Outlined" @bind-Value:after="After" />
+                            <MudAutocomplete T="Product" Label="Products" @bind-Value="StockTransferItem.Product" For="@(() => StockTransferItem.Product)"
+                            SearchFunc="@SearchProduct" ToStringFunc="@(product=> product==null?null : $"{product.ProductName}")" Variant="Variant.Outlined" @bind-Value:after="After" />
                         </MudItem>
 
                         <MudItem xs="12" sm="3">
@@ -72,7 +72,7 @@
 
         <MudDataGrid Items="StockTransferItems" Class="mt-4">
             <Columns>
-                <PropertyColumn Property="sti => sti.Product" Title="Product" />
+                <PropertyColumn Property="sti => sti.Product.ProductName" Title="Product" />
                 <PropertyColumn Property="sti => sti.AvailableQuantity" Title="Available Quantity" />
                 <PropertyColumn Property="sti => sti.TransferQuantity" Title="Transfer Quantity" />
                 <TemplateColumn CellClass="d-flex justify-end">
@@ -112,42 +112,50 @@
 
 
     private IEnumerable<Branch>? _branches;
-    private IEnumerable<Inventory>? _inventories;
+    private IEnumerable<Inventory>? _sourceBranchInventories;
 
     class StockTransferViewModel
     {
 
         [Required(ErrorMessage = "Source Branch is required.")]
-        public string SourceBranch { get; set; }
+        public Branch SourceBranch { get; set; } = new();
 
 
         [Required(ErrorMessage = "Destination Branch is required.")]
-        public string DestinationBranch { get; set; }
+        public Branch DestinationBranch { get; set; } = new();
 
         public DateTime? DateCreated { get; set; }
 
     }
 
-    class StockTransferItemViewModel   
+    public class StockTransferItemViewModel : IValidatableObject
     {
-
         [Required(ErrorMessage = "Product is required.")]
-        public string Product { get; set; }
+        public Product Product { get; set; }
 
         [Range(1, int.MaxValue, ErrorMessage = "Quantity must be greater than 0.")]
         [Required(ErrorMessage = "Quantity is required.")]
-
         public int TransferQuantity { get; set; }
 
         public int AvailableQuantity { get; set; }
 
-    }
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            if (AvailableQuantity == 0 && TransferQuantity > 0)
+            {
+                yield return new ValidationResult("Available quantity is zero. Cannot transfer.", new[] { nameof(TransferQuantity) });
+            }
 
+            if (TransferQuantity > AvailableQuantity)
+            {
+                yield return new ValidationResult("Transfer quantity exceeds available quantity.", new[] { nameof(TransferQuantity) });
+            }
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
         _branches = await BranchService.GetAllBranchAsync();
-        _inventories = await InventoryService.GetAllInventoryAsync();
     }
 
     private async Task AddStockTransferToDraft(EditContext context)
@@ -161,14 +169,14 @@
 
                 var st_data = new StockTransfer
                     {
-                        SourceBranchId = _branches.First(b=> b.BranchName == StockTransfer.SourceBranch).BranchId,
-                        DestinationBranchId = _branches.First(b => b.BranchName == StockTransfer.DestinationBranch).BranchId,
+                        SourceBranchId = StockTransfer.SourceBranch.BranchId,
+                        DestinationBranchId = StockTransfer.DestinationBranch.BranchId,
                         CreatedById = "your-user-id-1", // Replace with actual user ID
                     };
 
                 var sti_data = StockTransferItems.Select(vm => new StockTransferItem
                     {
-                        ProductId = _inventories.First(p => p.Product.ProductName == vm.Product).ProductID,
+                        ProductId = vm.Product.ProductId,
                         TransferQuantity = vm.TransferQuantity,
                     }).ToList();
 
@@ -184,36 +192,47 @@
         }
     }
 
-    private async Task<IEnumerable<string>> SearchProduct(string value, CancellationToken token)
+    private async Task<IEnumerable<Product>> SearchProduct(string value, CancellationToken token)
     {
+
+        if (StockTransfer.SourceBranch == null)
+        {
+            return new List<Product>();
+        }
+
+
+        // Filter inventories based on the source branch
+        _sourceBranchInventories = await InventoryService.GetAllInventoryByBranchAsync(StockTransfer.SourceBranch.BranchId);
+
 
         if (string.IsNullOrEmpty(value))
         {
-            // Return all available products excluding already added ones.
-            return _inventories.Where(p => !StockTransferItems.Any(poi => poi.Product == p.Product.ProductName)).Select(product => product.Product.ProductName);
+            // Return all available products from the source branch, excluding already added ones.
+            return _sourceBranchInventories
+                .Where(p => !StockTransferItems.Any(poi => poi.Product.ProductId == p.Product.ProductId))
+                .Select(i => i.Product);
         }
 
-        // Filter products based on search value and exclude already added ones.
-        return _inventories
+        // Filter products based on search value and exclude already added ones, from the source branch.
+        return _sourceBranchInventories
             .Where(p => p.Product.ProductName.Contains(value, StringComparison.InvariantCultureIgnoreCase) ||
-                        p.Product.SKU.Contains(value, StringComparison.InvariantCultureIgnoreCase)) // Add other search properties if needed
-            .Where(p => !StockTransferItems.Any(poi => poi.Product == p.Product.ProductName)).Select(product => product.Product.ProductName);
+                        p.Product.SKU.Contains(value, StringComparison.InvariantCultureIgnoreCase))
+            .Where(p => !StockTransferItems.Any(poi => poi.Product.ProductId == p.Product.ProductId))
+            .Select(i => i.Product);
     }
 
-    private async Task<IEnumerable<string>> SearchBranch(string value, CancellationToken token)
+    private async Task<IEnumerable<Branch>> SearchBranch(string value, CancellationToken token)
     {
         if (string.IsNullOrEmpty(value))
         {
             return _branches
-                .Where(b => b.BranchName != StockTransfer.SourceBranch && b.BranchName != StockTransfer.DestinationBranch)
-                .Select(b => b.BranchName);
+                .Where(b => b.BranchName != StockTransfer.SourceBranch.BranchName && b.BranchName != StockTransfer.DestinationBranch.BranchName);
         }
 
         return _branches
             .Where(b => b.BranchName.Contains(value, StringComparison.InvariantCultureIgnoreCase) &&
-                        b.BranchName != StockTransfer.SourceBranch &&
-                        b.BranchName != StockTransfer.DestinationBranch)
-            .Select(b => b.BranchName);
+                        b.BranchName != StockTransfer.SourceBranch.BranchName &&
+                        b.BranchName != StockTransfer.DestinationBranch.BranchName);
     }
 
     // events
@@ -226,8 +245,15 @@
 
     private void After()
     {
-        StockTransferItem.AvailableQuantity = _inventories.Where(i => i.Product.ProductName == StockTransferItem.Product)
+        StockTransferItem.AvailableQuantity = _sourceBranchInventories.Where(i => i.Product.ProductId == StockTransferItem.Product.ProductId)
                                                           .First().OnHandquantity;
+
+    }
+
+
+    private async void HandleChangeSourceBranch()
+    {
+        _sourceBranchInventories = await InventoryService.GetAllInventoryByBranchAsync(StockTransfer.SourceBranch.BranchId);
 
     }
 

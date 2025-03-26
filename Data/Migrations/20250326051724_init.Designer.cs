@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace InventiCloud.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250325053424_ProductIndexName")]
-    partial class ProductIndexName
+    [Migration("20250326051724_init")]
+    partial class init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -94,15 +94,15 @@ namespace InventiCloud.Migrations
                         {
                             Id = "your-user-id-1",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "c8c75510-f428-40fa-bb9c-88557e4926ad",
+                            ConcurrencyStamp = "7568dc33-76be-492e-b154-f3bd44261390",
                             Email = "admin@example.com",
                             EmailConfirmed = true,
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN@EXAMPLE.COM",
                             NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAEOeI9ITVe46SXYc5tWWCKftzkL79uYdD9RZgOurPLIxDfSY4wlhXbQ1Vg6iVuBVELQ==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEAEDguWDs8iOEwuuIrVS/f65un7ejYA8Ff0jGb62eK1oL1SisBm3wNIAmWOTYlgm0g==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "69ccdb33-ce8b-4b7f-ad30-e721c4c88edb",
+                            SecurityStamp = "63d487e8-e5c0-4a64-ae49-7bef0a80220b",
                             TwoFactorEnabled = false,
                             UserName = "admin"
                         });
@@ -215,7 +215,7 @@ namespace InventiCloud.Migrations
                         {
                             BranchId = 1,
                             Address = "123 Main St",
-                            BranchName = "Main Warehouse",
+                            BranchName = "Branch A",
                             City = "Anytown",
                             Country = "USA",
                             Email = "warehouse@example.com",
@@ -227,7 +227,7 @@ namespace InventiCloud.Migrations
                         {
                             BranchId = 2,
                             Address = "456 Oak Ave",
-                            BranchName = "Retail Store A",
+                            BranchName = "Branch B",
                             City = "Springfield",
                             Country = "Canada",
                             Email = "retailA@example.com",
@@ -239,7 +239,7 @@ namespace InventiCloud.Migrations
                         {
                             BranchId = 3,
                             Address = "789 Pine Ln",
-                            BranchName = "Distribution Center",
+                            BranchName = "Branch C",
                             City = "London",
                             Country = "UK",
                             Email = "distribution@example.com",
@@ -291,6 +291,33 @@ namespace InventiCloud.Migrations
                         .IsUnique();
 
                     b.ToTable("Categories");
+
+                    b.HasData(
+                        new
+                        {
+                            CategoryId = 1,
+                            CategoryName = "Eyeglasses"
+                        },
+                        new
+                        {
+                            CategoryId = 2,
+                            CategoryName = "Contact Lenses"
+                        },
+                        new
+                        {
+                            CategoryId = 3,
+                            CategoryName = "Reading Glasses"
+                        },
+                        new
+                        {
+                            CategoryId = 4,
+                            CategoryName = "Eye Care Products"
+                        },
+                        new
+                        {
+                            CategoryId = 5,
+                            CategoryName = "Sunglasses"
+                        });
                 });
 
             modelBuilder.Entity("InventiCloud.Entities.Customer", b =>
@@ -327,16 +354,16 @@ namespace InventiCloud.Migrations
 
             modelBuilder.Entity("InventiCloud.Entities.Inventory", b =>
                 {
-                    b.Property<int>("InventroyId")
+                    b.Property<int>("InventoryId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("InventroyId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("InventoryId"));
 
                     b.Property<int>("AvailableQuantity")
                         .HasColumnType("int");
 
-                    b.Property<int>("BranchID")
+                    b.Property<int>("BranchId")
                         .HasColumnType("int");
 
                     b.Property<int>("IncomingQuantity")
@@ -348,16 +375,168 @@ namespace InventiCloud.Migrations
                     b.Property<int>("OutgoingQuantity")
                         .HasColumnType("int");
 
-                    b.Property<int>("ProductID")
+                    b.Property<int>("ProductId")
                         .HasColumnType("int");
 
-                    b.HasKey("InventroyId");
+                    b.HasKey("InventoryId");
 
-                    b.HasIndex("BranchID");
+                    b.HasIndex("BranchId");
 
-                    b.HasIndex("ProductID");
+                    b.HasIndex("ProductId");
 
                     b.ToTable("Inventories");
+
+                    b.HasData(
+                        new
+                        {
+                            InventoryId = 1,
+                            AvailableQuantity = 0,
+                            BranchId = 1,
+                            IncomingQuantity = 0,
+                            OnHandquantity = 100,
+                            OutgoingQuantity = 0,
+                            ProductId = 1
+                        },
+                        new
+                        {
+                            InventoryId = 2,
+                            AvailableQuantity = 0,
+                            BranchId = 2,
+                            IncomingQuantity = 0,
+                            OnHandquantity = 50,
+                            OutgoingQuantity = 0,
+                            ProductId = 1
+                        },
+                        new
+                        {
+                            InventoryId = 3,
+                            AvailableQuantity = 0,
+                            BranchId = 3,
+                            IncomingQuantity = 0,
+                            OnHandquantity = 75,
+                            OutgoingQuantity = 0,
+                            ProductId = 1
+                        },
+                        new
+                        {
+                            InventoryId = 4,
+                            AvailableQuantity = 0,
+                            BranchId = 1,
+                            IncomingQuantity = 0,
+                            OnHandquantity = 200,
+                            OutgoingQuantity = 0,
+                            ProductId = 2
+                        },
+                        new
+                        {
+                            InventoryId = 5,
+                            AvailableQuantity = 0,
+                            BranchId = 2,
+                            IncomingQuantity = 0,
+                            OnHandquantity = 150,
+                            OutgoingQuantity = 0,
+                            ProductId = 2
+                        },
+                        new
+                        {
+                            InventoryId = 6,
+                            AvailableQuantity = 0,
+                            BranchId = 3,
+                            IncomingQuantity = 0,
+                            OnHandquantity = 150,
+                            OutgoingQuantity = 0,
+                            ProductId = 2
+                        },
+                        new
+                        {
+                            InventoryId = 7,
+                            AvailableQuantity = 0,
+                            BranchId = 1,
+                            IncomingQuantity = 0,
+                            OnHandquantity = 80,
+                            OutgoingQuantity = 0,
+                            ProductId = 3
+                        },
+                        new
+                        {
+                            InventoryId = 8,
+                            AvailableQuantity = 0,
+                            BranchId = 2,
+                            IncomingQuantity = 0,
+                            OnHandquantity = 120,
+                            OutgoingQuantity = 0,
+                            ProductId = 3
+                        },
+                        new
+                        {
+                            InventoryId = 9,
+                            AvailableQuantity = 0,
+                            BranchId = 3,
+                            IncomingQuantity = 0,
+                            OnHandquantity = 90,
+                            OutgoingQuantity = 0,
+                            ProductId = 3
+                        },
+                        new
+                        {
+                            InventoryId = 10,
+                            AvailableQuantity = 0,
+                            BranchId = 1,
+                            IncomingQuantity = 0,
+                            OnHandquantity = 300,
+                            OutgoingQuantity = 0,
+                            ProductId = 4
+                        },
+                        new
+                        {
+                            InventoryId = 11,
+                            AvailableQuantity = 0,
+                            BranchId = 2,
+                            IncomingQuantity = 0,
+                            OnHandquantity = 250,
+                            OutgoingQuantity = 0,
+                            ProductId = 4
+                        },
+                        new
+                        {
+                            InventoryId = 12,
+                            AvailableQuantity = 0,
+                            BranchId = 3,
+                            IncomingQuantity = 0,
+                            OnHandquantity = 280,
+                            OutgoingQuantity = 0,
+                            ProductId = 4
+                        },
+                        new
+                        {
+                            InventoryId = 13,
+                            AvailableQuantity = 0,
+                            BranchId = 1,
+                            IncomingQuantity = 0,
+                            OnHandquantity = 60,
+                            OutgoingQuantity = 0,
+                            ProductId = 5
+                        },
+                        new
+                        {
+                            InventoryId = 14,
+                            AvailableQuantity = 0,
+                            BranchId = 2,
+                            IncomingQuantity = 0,
+                            OnHandquantity = 40,
+                            OutgoingQuantity = 0,
+                            ProductId = 5
+                        },
+                        new
+                        {
+                            InventoryId = 15,
+                            AvailableQuantity = 0,
+                            BranchId = 3,
+                            IncomingQuantity = 0,
+                            OnHandquantity = 70,
+                            OutgoingQuantity = 0,
+                            ProductId = 5
+                        });
                 });
 
             modelBuilder.Entity("InventiCloud.Entities.Product", b =>
@@ -415,6 +594,73 @@ namespace InventiCloud.Migrations
                         .IsUnique();
 
                     b.ToTable("Products");
+
+                    b.HasData(
+                        new
+                        {
+                            ProductId = 1,
+                            Brand = "VisionGuard",
+                            CategoryId = 1,
+                            Description = "High-quality glasses to protect your eyes from harmful blue light.",
+                            ImageURL = "glasses_blue_light.jpg",
+                            ProductName = "Premium Blue Light Blocking Glasses",
+                            SKU = "VG-BL-001",
+                            UnitCost = 50.00m,
+                            UnitPrice = 120.00m,
+                            isActive = true
+                        },
+                        new
+                        {
+                            ProductId = 2,
+                            Brand = "AquaView",
+                            CategoryId = 2,
+                            Description = "Comfortable daily disposable contact lenses for clear vision.",
+                            ImageURL = "contact_lenses_daily.jpg",
+                            ProductName = "Daily Disposable Contact Lenses",
+                            SKU = "AV-CD-002",
+                            UnitCost = 15.00m,
+                            UnitPrice = 35.00m,
+                            isActive = true
+                        },
+                        new
+                        {
+                            ProductId = 3,
+                            Brand = "ReadWell",
+                            CategoryId = 3,
+                            Description = "Stylish reading glasses with anti-glare coating for reduced eye strain.",
+                            ImageURL = "reading_glasses_anti_glare.jpg",
+                            ProductName = "Anti-Glare Reading Glasses",
+                            SKU = "RW-RG-003",
+                            UnitCost = 25.00m,
+                            UnitPrice = 60.00m,
+                            isActive = true
+                        },
+                        new
+                        {
+                            ProductId = 4,
+                            Brand = "MoisturePlus",
+                            CategoryId = 4,
+                            Description = "Relief from dry, irritated eyes with these lubricating eye drops.",
+                            ImageURL = "eye_drops_dry_eyes.jpg",
+                            ProductName = "Eye Drops for Dry Eyes",
+                            SKU = "MP-ED-004",
+                            UnitCost = 8.00m,
+                            UnitPrice = 20.00m,
+                            isActive = true
+                        },
+                        new
+                        {
+                            ProductId = 5,
+                            Brand = "SunStyle",
+                            CategoryId = 1,
+                            Description = "Fashionable sunglasses with UV protection for sunny days.",
+                            ImageURL = "designer_sunglasses.jpg",
+                            ProductName = "Designer Sunglasses",
+                            SKU = "SS-SG-005",
+                            UnitCost = 80.00m,
+                            UnitPrice = 200.00m,
+                            isActive = true
+                        });
                 });
 
             modelBuilder.Entity("InventiCloud.Entities.ProductAttributeValue", b =>
@@ -987,13 +1233,13 @@ namespace InventiCloud.Migrations
                 {
                     b.HasOne("InventiCloud.Entities.Branch", "Branch")
                         .WithMany("Inventories")
-                        .HasForeignKey("BranchID")
+                        .HasForeignKey("BranchId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("InventiCloud.Entities.Product", "Product")
                         .WithMany("Inventories")
-                        .HasForeignKey("ProductID")
+                        .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

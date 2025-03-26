@@ -31,7 +31,6 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<StockTransferStatus> StockTransferStatuses { get; set; }
     public DbSet<Supplier> Suppliers { get; set; }
 
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -57,6 +56,22 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 SecurityStamp = Guid.NewGuid().ToString(), // Generate a unique SecurityStamp
             }
         );
+
+        modelBuilder.Entity<Supplier>().HasData(
+           new Supplier
+           {
+               SupplierCode = "SUP001",
+               SupplierName = "Global Electronics",
+               Company = "Global Tech Inc.",
+               ContactPerson = "John Doe",
+               Email = "john.doe@globaltech.com",
+               PhoneNumber = "+15551234567",
+               Country = "USA",
+               Address = "123 Main St",
+               PostalCode = "12345",
+               City = "New York",
+           }
+         );
 
         modelBuilder.Entity<Category>().HasData(
              new Category { CategoryId = 1, CategoryName = "Eyeglasses" },
@@ -129,23 +144,6 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             }
         );
 
-
-        modelBuilder.Entity<Supplier>().HasData(
-           new Supplier
-           {
-               SupplierCode = "SUP001",
-               SupplierName = "Global Electronics",
-               Company = "Global Tech Inc.",
-               ContactPerson = "John Doe",
-               Email = "john.doe@globaltech.com",
-               PhoneNumber = "+15551234567",
-               Country = "USA",
-               Address = "123 Main St",
-               PostalCode = "12345",
-               City = "New York",
-           }
-         );
-
         // Seed Branch data
         modelBuilder.Entity<Branch>().HasData(
             new Branch
@@ -185,5 +183,37 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 Email = "distribution@example.com"
             }
         );
+
+        // Seed Inventory data for each product and branch
+        modelBuilder.Entity<Inventory>().HasData(
+            // Product 1 Inventory
+            new Inventory { InventoryId = 1, ProductId = 1, BranchId = 1, OnHandquantity = 100 },
+            new Inventory { InventoryId = 2, ProductId = 1, BranchId = 2, OnHandquantity = 50 },
+            new Inventory { InventoryId = 3, ProductId = 1, BranchId = 3, OnHandquantity = 75 },
+
+            // Product 2 Inventory
+            new Inventory { InventoryId = 4, ProductId = 2, BranchId = 1, OnHandquantity = 200 },
+            new Inventory { InventoryId = 5, ProductId = 2, BranchId = 2, OnHandquantity = 150 },
+            new Inventory { InventoryId = 6, ProductId = 2, BranchId = 3, OnHandquantity = 150 },
+
+            new Inventory { InventoryId = 7, ProductId = 3, BranchId = 1, OnHandquantity = 80 },
+            new Inventory { InventoryId = 8, ProductId = 3, BranchId = 2, OnHandquantity = 120 },
+            new Inventory { InventoryId = 9, ProductId = 3, BranchId = 3, OnHandquantity = 90 },
+
+            // Product 4 Inventory
+            new Inventory { InventoryId = 10, ProductId = 4, BranchId = 1, OnHandquantity = 300 },
+            new Inventory { InventoryId = 11, ProductId = 4, BranchId = 2, OnHandquantity = 250 },
+            new Inventory { InventoryId = 12, ProductId = 4, BranchId = 3, OnHandquantity = 280 },
+
+            // Product 5 Inventory
+            new Inventory { InventoryId = 13, ProductId = 5, BranchId = 1, OnHandquantity = 60 },
+            new Inventory { InventoryId = 14, ProductId = 5, BranchId = 2, OnHandquantity = 40 },
+            new Inventory { InventoryId = 15, ProductId = 5, BranchId = 3, OnHandquantity = 70 }
+        );
+
+
+
+
+
     }
 }

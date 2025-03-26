@@ -24,8 +24,8 @@ namespace InventiCloud.Services
                 {
                     context.Inventories.Add(new Inventory
                     {
-                        ProductID = product.ProductId,
-                        BranchID = branch.BranchId,
+                        ProductId = product.ProductId,
+                        BranchId = branch.BranchId,
                         OnHandquantity = 0,
                         IncomingQuantity = 0,
                         AvailableQuantity = 0,
@@ -81,7 +81,7 @@ namespace InventiCloud.Services
             return await context.Inventories
                 .Include(i => i.Branch)
                 .Include(i => i.Product)
-                .Where(i => i.BranchID == branchId)
+                .Where(i => i.BranchId == branchId)
                 .ToListAsync()
                 ;
         }
@@ -93,7 +93,7 @@ namespace InventiCloud.Services
 
             try
             {
-                return await context.Inventories.FirstAsync(i => i.ProductID == productId && i.BranchID == branchId);
+                return await context.Inventories.FirstAsync(i => i.ProductId == productId && i.BranchId == branchId);
             }
             catch (Exception ex)
             {

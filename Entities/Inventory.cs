@@ -7,13 +7,13 @@ namespace InventiCloud.Entities;
 public class Inventory
 {
     [Key]
-    public int InventroyId { get; set; }
+    public int InventoryId { get; set; }
 
     [ForeignKey("Product")]
-    public int ProductID { get; set; }
+    public int ProductId { get; set; }
 
     [ForeignKey("Branch")]
-    public int BranchID { get; set; }
+    public int BranchId { get; set; }
     public int OnHandquantity { get; set; } = 0;
     public int IncomingQuantity { get; set; } = 0;
     public int AvailableQuantity { get; set; } = 0;

@@ -103,7 +103,7 @@ else
 
     private async Task<GridData<Inventory>> ServerReload(GridState<Inventory> state)
     {
-        _filteredinventories = _inventories.Where(b => b.BranchID == selectedBranch);
+        _filteredinventories = _inventories.Where(b => b.BranchId == selectedBranch);
 
         _filteredinventories = _filteredinventories.Where(inventory =>
         {

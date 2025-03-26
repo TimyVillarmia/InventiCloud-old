@@ -15,8 +15,8 @@ namespace InventiCloud.Services.Interface
         Task UpdateStockTransferStatusAsync(StockTransfer stockTransfer, int statusId, string statusName);
         Task<IEnumerable<StockTransfer>> GetAllStockTransferAsync();
         Task<IEnumerable<StockTransferItem>> GetAllStockTransferItemByIdAsync(int? stockTransferId);
-        Task<StockTransfer> GetPurchaseOrderByReferenceNumberAsync(string referenceNumber);
-        Task<PurchaseOrder> GetPurchaseOrderByIdAsync(int? stockTransferId);
+        Task<StockTransfer> GetStockTransferByReferenceNumberAsync(string referenceNumber);
+        Task<StockTransfer> GetStockTransferByIdAsync(int? stockTransferId);
         Task DisposeAsync();
 
 

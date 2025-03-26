@@ -40,12 +40,12 @@ namespace InventiCloud.Services
             throw new NotImplementedException();
         }
 
-        public Task<PurchaseOrder> GetPurchaseOrderByIdAsync(int? stockTransferId)
+        public Task<StockTransfer> GetStockTransferByIdAsync(int? stockTransferId)
         {
             throw new NotImplementedException();
         }
 
-        public Task<StockTransfer> GetPurchaseOrderByReferenceNumberAsync(string referenceNumber)
+        public Task<StockTransfer> GetStockTransferByReferenceNumberAsync(string referenceNumber)
         {
             throw new NotImplementedException();
         }
