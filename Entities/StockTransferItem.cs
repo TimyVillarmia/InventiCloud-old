@@ -3,10 +3,10 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace InventiCloud.Entities
 {
-    public class StockTransferDetail
+    public class StockTransferItem
     {
         [Key]
-        public int StockTransferDetailId { get; set; }
+        public int StockTransferItemlId { get; set; }
 
         [ForeignKey("StockTransfer")]
         public int StockTransferId { get; set; }

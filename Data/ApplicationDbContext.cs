@@ -27,10 +27,9 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<StockAdjustmentReason> StockAdjustmentReasons { get; set; }
     public DbSet<StockAdjustmentStatus> StockAdjustmentStatuses { get; set; }
     public DbSet<StockTransfer> StockTransfers { get; set; }
-    public DbSet<StockTransferDetail> StockTransferDetails { get; set; }
+    public DbSet<StockTransferItem> StockTransferItems { get; set; }
     public DbSet<StockTransferStatus> StockTransferStatuses { get; set; }
     public DbSet<Supplier> Suppliers { get; set; }
-
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -42,6 +41,13 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             new PurchaseOrderStatus { PurchaseOrderStatusId = 2, StatusName = "Ordered" },
             new PurchaseOrderStatus { PurchaseOrderStatusId = 3, StatusName = "Completed" },
             new PurchaseOrderStatus { PurchaseOrderStatusId = 4, StatusName = "Cancelled" }
+        );
+
+        // Seed StockTransferStatus data
+        modelBuilder.Entity<StockTransferStatus>().HasData(
+            new StockTransferStatus { StockTransferStatusId = 1, StatusName = "Draft" },
+            new StockTransferStatus { StockTransferStatusId = 2, StatusName = "Pending" },
+            new StockTransferStatus { StockTransferStatusId = 3, StatusName = "Completed" }
         );
 
         modelBuilder.Entity<ApplicationUser>().HasData(
@@ -57,7 +63,6 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 SecurityStamp = Guid.NewGuid().ToString(), // Generate a unique SecurityStamp
             }
         );
-
 
         modelBuilder.Entity<Supplier>().HasData(
            new Supplier
@@ -75,12 +80,83 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
            }
          );
 
+        modelBuilder.Entity<Category>().HasData(
+             new Category { CategoryId = 1, CategoryName = "Eyeglasses" },
+             new Category { CategoryId = 2, CategoryName = "Contact Lenses" },
+             new Category { CategoryId = 3, CategoryName = "Reading Glasses" },
+             new Category { CategoryId = 4, CategoryName = "Eye Care Products" },
+             new Category { CategoryId = 5, CategoryName = "Sunglasses" }
+        );
+
+        modelBuilder.Entity<Product>().HasData(
+            new Product
+            {
+                ProductId = 1, // Use negative ProductId
+                CategoryId = 1,
+                ProductName = "Premium Blue Light Blocking Glasses",
+                ImageURL = "glasses_blue_light.jpg",
+                Brand = "VisionGuard",
+                Description = "High-quality glasses to protect your eyes from harmful blue light.",
+                UnitCost = 50.00m,
+                UnitPrice = 120.00m,
+                SKU = "VG-BL-001"
+            },
+            new Product
+            {
+                ProductId = 2, // Use negative ProductId
+                CategoryId = 2,
+                ProductName = "Daily Disposable Contact Lenses",
+                ImageURL = "contact_lenses_daily.jpg",
+                Brand = "AquaView",
+                Description = "Comfortable daily disposable contact lenses for clear vision.",
+                UnitCost = 15.00m,
+                UnitPrice = 35.00m,
+                SKU = "AV-CD-002"
+            },
+            new Product
+            {
+                ProductId = 3, // Use negative ProductId
+                CategoryId = 3,
+                ProductName = "Anti-Glare Reading Glasses",
+                ImageURL = "reading_glasses_anti_glare.jpg",
+                Brand = "ReadWell",
+                Description = "Stylish reading glasses with anti-glare coating for reduced eye strain.",
+                UnitCost = 25.00m,
+                UnitPrice = 60.00m,
+                SKU = "RW-RG-003"
+            },
+            new Product
+            {
+                ProductId = 4, // Use negative ProductId
+                CategoryId = 4,
+                ProductName = "Eye Drops for Dry Eyes",
+                ImageURL = "eye_drops_dry_eyes.jpg",
+                Brand = "MoisturePlus",
+                Description = "Relief from dry, irritated eyes with these lubricating eye drops.",
+                UnitCost = 8.00m,
+                UnitPrice = 20.00m,
+                SKU = "MP-ED-004"
+            },
+            new Product
+            {
+                ProductId = 5, // Use negative ProductId
+                CategoryId = 1,
+                ProductName = "Designer Sunglasses",
+                ImageURL = "designer_sunglasses.jpg",
+                Brand = "SunStyle",
+                Description = "Fashionable sunglasses with UV protection for sunny days.",
+                UnitCost = 80.00m,
+                UnitPrice = 200.00m,
+                SKU = "SS-SG-005"
+            }
+        );
+
         // Seed Branch data
         modelBuilder.Entity<Branch>().HasData(
             new Branch
             {
                 BranchId = 1,
-                BranchName = "Main Warehouse",
+                BranchName = "Branch A",
                 Country = "USA",
                 Address = "123 Main St",
                 PostalCode = "12345",
@@ -92,7 +168,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             new Branch
             {
                 BranchId = 2,
-                BranchName = "Retail Store A",
+                BranchName = "Branch B",
                 Country = "Canada",
                 Address = "456 Oak Ave",
                 PostalCode = "A1B 2C3",
@@ -104,7 +180,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             new Branch
             {
                 BranchId = 3,
-                BranchName = "Distribution Center",
+                BranchName = "Branch C",
                 Country = "UK",
                 Address = "789 Pine Ln",
                 PostalCode = "SW1A 1AA",
@@ -114,5 +190,37 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 Email = "distribution@example.com"
             }
         );
+
+        // Seed Inventory data for each product and branch
+        modelBuilder.Entity<Inventory>().HasData(
+            // Product 1 Inventory
+            new Inventory { InventoryId = 1, ProductId = 1, BranchId = 1, OnHandquantity = 100 },
+            new Inventory { InventoryId = 2, ProductId = 1, BranchId = 2, OnHandquantity = 50 },
+            new Inventory { InventoryId = 3, ProductId = 1, BranchId = 3, OnHandquantity = 75 },
+
+            // Product 2 Inventory
+            new Inventory { InventoryId = 4, ProductId = 2, BranchId = 1, OnHandquantity = 200 },
+            new Inventory { InventoryId = 5, ProductId = 2, BranchId = 2, OnHandquantity = 150 },
+            new Inventory { InventoryId = 6, ProductId = 2, BranchId = 3, OnHandquantity = 150 },
+
+            new Inventory { InventoryId = 7, ProductId = 3, BranchId = 1, OnHandquantity = 80 },
+            new Inventory { InventoryId = 8, ProductId = 3, BranchId = 2, OnHandquantity = 120 },
+            new Inventory { InventoryId = 9, ProductId = 3, BranchId = 3, OnHandquantity = 90 },
+
+            // Product 4 Inventory
+            new Inventory { InventoryId = 10, ProductId = 4, BranchId = 1, OnHandquantity = 300 },
+            new Inventory { InventoryId = 11, ProductId = 4, BranchId = 2, OnHandquantity = 250 },
+            new Inventory { InventoryId = 12, ProductId = 4, BranchId = 3, OnHandquantity = 280 },
+
+            // Product 5 Inventory
+            new Inventory { InventoryId = 13, ProductId = 5, BranchId = 1, OnHandquantity = 60 },
+            new Inventory { InventoryId = 14, ProductId = 5, BranchId = 2, OnHandquantity = 40 },
+            new Inventory { InventoryId = 15, ProductId = 5, BranchId = 3, OnHandquantity = 70 }
+        );
+
+
+
+
+
     }
 }

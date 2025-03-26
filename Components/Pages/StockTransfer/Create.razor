@@ -1,0 +1,276 @@
+﻿@page "/inventory/stock-transfers/create"
+@using InventiCloud.Components.UI
+@using InventiCloud.Services
+@using InventiCloud.Services.Interface
+@using InventiCloud.Entities
+@using System.ComponentModel.DataAnnotations
+@inject IBranchService BranchService
+@inject IStockTransferService StockTransferService
+@inject IProductService ProductService
+@inject IInventoryService InventoryService
+@inject ISnackbar Snackbar
+
+<MudContainer Class="pt-5" MaxWidth="MaxWidth.Large">
+
+    <div class="d-flex align-items-center mb-4">
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" aria-label="delete" Href="/inventory/stock-transfers" />
+        <MudText Typo="Typo.h4">CREATE STOCK TRANSFER</MudText>
+    </div>
+
+    <EditForm method="post" Model="@StockTransfer" Context="StockTransferForm" OnValidSubmit="@AddStockTransferToDraft" FormName="createStockTransfer" Enhance>
+        <DataAnnotationsValidator />
+        <MudText Typo="Typo.h6">DETAILS</MudText>
+        <MudGrid>
+
+            <MudItem xs="12" sm="6">
+                <MudAutocomplete T="Branch" Label="Source Branch" @bind-Value="StockTransfer.SourceBranch" For="@(()=> StockTransfer.SourceBranch)"
+                SearchFunc="@SearchBranch" ToStringFunc="@(branch=> branch==null?null : $"{branch.BranchName}")" Variant="Variant.Outlined" @bind-Value:after="HandleChangeSourceBranch" />
+                <MudTextField T="string" Class="mb-4" Label="Purchase Order Number" ReadOnly="true" Disabled="true" Variant="Variant.Outlined" />
+            </MudItem>
+
+            <MudItem xs="12" sm="6">
+                <MudAutocomplete T="Branch" Label="Destination Branch" @bind-Value="StockTransfer.DestinationBranch"
+                SearchFunc="@SearchBranch" ToStringFunc="@(branch=> branch==null?null : $"{branch.BranchName}")" For="@(() => StockTransfer.DestinationBranch)" Variant="Variant.Outlined" />
+                <MudDatePicker Label="Estimated Arrival" Editable="true" @bind-Date="StockTransfer.DateCreated"
+                Mask="@(new DateMask("MM/dd/yyyy"))" DateFormat="MM/dd/yyyy" Placeholder="Estimated Arrival" Variant="Variant.Outlined" />
+            </MudItem>
+
+
+        </MudGrid>
+
+        <EditForm method="post" Model="@StockTransferItem" Context="StockTransferItemForm" OnValidSubmit="@AddBatchStockTransferItem" FormName="createStockTransferItem" Enhance>
+            <DataAnnotationsValidator />
+            <MudText Typo="Typo.h6">PRODUCTS</MudText>
+            <MudGrid>
+                <MudItem sm="12">
+                    <MudGrid Class="d-flex align-center flex-wrap flex-grow-1">
+                        <MudItem xs="12" sm="5">
+                            <MudAutocomplete T="Product" Label="Products" @bind-Value="StockTransferItem.Product" For="@(() => StockTransferItem.Product)"
+                            SearchFunc="@SearchProduct" ToStringFunc="@(product=> product==null?null : $"{product.ProductName}")" Variant="Variant.Outlined" @bind-Value:after="After" />
+                        </MudItem>
+
+                        <MudItem xs="12" sm="3">
+                            <MudNumericField HideSpinButtons="true" T="int" Variant="Variant.Outlined" ReadOnly="true" Label="Available Quantity" For="@(() => StockTransferItem.AvailableQuantity)"
+                            @bind-Value="StockTransferItem.AvailableQuantity" />
+                        </MudItem>
+
+                        <MudItem xs="12" sm="3">
+                            <MudNumericField HideSpinButtons="true" T="int" Variant="Variant.Outlined" Label="Transfer Quantity" For="@(() => StockTransferItem.TransferQuantity)"
+                            @bind-Value="StockTransferItem.TransferQuantity" />
+                        </MudItem>
+
+
+                        <MudItem xs="6" sm="1">
+                            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary">Add</MudButton>
+                        </MudItem>
+                    </MudGrid>
+
+                </MudItem>
+            </MudGrid>
+
+        </EditForm>
+
+        <MudDataGrid Items="StockTransferItems" Class="mt-4">
+            <Columns>
+                <PropertyColumn Property="sti => sti.Product.ProductName" Title="Product" />
+                <PropertyColumn Property="sti => sti.AvailableQuantity" Title="Available Quantity" />
+                <PropertyColumn Property="sti => sti.TransferQuantity" Title="Transfer Quantity" />
+                <TemplateColumn CellClass="d-flex justify-end">
+                    <CellTemplate>
+                        <MudStack Row>
+                            <MudIconButton Icon="@Icons.Material.Filled.Close" Color="Color.Error" aria-label="delete" OnClick="@(() => RemoveBatchProduct(context.Item))" />
+                        </MudStack>
+                    </CellTemplate>
+                </TemplateColumn>
+            </Columns>
+        </MudDataGrid>
+        <div class="d-flex align-end mt-12">
+            <MudButton Variant="Variant.Filled" Color="Color.Default" Href="/inventory/stock-transfers" Class="ml-auto">CANCEL</MudButton>
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-2">SAVE AS DRAFT</MudButton>
+
+        </div>
+
+    </EditForm>
+
+</MudContainer>
+
+
+
+
+@code {
+    MudDataGrid<StockTransfer> dataGrid = new();
+    private string? searchString;
+
+
+    [SupplyParameterFromForm(FormName = "createStockTransfer")]
+    private StockTransferViewModel StockTransfer { get; set; } = new();    
+
+    [SupplyParameterFromForm(FormName = "createStockTransferItem")]
+    private StockTransferItemViewModel StockTransferItem { get; set; } = new();
+
+    private List<StockTransferItemViewModel> StockTransferItems = new List<StockTransferItemViewModel>();
+
+
+    private IEnumerable<Branch>? _branches;
+    private IEnumerable<Inventory>? _sourceBranchInventories;
+
+    class StockTransferViewModel
+    {
+
+        [Required(ErrorMessage = "Source Branch is required.")]
+        public Branch SourceBranch { get; set; } = new();
+
+
+        [Required(ErrorMessage = "Destination Branch is required.")]
+        public Branch DestinationBranch { get; set; } = new();
+
+        public DateTime? DateCreated { get; set; }
+
+    }
+
+    public class StockTransferItemViewModel : IValidatableObject
+    {
+        [Required(ErrorMessage = "Product is required.")]
+        public Product Product { get; set; }
+
+        [Range(1, int.MaxValue, ErrorMessage = "Quantity must be greater than 0.")]
+        [Required(ErrorMessage = "Quantity is required.")]
+        public int TransferQuantity { get; set; }
+
+        public int AvailableQuantity { get; set; }
+
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            if (AvailableQuantity == 0 && TransferQuantity > 0)
+            {
+                yield return new ValidationResult("Available quantity is zero. Cannot transfer.", new[] { nameof(TransferQuantity) });
+            }
+
+            if (TransferQuantity > AvailableQuantity)
+            {
+                yield return new ValidationResult("Transfer quantity exceeds available quantity.", new[] { nameof(TransferQuantity) });
+            }
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _branches = await BranchService.GetAllBranchAsync();
+    }
+
+    private async Task AddStockTransferToDraft(EditContext context)
+    {
+
+        if (context.Validate())
+        {
+            try
+            {
+
+
+                var st_data = new StockTransfer
+                    {
+                        SourceBranchId = StockTransfer.SourceBranch.BranchId,
+                        DestinationBranchId = StockTransfer.DestinationBranch.BranchId,
+                        CreatedById = "your-user-id-1", // Replace with actual user ID
+                    };
+
+                var sti_data = StockTransferItems.Select(vm => new StockTransferItem
+                    {
+                        ProductId = vm.Product.ProductId,
+                        TransferQuantity = vm.TransferQuantity,
+                    }).ToList();
+
+                await StockTransferService.AddStockTransferAsync(st_data, sti_data);
+                Snackbar.Add("Stock Transfer added to draft.", Severity.Success);
+                StockTransfer = new(); // Reset
+                await dataGrid.ReloadServerData(); // Reload grid if it exists
+            }
+            catch (InvalidOperationException ex)
+            {
+                Snackbar.Add(ex.Message, Severity.Error);
+            }
+        }
+    }
+
+    private async Task<IEnumerable<Product>> SearchProduct(string value, CancellationToken token)
+    {
+
+        if (StockTransfer.SourceBranch == null)
+        {
+            return new List<Product>();
+        }
+
+
+        // Filter inventories based on the source branch
+        _sourceBranchInventories = await InventoryService.GetAllInventoryByBranchAsync(StockTransfer.SourceBranch.BranchId);
+
+
+        if (string.IsNullOrEmpty(value))
+        {
+            // Return all available products from the source branch, excluding already added ones.
+            return _sourceBranchInventories
+                .Where(p => !StockTransferItems.Any(poi => poi.Product.ProductId == p.Product.ProductId))
+                .Select(i => i.Product);
+        }
+
+        // Filter products based on search value and exclude already added ones, from the source branch.
+        return _sourceBranchInventories
+            .Where(p => p.Product.ProductName.Contains(value, StringComparison.InvariantCultureIgnoreCase) ||
+                        p.Product.SKU.Contains(value, StringComparison.InvariantCultureIgnoreCase))
+            .Where(p => !StockTransferItems.Any(poi => poi.Product.ProductId == p.Product.ProductId))
+            .Select(i => i.Product);
+    }
+
+    private async Task<IEnumerable<Branch>> SearchBranch(string value, CancellationToken token)
+    {
+        if (string.IsNullOrEmpty(value))
+        {
+            return _branches
+                .Where(b => b.BranchName != StockTransfer.SourceBranch.BranchName && b.BranchName != StockTransfer.DestinationBranch.BranchName);
+        }
+
+        return _branches
+            .Where(b => b.BranchName.Contains(value, StringComparison.InvariantCultureIgnoreCase) &&
+                        b.BranchName != StockTransfer.SourceBranch.BranchName &&
+                        b.BranchName != StockTransfer.DestinationBranch.BranchName);
+    }
+
+    // events
+    Task RemoveBatchProduct(StockTransferItemViewModel item)
+    {
+        StockTransferItems.Remove(item);
+        return dataGrid.ReloadServerData();
+
+    }
+
+    private void After()
+    {
+        StockTransferItem.AvailableQuantity = _sourceBranchInventories.Where(i => i.Product.ProductId == StockTransferItem.Product.ProductId)
+                                                          .First().OnHandquantity;
+
+    }
+
+
+    private async void HandleChangeSourceBranch()
+    {
+        _sourceBranchInventories = await InventoryService.GetAllInventoryByBranchAsync(StockTransfer.SourceBranch.BranchId);
+        StockTransferItem = new();
+
+    }
+
+    private Task AddBatchStockTransferItem(EditContext context)
+    {
+
+
+        if (context.Validate())
+        {
+            StockTransferItems.Add(StockTransferItem);
+            StockTransferItem = new(); // Reset
+        }
+
+        return dataGrid.ReloadServerData();
+
+
+    }
+    
+}

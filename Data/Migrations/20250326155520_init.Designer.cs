@@ -12,15 +12,15 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace InventiCloud.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250309114255_DropSupplierId")]
-    partial class DropSupplierId
+    [Migration("20250326155520_init")]
+    partial class init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.13")
+                .HasAnnotation("ProductVersion", "8.0.14")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -88,6 +88,24 @@ namespace InventiCloud.Migrations
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
                     b.ToTable("AspNetUsers", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = "your-user-id-1",
+                            AccessFailedCount = 0,
+                            ConcurrencyStamp = "8fefdc8a-483d-42f4-8eb8-1be600c78de8",
+                            Email = "admin@example.com",
+                            EmailConfirmed = true,
+                            LockoutEnabled = false,
+                            NormalizedEmail = "ADMIN@EXAMPLE.COM",
+                            NormalizedUserName = "ADMIN",
+                            PasswordHash = "AQAAAAIAAYagAAAAECcNDPyihU4AS5a+71WbLa9GwHF7YDXL/4AwUif4vtKwtPCmr3NmPcQ1lAmpCfDYIg==",
+                            PhoneNumberConfirmed = false,
+                            SecurityStamp = "b9956b54-5ecb-4080-a813-3a58e6c8da1d",
+                            TwoFactorEnabled = false,
+                            UserName = "admin"
+                        });
                 });
 
             modelBuilder.Entity("InventiCloud.Entities.Attribute", b =>
@@ -197,7 +215,7 @@ namespace InventiCloud.Migrations
                         {
                             BranchId = 1,
                             Address = "123 Main St",
-                            BranchName = "Main Warehouse",
+                            BranchName = "Branch A",
                             City = "Anytown",
                             Country = "USA",
                             Email = "warehouse@example.com",
@@ -209,7 +227,7 @@ namespace InventiCloud.Migrations
                         {
                             BranchId = 2,
                             Address = "456 Oak Ave",
-                            BranchName = "Retail Store A",
+                            BranchName = "Branch B",
                             City = "Springfield",
                             Country = "Canada",
                             Email = "retailA@example.com",
@@ -221,7 +239,7 @@ namespace InventiCloud.Migrations
                         {
                             BranchId = 3,
                             Address = "789 Pine Ln",
-                            BranchName = "Distribution Center",
+                            BranchName = "Branch C",
                             City = "London",
                             Country = "UK",
                             Email = "distribution@example.com",
@@ -273,6 +291,33 @@ namespace InventiCloud.Migrations
                         .IsUnique();
 
                     b.ToTable("Categories");
+
+                    b.HasData(
+                        new
+                        {
+                            CategoryId = 1,
+                            CategoryName = "Eyeglasses"
+                        },
+                        new
+                        {
+                            CategoryId = 2,
+                            CategoryName = "Contact Lenses"
+                        },
+                        new
+                        {
+                            CategoryId = 3,
+                            CategoryName = "Reading Glasses"
+                        },
+                        new
+                        {
+                            CategoryId = 4,
+                            CategoryName = "Eye Care Products"
+                        },
+                        new
+                        {
+                            CategoryId = 5,
+                            CategoryName = "Sunglasses"
+                        });
                 });
 
             modelBuilder.Entity("InventiCloud.Entities.Customer", b =>
@@ -309,16 +354,16 @@ namespace InventiCloud.Migrations
 
             modelBuilder.Entity("InventiCloud.Entities.Inventory", b =>
                 {
-                    b.Property<int>("InventroyId")
+                    b.Property<int>("InventoryId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("InventroyId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("InventoryId"));
 
                     b.Property<int>("AvailableQuantity")
                         .HasColumnType("int");
 
-                    b.Property<int>("BranchID")
+                    b.Property<int>("BranchId")
                         .HasColumnType("int");
 
                     b.Property<int>("IncomingQuantity")
@@ -330,16 +375,168 @@ namespace InventiCloud.Migrations
                     b.Property<int>("OutgoingQuantity")
                         .HasColumnType("int");
 
-                    b.Property<int>("ProductID")
+                    b.Property<int>("ProductId")
                         .HasColumnType("int");
 
-                    b.HasKey("InventroyId");
+                    b.HasKey("InventoryId");
 
-                    b.HasIndex("BranchID");
+                    b.HasIndex("BranchId");
 
-                    b.HasIndex("ProductID");
+                    b.HasIndex("ProductId");
 
                     b.ToTable("Inventories");
+
+                    b.HasData(
+                        new
+                        {
+                            InventoryId = 1,
+                            AvailableQuantity = 0,
+                            BranchId = 1,
+                            IncomingQuantity = 0,
+                            OnHandquantity = 100,
+                            OutgoingQuantity = 0,
+                            ProductId = 1
+                        },
+                        new
+                        {
+                            InventoryId = 2,
+                            AvailableQuantity = 0,
+                            BranchId = 2,
+                            IncomingQuantity = 0,
+                            OnHandquantity = 50,
+                            OutgoingQuantity = 0,
+                            ProductId = 1
+                        },
+                        new
+                        {
+                            InventoryId = 3,
+                            AvailableQuantity = 0,
+                            BranchId = 3,
+                            IncomingQuantity = 0,
+                            OnHandquantity = 75,
+                            OutgoingQuantity = 0,
+                            ProductId = 1
+                        },
+                        new
+                        {
+                            InventoryId = 4,
+                            AvailableQuantity = 0,
+                            BranchId = 1,
+                            IncomingQuantity = 0,
+                            OnHandquantity = 200,
+                            OutgoingQuantity = 0,
+                            ProductId = 2
+                        },
+                        new
+                        {
+                            InventoryId = 5,
+                            AvailableQuantity = 0,
+                            BranchId = 2,
+                            IncomingQuantity = 0,
+                            OnHandquantity = 150,
+                            OutgoingQuantity = 0,
+                            ProductId = 2
+                        },
+                        new
+                        {
+                            InventoryId = 6,
+                            AvailableQuantity = 0,
+                            BranchId = 3,
+                            IncomingQuantity = 0,
+                            OnHandquantity = 150,
+                            OutgoingQuantity = 0,
+                            ProductId = 2
+                        },
+                        new
+                        {
+                            InventoryId = 7,
+                            AvailableQuantity = 0,
+                            BranchId = 1,
+                            IncomingQuantity = 0,
+                            OnHandquantity = 80,
+                            OutgoingQuantity = 0,
+                            ProductId = 3
+                        },
+                        new
+                        {
+                            InventoryId = 8,
+                            AvailableQuantity = 0,
+                            BranchId = 2,
+                            IncomingQuantity = 0,
+                            OnHandquantity = 120,
+                            OutgoingQuantity = 0,
+                            ProductId = 3
+                        },
+                        new
+                        {
+                            InventoryId = 9,
+                            AvailableQuantity = 0,
+                            BranchId = 3,
+                            IncomingQuantity = 0,
+                            OnHandquantity = 90,
+                            OutgoingQuantity = 0,
+                            ProductId = 3
+                        },
+                        new
+                        {
+                            InventoryId = 10,
+                            AvailableQuantity = 0,
+                            BranchId = 1,
+                            IncomingQuantity = 0,
+                            OnHandquantity = 300,
+                            OutgoingQuantity = 0,
+                            ProductId = 4
+                        },
+                        new
+                        {
+                            InventoryId = 11,
+                            AvailableQuantity = 0,
+                            BranchId = 2,
+                            IncomingQuantity = 0,
+                            OnHandquantity = 250,
+                            OutgoingQuantity = 0,
+                            ProductId = 4
+                        },
+                        new
+                        {
+                            InventoryId = 12,
+                            AvailableQuantity = 0,
+                            BranchId = 3,
+                            IncomingQuantity = 0,
+                            OnHandquantity = 280,
+                            OutgoingQuantity = 0,
+                            ProductId = 4
+                        },
+                        new
+                        {
+                            InventoryId = 13,
+                            AvailableQuantity = 0,
+                            BranchId = 1,
+                            IncomingQuantity = 0,
+                            OnHandquantity = 60,
+                            OutgoingQuantity = 0,
+                            ProductId = 5
+                        },
+                        new
+                        {
+                            InventoryId = 14,
+                            AvailableQuantity = 0,
+                            BranchId = 2,
+                            IncomingQuantity = 0,
+                            OnHandquantity = 40,
+                            OutgoingQuantity = 0,
+                            ProductId = 5
+                        },
+                        new
+                        {
+                            InventoryId = 15,
+                            AvailableQuantity = 0,
+                            BranchId = 3,
+                            IncomingQuantity = 0,
+                            OnHandquantity = 70,
+                            OutgoingQuantity = 0,
+                            ProductId = 5
+                        });
                 });
 
             modelBuilder.Entity("InventiCloud.Entities.Product", b =>
@@ -367,7 +564,7 @@ namespace InventiCloud.Migrations
 
                     b.Property<string>("ProductName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("SKU")
                         .IsRequired()
@@ -390,10 +587,80 @@ namespace InventiCloud.Migrations
 
                     b.HasIndex("CategoryId");
 
+                    b.HasIndex("ProductName")
+                        .IsUnique();
+
                     b.HasIndex("SKU")
                         .IsUnique();
 
                     b.ToTable("Products");
+
+                    b.HasData(
+                        new
+                        {
+                            ProductId = 1,
+                            Brand = "VisionGuard",
+                            CategoryId = 1,
+                            Description = "High-quality glasses to protect your eyes from harmful blue light.",
+                            ImageURL = "glasses_blue_light.jpg",
+                            ProductName = "Premium Blue Light Blocking Glasses",
+                            SKU = "VG-BL-001",
+                            UnitCost = 50.00m,
+                            UnitPrice = 120.00m,
+                            isActive = true
+                        },
+                        new
+                        {
+                            ProductId = 2,
+                            Brand = "AquaView",
+                            CategoryId = 2,
+                            Description = "Comfortable daily disposable contact lenses for clear vision.",
+                            ImageURL = "contact_lenses_daily.jpg",
+                            ProductName = "Daily Disposable Contact Lenses",
+                            SKU = "AV-CD-002",
+                            UnitCost = 15.00m,
+                            UnitPrice = 35.00m,
+                            isActive = true
+                        },
+                        new
+                        {
+                            ProductId = 3,
+                            Brand = "ReadWell",
+                            CategoryId = 3,
+                            Description = "Stylish reading glasses with anti-glare coating for reduced eye strain.",
+                            ImageURL = "reading_glasses_anti_glare.jpg",
+                            ProductName = "Anti-Glare Reading Glasses",
+                            SKU = "RW-RG-003",
+                            UnitCost = 25.00m,
+                            UnitPrice = 60.00m,
+                            isActive = true
+                        },
+                        new
+                        {
+                            ProductId = 4,
+                            Brand = "MoisturePlus",
+                            CategoryId = 4,
+                            Description = "Relief from dry, irritated eyes with these lubricating eye drops.",
+                            ImageURL = "eye_drops_dry_eyes.jpg",
+                            ProductName = "Eye Drops for Dry Eyes",
+                            SKU = "MP-ED-004",
+                            UnitCost = 8.00m,
+                            UnitPrice = 20.00m,
+                            isActive = true
+                        },
+                        new
+                        {
+                            ProductId = 5,
+                            Brand = "SunStyle",
+                            CategoryId = 1,
+                            Description = "Fashionable sunglasses with UV protection for sunny days.",
+                            ImageURL = "designer_sunglasses.jpg",
+                            ProductName = "Designer Sunglasses",
+                            SKU = "SS-SG-005",
+                            UnitCost = 80.00m,
+                            UnitPrice = 200.00m,
+                            isActive = true
+                        });
                 });
 
             modelBuilder.Entity("InventiCloud.Entities.ProductAttributeValue", b =>
@@ -445,7 +712,7 @@ namespace InventiCloud.Migrations
                     b.Property<DateTime?>("EstimatedArrival")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime>("PurchasedDate")
+                    b.Property<DateTime?>("PurchasedDate")
                         .HasColumnType("datetime2");
 
                     b.Property<DateTime?>("ReceivedDate")
@@ -496,12 +763,12 @@ namespace InventiCloud.Migrations
                         .HasColumnType("int");
 
                     b.Property<decimal>("SubTotal")
-                        .HasPrecision(19, 4)
-                        .HasColumnType("decimal(19,4)");
+                        .HasPrecision(19, 2)
+                        .HasColumnType("decimal(19,2)");
 
                     b.Property<decimal>("UnitPrice")
-                        .HasPrecision(19, 4)
-                        .HasColumnType("decimal(19,4)");
+                        .HasPrecision(19, 2)
+                        .HasColumnType("decimal(19,2)");
 
                     b.HasKey("PurchaseOrderItemId");
 
@@ -657,39 +924,48 @@ namespace InventiCloud.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("StockTransferId"));
 
-                    b.Property<int>("FromBranchId")
+                    b.Property<string>("CreatedById")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime?>("DateCompleted")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("DestinationBranchId")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("ReceivedDate")
-                        .HasColumnType("datetime2");
+                    b.Property<string>("ReferenceNumber")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("SourceBranchId")
+                        .HasColumnType("int");
 
                     b.Property<int>("StatusId")
                         .HasColumnType("int");
 
-                    b.Property<int>("ToBranchId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("TransferDate")
-                        .HasColumnType("datetime2");
-
                     b.HasKey("StockTransferId");
 
-                    b.HasIndex("FromBranchId");
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("DestinationBranchId");
+
+                    b.HasIndex("SourceBranchId");
 
                     b.HasIndex("StatusId");
-
-                    b.HasIndex("ToBranchId");
 
                     b.ToTable("StockTransfers");
                 });
 
-            modelBuilder.Entity("InventiCloud.Entities.StockTransferDetail", b =>
+            modelBuilder.Entity("InventiCloud.Entities.StockTransferItem", b =>
                 {
-                    b.Property<int>("StockTransferDetailId")
+                    b.Property<int>("StockTransferItemlId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("StockTransferDetailId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("StockTransferItemlId"));
 
                     b.Property<int>("ProductId")
                         .HasColumnType("int");
@@ -700,13 +976,13 @@ namespace InventiCloud.Migrations
                     b.Property<int>("TransferQuantity")
                         .HasColumnType("int");
 
-                    b.HasKey("StockTransferDetailId");
+                    b.HasKey("StockTransferItemlId");
 
                     b.HasIndex("ProductId");
 
                     b.HasIndex("StockTransferId");
 
-                    b.ToTable("StockTransferDetails");
+                    b.ToTable("StockTransferItems");
                 });
 
             modelBuilder.Entity("InventiCloud.Entities.StockTransferStatus", b =>
@@ -724,6 +1000,23 @@ namespace InventiCloud.Migrations
                     b.HasKey("StockTransferStatusId");
 
                     b.ToTable("StockTransferStatuses");
+
+                    b.HasData(
+                        new
+                        {
+                            StockTransferStatusId = 1,
+                            StatusName = "Draft"
+                        },
+                        new
+                        {
+                            StockTransferStatusId = 2,
+                            StatusName = "Pending"
+                        },
+                        new
+                        {
+                            StockTransferStatusId = 3,
+                            StatusName = "Completed"
+                        });
                 });
 
             modelBuilder.Entity("InventiCloud.Entities.Supplier", b =>
@@ -763,10 +1056,6 @@ namespace InventiCloud.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Region")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("SupplierName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -777,6 +1066,21 @@ namespace InventiCloud.Migrations
                         .IsUnique();
 
                     b.ToTable("Suppliers");
+
+                    b.HasData(
+                        new
+                        {
+                            SupplierCode = "SUP001",
+                            Address = "123 Main St",
+                            City = "New York",
+                            Company = "Global Tech Inc.",
+                            ContactPerson = "John Doe",
+                            Country = "USA",
+                            Email = "john.doe@globaltech.com",
+                            PhoneNumber = "+15551234567",
+                            PostalCode = "12345",
+                            SupplierName = "Global Electronics"
+                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -946,13 +1250,13 @@ namespace InventiCloud.Migrations
                 {
                     b.HasOne("InventiCloud.Entities.Branch", "Branch")
                         .WithMany("Inventories")
-                        .HasForeignKey("BranchID")
+                        .HasForeignKey("BranchId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("InventiCloud.Entities.Product", "Product")
                         .WithMany("Inventories")
-                        .HasForeignKey("ProductID")
+                        .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -1107,9 +1411,21 @@ namespace InventiCloud.Migrations
 
             modelBuilder.Entity("InventiCloud.Entities.StockTransfer", b =>
                 {
-                    b.HasOne("InventiCloud.Entities.Branch", "FromBranch")
+                    b.HasOne("InventiCloud.Data.ApplicationUser", "CreatedBy")
                         .WithMany()
-                        .HasForeignKey("FromBranchId")
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("InventiCloud.Entities.Branch", "DestinationBranch")
+                        .WithMany()
+                        .HasForeignKey("DestinationBranchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("InventiCloud.Entities.Branch", "SourceBranch")
+                        .WithMany()
+                        .HasForeignKey("SourceBranchId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -1119,20 +1435,16 @@ namespace InventiCloud.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("InventiCloud.Entities.Branch", "ToBranch")
-                        .WithMany()
-                        .HasForeignKey("ToBranchId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                    b.Navigation("CreatedBy");
 
-                    b.Navigation("FromBranch");
+                    b.Navigation("DestinationBranch");
+
+                    b.Navigation("SourceBranch");
 
                     b.Navigation("Status");
-
-                    b.Navigation("ToBranch");
                 });
 
-            modelBuilder.Entity("InventiCloud.Entities.StockTransferDetail", b =>
+            modelBuilder.Entity("InventiCloud.Entities.StockTransferItem", b =>
                 {
                     b.HasOne("InventiCloud.Entities.Product", "Product")
                         .WithMany()
@@ -1141,7 +1453,7 @@ namespace InventiCloud.Migrations
                         .IsRequired();
 
                     b.HasOne("InventiCloud.Entities.StockTransfer", "StockTransfer")
-                        .WithMany("Details")
+                        .WithMany("StockTransferItems")
                         .HasForeignKey("StockTransferId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1243,7 +1555,7 @@ namespace InventiCloud.Migrations
 
             modelBuilder.Entity("InventiCloud.Entities.StockTransfer", b =>
                 {
-                    b.Navigation("Details");
+                    b.Navigation("StockTransferItems");
                 });
 
             modelBuilder.Entity("InventiCloud.Entities.Supplier", b =>

@@ -38,7 +38,7 @@ namespace InventiCloud.Services
                 await context.SaveChangesAsync(); // Generate PurchaseOrderId
 
                 // Generate and set the reference number.
-                purchaseOrder.ReferenceNumber = PurchaseOrderGenerateReferenceNumber.GenerateReferenceNumber(purchaseOrder.PurchaseOrderId);
+                purchaseOrder.ReferenceNumber = ReferenceNumberGenerator.GeneratePurchaseOrderReference(purchaseOrder.PurchaseOrderId);
 
                 // Update the purchase order 
                 context.PurchaseOrders.Update(purchaseOrder);
