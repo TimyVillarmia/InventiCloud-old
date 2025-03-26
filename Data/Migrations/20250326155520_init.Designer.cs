@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace InventiCloud.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250326051724_init")]
+    [Migration("20250326155520_init")]
     partial class init
     {
         /// <inheritdoc />
@@ -94,15 +94,15 @@ namespace InventiCloud.Migrations
                         {
                             Id = "your-user-id-1",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "7568dc33-76be-492e-b154-f3bd44261390",
+                            ConcurrencyStamp = "8fefdc8a-483d-42f4-8eb8-1be600c78de8",
                             Email = "admin@example.com",
                             EmailConfirmed = true,
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN@EXAMPLE.COM",
                             NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAEAEDguWDs8iOEwuuIrVS/f65un7ejYA8Ff0jGb62eK1oL1SisBm3wNIAmWOTYlgm0g==",
+                            PasswordHash = "AQAAAAIAAYagAAAAECcNDPyihU4AS5a+71WbLa9GwHF7YDXL/4AwUif4vtKwtPCmr3NmPcQ1lAmpCfDYIg==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "63d487e8-e5c0-4a64-ae49-7bef0a80220b",
+                            SecurityStamp = "b9956b54-5ecb-4080-a813-3a58e6c8da1d",
                             TwoFactorEnabled = false,
                             UserName = "admin"
                         });
@@ -982,7 +982,7 @@ namespace InventiCloud.Migrations
 
                     b.HasIndex("StockTransferId");
 
-                    b.ToTable("StockTransferDetails");
+                    b.ToTable("StockTransferItems");
                 });
 
             modelBuilder.Entity("InventiCloud.Entities.StockTransferStatus", b =>
@@ -1000,6 +1000,23 @@ namespace InventiCloud.Migrations
                     b.HasKey("StockTransferStatusId");
 
                     b.ToTable("StockTransferStatuses");
+
+                    b.HasData(
+                        new
+                        {
+                            StockTransferStatusId = 1,
+                            StatusName = "Draft"
+                        },
+                        new
+                        {
+                            StockTransferStatusId = 2,
+                            StatusName = "Pending"
+                        },
+                        new
+                        {
+                            StockTransferStatusId = 3,
+                            StatusName = "Completed"
+                        });
                 });
 
             modelBuilder.Entity("InventiCloud.Entities.Supplier", b =>

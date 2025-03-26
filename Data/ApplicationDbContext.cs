@@ -27,7 +27,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<StockAdjustmentReason> StockAdjustmentReasons { get; set; }
     public DbSet<StockAdjustmentStatus> StockAdjustmentStatuses { get; set; }
     public DbSet<StockTransfer> StockTransfers { get; set; }
-    public DbSet<StockTransferItem> StockTransferDetails { get; set; }
+    public DbSet<StockTransferItem> StockTransferItems { get; set; }
     public DbSet<StockTransferStatus> StockTransferStatuses { get; set; }
     public DbSet<Supplier> Suppliers { get; set; }
 
@@ -41,6 +41,13 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             new PurchaseOrderStatus { PurchaseOrderStatusId = 2, StatusName = "Ordered" },
             new PurchaseOrderStatus { PurchaseOrderStatusId = 3, StatusName = "Completed" },
             new PurchaseOrderStatus { PurchaseOrderStatusId = 4, StatusName = "Cancelled" }
+        );
+
+        // Seed StockTransferStatus data
+        modelBuilder.Entity<StockTransferStatus>().HasData(
+            new StockTransferStatus { StockTransferStatusId = 1, StatusName = "Draft" },
+            new StockTransferStatus { StockTransferStatusId = 2, StatusName = "Pending" },
+            new StockTransferStatus { StockTransferStatusId = 3, StatusName = "Completed" }
         );
 
         modelBuilder.Entity<ApplicationUser>().HasData(

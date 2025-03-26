@@ -1,4 +1,4 @@
-﻿@page "/inventory/stock-transfer"
+﻿@page "/inventory/stock-transfers/"
 @using InventiCloud.Components.UI
 @using InventiCloud.Services
 @using InventiCloud.Services.Interface
@@ -26,10 +26,10 @@ else
         <MudPaper Height="500px" Class="justify-center align-content-center">
             <MudText Class="bol" Typo="Typo.h6" Align="Align.Center">No Stock Transfers Found</MudText>
             <MudText Typo="Typo.body1" Align="Align.Center">
-                Click the button below to create your first stock transfer.
+                Start a new transfer to move items between branches.
             </MudText>
             <MudContainer Class="d-flex justify-center mt-2">
-                <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Href="/inventory/stock-transfer/create" Color="Color.Primary" Class="text-uppercase">
+                <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Href="/inventory/stock-transfers/create" Color="Color.Primary" Class="text-uppercase">
                     Create Stock Transfer
                 </MudButton>
             </MudContainer>
@@ -48,7 +48,7 @@ else
             </MudItem>
 
             <MudItem sm="6">
-                <MudButton Variant="Variant.Filled" Href="/inventory/stock-transfer/create" Color="Color.Primary" Class="text-uppercase">
+                <MudButton Variant="Variant.Filled" Href="/inventory/stock-transfers/create" Color="Color.Primary" Class="text-uppercase">
                     Create Stock Transfer
                 </MudButton>
             </MudItem>  
@@ -62,16 +62,15 @@ else
                 <PropertyColumn Property="st => st.DestinationBranch.BranchName" Title="Destination Branch" />
                 <TemplateColumn Title="Status">
                     <CellTemplate>
-                        <MudChip Color="@GetChipColor(context.Item.Status.StatusName)" Size="Size.Small">@context.Item.PurchaseOrderStatus.StatusName</MudChip>
+                        <MudChip Color="@GetChipColor(context.Item.Status.StatusName)" Size="Size.Small">@context.Item.Status.StatusName</MudChip>
                     </CellTemplate>
                 </TemplateColumn>
-                <PropertyColumn Property="po => po.EstimatedArrival" Title="Estimated Arrival" />
-                <PropertyColumn Property="po => po.TotalAmount" Title="Total" />
+                <PropertyColumn Property="st => st.DateCreated" Title="Date Created" />
                 <TemplateColumn CellClass="d-flex justify-end">
                     <CellTemplate>
                         <MudMenu Icon="@Icons.Material.Filled.MoreVert" AriaLabel="Open user menu">
-                            <MudMenuItem Label="Edit" href="@($"/purchase/orders/{context.Item.ReferenceNumber}")" />
-                            @if (context.Item.PurchaseOrderStatus.StatusName.ToLower() == "draft")
+                            <MudMenuItem Label="Edit" href="@($"/inventory/stock-transfers/{context.Item.ReferenceNumber}")" />
+                            @if (context.Item.Status.StatusName.ToLower() == "draft")
                             {
                                 <MudMenuItem Label="Delete" Class="red-text" OnClick="@(() => OpenDialogAsync(context.Item))" />
 
@@ -106,6 +105,21 @@ else
     {
         _branches = await BranchService.GetAllBranchAsync();
         _stocktransfers = await StockTransferService.GetAllStockTransferAsync();
+    }
+
+    private Color GetChipColor(string status)
+    {
+        switch (status.ToLower())
+        {
+            case "draft":
+                return Color.Default;
+            case "pending":
+                return Color.Info;
+            case "completed":
+                return Color.Success;
+            default:
+                return Color.Default;
+        }
     }
 
     private async Task<GridData<StockTransfer>> ServerReload(GridState<StockTransfer> state)
@@ -161,7 +175,16 @@ else
             return;
         }
 
-        NavigationManager.NavigateTo($"/inventory/stock-transfer/{args.Item.ReferenceNumber}");
+        NavigationManager.NavigateTo($"/inventory/stock-transfers/{args.Item.ReferenceNumber}");
 
     }
+
+    async Task OpenDialogAsync(StockTransfer stockTransfer)
+    {
+        
+    }
+
+
+    public async ValueTask DisposeAsync() => await StockTransferService.DisposeAsync();
+
 }

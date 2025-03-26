@@ -1,4 +1,4 @@
-﻿@page "/inventory/stock-transfer/create"
+﻿@page "/inventory/stock-transfers/create"
 @using InventiCloud.Components.UI
 @using InventiCloud.Services
 @using InventiCloud.Services.Interface
@@ -13,7 +13,7 @@
 <MudContainer Class="pt-5" MaxWidth="MaxWidth.Large">
 
     <div class="d-flex align-items-center mb-4">
-        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" aria-label="delete" Href="/inventory/stock-transfer" />
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" aria-label="delete" Href="/inventory/stock-transfers" />
         <MudText Typo="Typo.h4">CREATE STOCK TRANSFER</MudText>
     </div>
 
@@ -85,7 +85,7 @@
             </Columns>
         </MudDataGrid>
         <div class="d-flex align-end mt-12">
-            <MudButton Variant="Variant.Filled" Color="Color.Default" Href="/purchase/orders" Class="ml-auto">CANCEL</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Default" Href="/inventory/stock-transfers" Class="ml-auto">CANCEL</MudButton>
             <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-2">SAVE AS DRAFT</MudButton>
 
         </div>
@@ -254,6 +254,7 @@
     private async void HandleChangeSourceBranch()
     {
         _sourceBranchInventories = await InventoryService.GetAllInventoryByBranchAsync(StockTransfer.SourceBranch.BranchId);
+        StockTransferItem = new();
 
     }
 
