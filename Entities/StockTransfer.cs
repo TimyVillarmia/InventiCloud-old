@@ -29,7 +29,10 @@ namespace InventiCloud.Entities
 
         public virtual ApplicationUser CreatedBy { get; set; }
 
-        public virtual Branch SourceBranch { get; set; } 
+        [Required(ErrorMessage = "Source Branch is required.")]
+        public virtual Branch SourceBranch { get; set; }
+
+        [Required(ErrorMessage = "Destination Branch is required.")]
         public virtual Branch DestinationBranch { get; set; }
         public virtual StockTransferStatus Status { get; set; }
         public virtual ICollection<StockTransferItem> StockTransferItems { get; set; } 

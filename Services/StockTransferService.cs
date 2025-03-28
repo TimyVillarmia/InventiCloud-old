@@ -107,6 +107,7 @@ namespace InventiCloud.Services
                 .Include(st => st.DestinationBranch)
                 .Include(st => st.Status)
                 .Include(st => st.StockTransferItems)
+                    .ThenInclude(st => st.Product)
                 .AsNoTracking()
                 .ToListAsync();
         }
@@ -135,6 +136,11 @@ namespace InventiCloud.Services
 
 
                 var stockTransfer = await context.StockTransfers
+                    .Include(st => st.CreatedBy)
+                    .Include(st => st.SourceBranch)
+                    .Include(st => st.DestinationBranch)
+                    .Include(st => st.Status)
+                    .Include(st => st.StockTransferItems)
                     .FirstAsync(po => po.ReferenceNumber == referenceNumber);
 
 
