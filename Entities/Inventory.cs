@@ -17,7 +17,7 @@ public class Inventory
     public int OnHandquantity { get; set; } = 0;
     public int IncomingQuantity { get; set; } = 0;
     public int AvailableQuantity { get; set; } = 0;
-    public int OutgoingQuantity { get; set; } = 0;
+    public int Allocated { get; set; } = 0;
 
  // navigation properties
     public virtual Product Product { get; set; }
