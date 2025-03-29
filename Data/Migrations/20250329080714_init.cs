@@ -376,7 +376,7 @@ namespace InventiCloud.Migrations
                     OnHandquantity = table.Column<int>(type: "int", nullable: false),
                     IncomingQuantity = table.Column<int>(type: "int", nullable: false),
                     AvailableQuantity = table.Column<int>(type: "int", nullable: false),
-                    OutgoingQuantity = table.Column<int>(type: "int", nullable: false)
+                    Allocated = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -516,7 +516,7 @@ namespace InventiCloud.Migrations
             migrationBuilder.InsertData(
                 table: "AspNetUsers",
                 columns: new[] { "Id", "AccessFailedCount", "ConcurrencyStamp", "Email", "EmailConfirmed", "LockoutEnabled", "LockoutEnd", "NormalizedEmail", "NormalizedUserName", "PasswordHash", "PhoneNumber", "PhoneNumberConfirmed", "SecurityStamp", "TwoFactorEnabled", "UserName" },
-                values: new object[] { "your-user-id-1", 0, "aea2dfc5-1c5b-4b0f-8c82-b452ad757702", "admin@example.com", true, false, null, "ADMIN@EXAMPLE.COM", "ADMIN", "AQAAAAIAAYagAAAAEDwdCEf1CKQYEkCkzwF31kLlf6CKbm/LtnhxU5zRfNnr7rU7vy42Etvabnp17IVEgA==", null, false, "27d2d507-b760-428d-84f4-c5e3e5d9950c", false, "admin" });
+                values: new object[] { "your-user-id-1", 0, "7da4ec69-d502-46a6-9430-dfd9a7f4271d", "admin@example.com", true, false, null, "ADMIN@EXAMPLE.COM", "ADMIN", "AQAAAAIAAYagAAAAEO8jA0GpcRSNnPR/fOKm9QSnBcqgtRtPDIpeZiG3N3ITaLSot0vKM+dIeRv/kwfqzw==", null, false, "797f5db8-d836-41ee-b9fb-28b6695e8542", false, "admin" });
 
             migrationBuilder.InsertData(
                 table: "Branches",
@@ -581,24 +581,24 @@ namespace InventiCloud.Migrations
 
             migrationBuilder.InsertData(
                 table: "Inventories",
-                columns: new[] { "InventoryId", "AvailableQuantity", "BranchId", "IncomingQuantity", "OnHandquantity", "OutgoingQuantity", "ProductId" },
+                columns: new[] { "InventoryId", "Allocated", "AvailableQuantity", "BranchId", "IncomingQuantity", "OnHandquantity", "ProductId" },
                 values: new object[,]
                 {
-                    { 1, 0, 1, 0, 100, 0, 1 },
-                    { 2, 0, 2, 0, 50, 0, 1 },
-                    { 3, 0, 3, 0, 75, 0, 1 },
-                    { 4, 0, 1, 0, 200, 0, 2 },
-                    { 5, 0, 2, 0, 150, 0, 2 },
-                    { 6, 0, 3, 0, 150, 0, 2 },
-                    { 7, 0, 1, 0, 80, 0, 3 },
-                    { 8, 0, 2, 0, 120, 0, 3 },
-                    { 9, 0, 3, 0, 90, 0, 3 },
-                    { 10, 0, 1, 0, 300, 0, 4 },
-                    { 11, 0, 2, 0, 250, 0, 4 },
-                    { 12, 0, 3, 0, 280, 0, 4 },
-                    { 13, 0, 1, 0, 60, 0, 5 },
-                    { 14, 0, 2, 0, 40, 0, 5 },
-                    { 15, 0, 3, 0, 70, 0, 5 }
+                    { 1, 0, 0, 1, 0, 100, 1 },
+                    { 2, 0, 0, 2, 0, 50, 1 },
+                    { 3, 0, 0, 3, 0, 75, 1 },
+                    { 4, 0, 0, 1, 0, 200, 2 },
+                    { 5, 0, 0, 2, 0, 150, 2 },
+                    { 6, 0, 0, 3, 0, 150, 2 },
+                    { 7, 0, 0, 1, 0, 80, 3 },
+                    { 8, 0, 0, 2, 0, 120, 3 },
+                    { 9, 0, 0, 3, 0, 90, 3 },
+                    { 10, 0, 0, 1, 0, 300, 4 },
+                    { 11, 0, 0, 2, 0, 250, 4 },
+                    { 12, 0, 0, 3, 0, 280, 4 },
+                    { 13, 0, 0, 1, 0, 60, 5 },
+                    { 14, 0, 0, 2, 0, 40, 5 },
+                    { 15, 0, 0, 3, 0, 70, 5 }
                 });
 
             migrationBuilder.CreateIndex(

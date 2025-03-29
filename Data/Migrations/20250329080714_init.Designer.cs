@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace InventiCloud.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250328134916_init")]
+    [Migration("20250329080714_init")]
     partial class init
     {
         /// <inheritdoc />
@@ -94,15 +94,15 @@ namespace InventiCloud.Migrations
                         {
                             Id = "your-user-id-1",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "aea2dfc5-1c5b-4b0f-8c82-b452ad757702",
+                            ConcurrencyStamp = "7da4ec69-d502-46a6-9430-dfd9a7f4271d",
                             Email = "admin@example.com",
                             EmailConfirmed = true,
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN@EXAMPLE.COM",
                             NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAEDwdCEf1CKQYEkCkzwF31kLlf6CKbm/LtnhxU5zRfNnr7rU7vy42Etvabnp17IVEgA==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEO8jA0GpcRSNnPR/fOKm9QSnBcqgtRtPDIpeZiG3N3ITaLSot0vKM+dIeRv/kwfqzw==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "27d2d507-b760-428d-84f4-c5e3e5d9950c",
+                            SecurityStamp = "797f5db8-d836-41ee-b9fb-28b6695e8542",
                             TwoFactorEnabled = false,
                             UserName = "admin"
                         });
@@ -360,6 +360,9 @@ namespace InventiCloud.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("InventoryId"));
 
+                    b.Property<int>("Allocated")
+                        .HasColumnType("int");
+
                     b.Property<int>("AvailableQuantity")
                         .HasColumnType("int");
 
@@ -370,9 +373,6 @@ namespace InventiCloud.Migrations
                         .HasColumnType("int");
 
                     b.Property<int>("OnHandquantity")
-                        .HasColumnType("int");
-
-                    b.Property<int>("OutgoingQuantity")
                         .HasColumnType("int");
 
                     b.Property<int>("ProductId")
@@ -390,151 +390,151 @@ namespace InventiCloud.Migrations
                         new
                         {
                             InventoryId = 1,
+                            Allocated = 0,
                             AvailableQuantity = 0,
                             BranchId = 1,
                             IncomingQuantity = 0,
                             OnHandquantity = 100,
-                            OutgoingQuantity = 0,
                             ProductId = 1
                         },
                         new
                         {
                             InventoryId = 2,
+                            Allocated = 0,
                             AvailableQuantity = 0,
                             BranchId = 2,
                             IncomingQuantity = 0,
                             OnHandquantity = 50,
-                            OutgoingQuantity = 0,
                             ProductId = 1
                         },
                         new
                         {
                             InventoryId = 3,
+                            Allocated = 0,
                             AvailableQuantity = 0,
                             BranchId = 3,
                             IncomingQuantity = 0,
                             OnHandquantity = 75,
-                            OutgoingQuantity = 0,
                             ProductId = 1
                         },
                         new
                         {
                             InventoryId = 4,
+                            Allocated = 0,
                             AvailableQuantity = 0,
                             BranchId = 1,
                             IncomingQuantity = 0,
                             OnHandquantity = 200,
-                            OutgoingQuantity = 0,
                             ProductId = 2
                         },
                         new
                         {
                             InventoryId = 5,
+                            Allocated = 0,
                             AvailableQuantity = 0,
                             BranchId = 2,
                             IncomingQuantity = 0,
                             OnHandquantity = 150,
-                            OutgoingQuantity = 0,
                             ProductId = 2
                         },
                         new
                         {
                             InventoryId = 6,
+                            Allocated = 0,
                             AvailableQuantity = 0,
                             BranchId = 3,
                             IncomingQuantity = 0,
                             OnHandquantity = 150,
-                            OutgoingQuantity = 0,
                             ProductId = 2
                         },
                         new
                         {
                             InventoryId = 7,
+                            Allocated = 0,
                             AvailableQuantity = 0,
                             BranchId = 1,
                             IncomingQuantity = 0,
                             OnHandquantity = 80,
-                            OutgoingQuantity = 0,
                             ProductId = 3
                         },
                         new
                         {
                             InventoryId = 8,
+                            Allocated = 0,
                             AvailableQuantity = 0,
                             BranchId = 2,
                             IncomingQuantity = 0,
                             OnHandquantity = 120,
-                            OutgoingQuantity = 0,
                             ProductId = 3
                         },
                         new
                         {
                             InventoryId = 9,
+                            Allocated = 0,
                             AvailableQuantity = 0,
                             BranchId = 3,
                             IncomingQuantity = 0,
                             OnHandquantity = 90,
-                            OutgoingQuantity = 0,
                             ProductId = 3
                         },
                         new
                         {
                             InventoryId = 10,
+                            Allocated = 0,
                             AvailableQuantity = 0,
                             BranchId = 1,
                             IncomingQuantity = 0,
                             OnHandquantity = 300,
-                            OutgoingQuantity = 0,
                             ProductId = 4
                         },
                         new
                         {
                             InventoryId = 11,
+                            Allocated = 0,
                             AvailableQuantity = 0,
                             BranchId = 2,
                             IncomingQuantity = 0,
                             OnHandquantity = 250,
-                            OutgoingQuantity = 0,
                             ProductId = 4
                         },
                         new
                         {
                             InventoryId = 12,
+                            Allocated = 0,
                             AvailableQuantity = 0,
                             BranchId = 3,
                             IncomingQuantity = 0,
                             OnHandquantity = 280,
-                            OutgoingQuantity = 0,
                             ProductId = 4
                         },
                         new
                         {
                             InventoryId = 13,
+                            Allocated = 0,
                             AvailableQuantity = 0,
                             BranchId = 1,
                             IncomingQuantity = 0,
                             OnHandquantity = 60,
-                            OutgoingQuantity = 0,
                             ProductId = 5
                         },
                         new
                         {
                             InventoryId = 14,
+                            Allocated = 0,
                             AvailableQuantity = 0,
                             BranchId = 2,
                             IncomingQuantity = 0,
                             OnHandquantity = 40,
-                            OutgoingQuantity = 0,
                             ProductId = 5
                         },
                         new
                         {
                             InventoryId = 15,
+                            Allocated = 0,
                             AvailableQuantity = 0,
                             BranchId = 3,
                             IncomingQuantity = 0,
                             OnHandquantity = 70,
-                            OutgoingQuantity = 0,
                             ProductId = 5
                         });
                 });
