@@ -9,6 +9,7 @@
 @inject IProductService ProductService
 @inject IInventoryService InventoryService
 @inject ISnackbar Snackbar
+@inject IDialogService DialogService
 @inject NavigationManager NavigationManager
 
 <MudContainer Class="pt-5" MaxWidth="MaxWidth.Large">
@@ -16,30 +17,31 @@
     <div class="d-flex align-items-center mb-4">
         <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" aria-label="delete" Href="/inventory/stock-transfers" />
         <MudText Typo="Typo.h4">@ReferenceNumber</MudText>
+        <MudChip T="string" Color="@SelectedColor">@Status</MudChip>
     </div>
 
-    <EditForm method="post" Model="@StockTransfer" Context="StockTransferForm" OnValidSubmit="@AddStockTransferToDraft" FormName="updateStockTransfer" Enhance>
+    <EditForm method="post" Model="@StockTransfer" Context="StockTransferForm" FormName="updateStockTransfer" Enhance>
         <DataAnnotationsValidator />
         <MudText Typo="Typo.h6">DETAILS</MudText>
         <MudGrid>
 
             <MudItem xs="12" sm="6">
-                <MudAutocomplete T="Branch" Label="Source Branch" @bind-Value="StockTransfer.SourceBranch" For="@(()=> StockTransfer.SourceBranch)"
+                <MudAutocomplete T="Branch" Label="Source Branch" @bind-Value="StockTransfer.SourceBranch" For="@(()=> StockTransfer.SourceBranch)" Disabled="@( isAllocated && isEmpty ? true : false)"
                 SearchFunc="@SearchBranch" ToStringFunc="@(branch=> branch==null?null : $"{branch.BranchName}")" Variant="Variant.Outlined" @bind-Value:after="HandleChangeSourceBranch" />
                 <MudTextField T="string" Class="mb-4" Label="Purchase Order Number" @bind-Value="StockTransfer.ReferenceNumber" ReadOnly="true" Disabled="true" Variant="Variant.Outlined" />
             </MudItem>
 
             <MudItem xs="12" sm="6">
-                <MudAutocomplete T="Branch" Label="Destination Branch" @bind-Value="StockTransfer.DestinationBranch"
+                <MudAutocomplete T="Branch" Label="Destination Branch" @bind-Value="StockTransfer.DestinationBranch" Disabled="@( isAllocated && isEmpty ? true : false)"
                 SearchFunc="@SearchBranch" ToStringFunc="@(branch=> branch==null?null : $"{branch.BranchName}")" For="@(() => StockTransfer.DestinationBranch)" Variant="Variant.Outlined" />
-                <MudDatePicker Label="Estimated Arrival" Editable="true" @bind-Date="StockTransfer.DateCreated"
-                Mask="@(new DateMask("MM/dd/yyyy"))" DateFormat="MM/dd/yyyy" Placeholder="Estimated Arrival" Variant="Variant.Outlined" />
+                <MudDatePicker Label="Date Created" Editable="true" @bind-Date="StockTransfer.DateCreated" ReadOnly="true"
+                Mask="@(new DateMask("MM/dd/yyyy"))" DateFormat="MM/dd/yyyy" Placeholder="Date Created" Variant="Variant.Outlined" />
             </MudItem>
 
 
         </MudGrid>
 
-        <EditForm method="post" Model="@StockTransferItem" Context="StockTransferItemForm" OnValidSubmit="@AddBatchStockTransferItem" FormName="updateStockTransferItem" Enhance>
+        <EditForm method="post" Model="@StockTransferItem" Context="StockTransferItemForm" OnValidSubmit="@AddStockTransferItem" FormName="updateStockTransferItem" Enhance>
             <DataAnnotationsValidator />
             <MudText Typo="Typo.h6">PRODUCTS</MudText>
             <MudGrid>
@@ -74,25 +76,29 @@
         <MudDataGrid Items="StockTransferItems" Class="mt-4">
             <Columns>
                 <PropertyColumn Property="sti => sti.Product.ProductName" Title="Product" />
-                <PropertyColumn Property="sti => sti.AvailableQuantity" Title="Available Quantity" />
+                @if (isAllocated)
+                {
+                    <PropertyColumn Property="sti => sti.AvailableQuantity" Title="Available Quantity" />
+
+                }
                 <PropertyColumn Property="sti => sti.TransferQuantity" Title="Transfer Quantity" />
                 <TemplateColumn CellClass="d-flex justify-end">
                     <CellTemplate>
                         <MudStack Row>
-                            <MudIconButton Icon="@Icons.Material.Filled.Close" Color="Color.Error" aria-label="delete" OnClick="@(() => RemoveBatchProduct(context.Item))" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Close" Color="Color.Error" aria-label="delete" OnClick="@(() => RemoveStockTransferItem(context.Item))" />
                         </MudStack>
                     </CellTemplate>
                 </TemplateColumn>
             </Columns>
         </MudDataGrid>
         <div class="d-flex align-end mt-12">
-            @if (Status.ToLower() == "draft")
+            @if (Status.ToLower() == "allocated")
             {
                 <MudButton OnClick="DeleteStockTransfer" Variant="Variant.Outlined" Color="Color.Error">DELETE</MudButton>
-                <MudButton OnClick="MarkAsPending" Variant="Variant.Outlined" Color="Color.Info">MARK AS PENDING</MudButton>
-                <MudButton OnClick="SaveChanges" Variant="Variant.Filled" Color="Color.Primary">SAVE CHANGES</MudButton>
+                <MudButton OnClick="MarkAsTransit" Variant="Variant.Outlined" Color="Color.Info">MARK AS IN TRANSIT</MudButton>
+                <MudButton  OnClick="SaveChanges" Variant="Variant.Filled" Color="Color.Primary">SAVE CHANGES</MudButton>
             }
-            else if (Status.ToLower() == "pending")
+            else if (Status.ToLower() == "in transit")
             {
                 <MudButton OnClick="CancelTransfer" Variant="Variant.Outlined" Color="Color.Error">CANCEL TRANSFER</MudButton>
                 <MudButton OnClick="CompleteTransfer" Variant="Variant.Filled" Color="Color.Success">COMPLETE TRANSFER</MudButton>
@@ -115,7 +121,6 @@
     public string ReferenceNumber { get; set; }
 
 
-
     [SupplyParameterFromForm(FormName = "updateStockTransfer")]
     private StockTransferViewModel StockTransfer { get; set; } = new();
 
@@ -124,16 +129,21 @@
 
     private List<StockTransferItemViewModel> StockTransferItems = new List<StockTransferItemViewModel>();
 
-    private string? Status = "Draft";
-    public Color SelectedColor;
-    public bool isDraft = true;
-
-
     private IEnumerable<Branch>? _branches;
     private IEnumerable<Inventory>? _sourceBranchInventories;
 
+    // conditions
+    private string? Status = "Draft";
+    public Color SelectedColor;
+    public bool isAllocated = true;
+    public bool isEmpty = true;
+
+
+
+
     class StockTransferViewModel
     {
+        public int Id { get; set; }
 
         [Required(ErrorMessage = "Source Branch is required.")]
         public Branch SourceBranch { get; set; } = new();
@@ -142,13 +152,16 @@
         [Required(ErrorMessage = "Destination Branch is required.")]
         public Branch DestinationBranch { get; set; } = new();
 
-        public string? ReferenceNumber { get; set; } 
+        public string? ReferenceNumber { get; set; }
+
         public DateTime? DateCreated { get; set; }
 
     }
 
     public class StockTransferItemViewModel : IValidatableObject
     {
+        public int Id { get; set; }
+
         [Required(ErrorMessage = "Product is required.")]
         public Product Product { get; set; }
 
@@ -175,10 +188,8 @@
     protected override async Task OnInitializedAsync()
     {
         _branches = await BranchService.GetAllBranchAsync();
-        _sourceBranchInventories = await InventoryService.GetAllInventoryByBranchAsync(StockTransfer.SourceBranch.BranchId);
 
         var data = await StockTransferService.GetStockTransferByReferenceNumberAsync(ReferenceNumber);
-        await dataGrid.ReloadServerData();
 
 
         if (data is null)
@@ -186,60 +197,55 @@
             NavigationManager.NavigateTo("notfound");
         }
 
-
         Status = data.Status.StatusName;
+        _sourceBranchInventories = await InventoryService.GetAllInventoryByBranchAsync(data.SourceBranch.BranchId);
 
         // map data
+        StockTransfer.Id = data.StockTransferId;
         StockTransfer.SourceBranch = data.SourceBranch;
         StockTransfer.DestinationBranch = data.DestinationBranch;
-        StockTransfer.ReferenceNumber = ReferenceNumber;
+        StockTransfer.ReferenceNumber = data.ReferenceNumber;
         StockTransfer.DateCreated = data.DateCreated;
 
+        var items = data.StockTransferItems.ToList();
 
-
-        StockTransferItems = data.StockTransferItems.Select(item => new StockTransferItemViewModel
-        {
-            Product = item.Product,
-            TransferQuantity = item.TransferQuantity,
-            AvailableQuantity = _sourceBranchInventories.Where(i => i.Product.ProductId == StockTransferItem.Product.ProductId)
-                                                              .First().OnHandquantity
-
-        }).ToList();
-    }
-
-    private async Task AddStockTransferToDraft(EditContext context)
-    {
-
-        if (context.Validate())
-        {
-            try
+        StockTransferItems = items.Select(vm => new StockTransferItemViewModel
             {
+                Id = vm.StockTransferItemlId,
+                Product = vm.Product,
+                TransferQuantity = vm.TransferQuantity,
+                AvailableQuantity = _sourceBranchInventories
+             .FirstOrDefault(i => i.Product.ProductId == vm.Product.ProductId)?.OnHandquantity ?? 0 // Use vm.Product.ProductId and handle null
+            }).ToList();
 
-
-                var st_data = new StockTransfer
-                    {
-                        SourceBranchId = StockTransfer.SourceBranch.BranchId,
-                        DestinationBranchId = StockTransfer.DestinationBranch.BranchId,
-                        CreatedById = "your-user-id-1", // Replace with actual user ID
-                    };
-
-                var sti_data = StockTransferItems.Select(vm => new StockTransferItem
-                    {
-                        ProductId = vm.Product.ProductId,
-                        TransferQuantity = vm.TransferQuantity,
-                    }).ToList();
-
-                await StockTransferService.AddStockTransferAsync(st_data, sti_data);
-                Snackbar.Add("Stock Transfer added to draft.", Severity.Success);
-                StockTransfer = new(); // Reset
-                await dataGrid.ReloadServerData(); // Reload grid if it exists
-            }
-            catch (InvalidOperationException ex)
-            {
-                Snackbar.Add(ex.Message, Severity.Error);
-            }
+        switch (Status.ToLower()) // Use ToLower() for case-insensitive comparison
+        {
+            case "allocated":
+                SelectedColor = Color.Default;
+                isAllocated = true;
+                break;
+            case "in transit":
+                SelectedColor = Color.Info;
+                isAllocated = false;
+                break;
+            case "cancelled":
+                SelectedColor = Color.Error;
+                break;
+            case "completed":
+                SelectedColor = Color.Success;
+                isAllocated = false;
+                break;
+            default:
+                SelectedColor = Color.Default; // Or some other default color
+                break;
         }
+
+        // source and destination is only editable when
+        // StockTransferItems is empty
+        isEmpty = StockTransferItems.Any();
     }
+
+    
 
     private async Task<IEnumerable<Product>> SearchProduct(string value, CancellationToken token)
     {
@@ -285,12 +291,7 @@
     }
 
     // events
-    Task RemoveBatchProduct(StockTransferItemViewModel item)
-    {
-        StockTransferItems.Remove(item);
-        return dataGrid.ReloadServerData();
 
-    }
 
     private void After()
     {
@@ -307,32 +308,134 @@
 
     }
 
-    private Task AddBatchStockTransferItem(EditContext context)
+    void RemoveStockTransferItem(StockTransferItemViewModel item)
+    {
+
+
+        try
+        {
+
+            // delete from view model collections
+            StockTransferItems.Remove(item);
+            isEmpty = StockTransferItems.Any();
+        }
+        catch (InvalidOperationException ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+
+
+    }
+
+    private void AddStockTransferItem(EditContext context)
     {
 
 
         if (context.Validate())
         {
+
+            // delete from view model collections
             StockTransferItems.Add(StockTransferItem);
             StockTransferItem = new(); // Reset
+
+            isEmpty = StockTransferItems.Any();
         }
 
-        return dataGrid.ReloadServerData();
+
 
 
     }
+
+
 
     private async Task DeleteStockTransfer()
     {
+        var parameters = new DialogParameters<DialogComponent>
+        {
+            {x => x.ContentText, $"Are you sure you want to delete the Stock Transfer '{StockTransfer.ReferenceNumber}'? This action cannot be undone."},
+            { "Button1Text", "Delete" },
+            { "Button2Text", "Cancel" },
+            { "Color", Color.Error }
+        };
 
+        var dialog = await DialogService.ShowAsync<DialogComponent>("Delete Stock Transfer", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            try
+            {
+                // delete from db
+                await StockTransferService.DeleteStockTransferAsync(ReferenceNumber);
+                NavigationManager.NavigateTo($"/inventory/stock-transfers");
+                Snackbar.Add("Stock Transfer Deleted", Severity.Success);
+
+            }
+            catch (InvalidOperationException ex)
+            {
+                Snackbar.Add(ex.Message, Severity.Error);
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add("An error occurred while deleting the Stock Transfer.", Severity.Error);
+            }
+        }
     }
-    private async Task MarkAsPending()
+    private async Task MarkAsTransit()
     {
         throw new NotImplementedException();
     }
+
     private async Task SaveChanges()
     {
-        throw new NotImplementedException();
+        var parameters = new DialogParameters<DialogComponent>
+        {
+            {x => x.ContentText, $"Are you sure you want to update the Stock Transfer '{ReferenceNumber}'?"},
+            { "Button1Text", "Update" },
+            { "Button2Text", "Cancel" },
+            { "Color", Color.Warning } 
+        };
+
+        var dialog = await DialogService.ShowAsync<DialogComponent>("Update Stock Transfer", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            try
+            {
+                // update stock transfer from db
+                await StockTransferService.UpdateStockTransferAsync(ReferenceNumber, new StockTransfer
+                    {
+                        StockTransferId = StockTransfer.Id,
+                        ReferenceNumber = StockTransfer.ReferenceNumber,
+                        SourceBranchId = StockTransfer.SourceBranch.BranchId,
+                        DestinationBranchId = StockTransfer.DestinationBranch.BranchId,
+
+                    });
+
+                // update stock transfer items from db
+                await StockTransferService.UpdateStockTransferItemsAsync(
+                    ReferenceNumber,
+                    StockTransferItems.Select(vm => new StockTransferItem
+                        {
+                            ProductId = vm.Product.ProductId,
+                            TransferQuantity = vm.TransferQuantity,
+                        }).ToList()
+                );
+
+
+                Snackbar.Add("Stock Transfer Updated", Severity.Success);
+
+            }
+            catch (InvalidOperationException ex)
+            {
+                Snackbar.Add(ex.Message, Severity.Error);
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add("An error occurred while updating the Stock Transfer.", Severity.Error);
+            }
+        }
     }
     private async Task CancelTransfer()
     {

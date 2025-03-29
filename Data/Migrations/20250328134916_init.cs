@@ -516,7 +516,7 @@ namespace InventiCloud.Migrations
             migrationBuilder.InsertData(
                 table: "AspNetUsers",
                 columns: new[] { "Id", "AccessFailedCount", "ConcurrencyStamp", "Email", "EmailConfirmed", "LockoutEnabled", "LockoutEnd", "NormalizedEmail", "NormalizedUserName", "PasswordHash", "PhoneNumber", "PhoneNumberConfirmed", "SecurityStamp", "TwoFactorEnabled", "UserName" },
-                values: new object[] { "your-user-id-1", 0, "8fefdc8a-483d-42f4-8eb8-1be600c78de8", "admin@example.com", true, false, null, "ADMIN@EXAMPLE.COM", "ADMIN", "AQAAAAIAAYagAAAAECcNDPyihU4AS5a+71WbLa9GwHF7YDXL/4AwUif4vtKwtPCmr3NmPcQ1lAmpCfDYIg==", null, false, "b9956b54-5ecb-4080-a813-3a58e6c8da1d", false, "admin" });
+                values: new object[] { "your-user-id-1", 0, "aea2dfc5-1c5b-4b0f-8c82-b452ad757702", "admin@example.com", true, false, null, "ADMIN@EXAMPLE.COM", "ADMIN", "AQAAAAIAAYagAAAAEDwdCEf1CKQYEkCkzwF31kLlf6CKbm/LtnhxU5zRfNnr7rU7vy42Etvabnp17IVEgA==", null, false, "27d2d507-b760-428d-84f4-c5e3e5d9950c", false, "admin" });
 
             migrationBuilder.InsertData(
                 table: "Branches",
@@ -556,9 +556,10 @@ namespace InventiCloud.Migrations
                 columns: new[] { "StockTransferStatusId", "StatusName" },
                 values: new object[,]
                 {
-                    { 1, "Draft" },
-                    { 2, "Pending" },
-                    { 3, "Completed" }
+                    { 1, "Allocated" },
+                    { 2, "In Transit" },
+                    { 3, "Cancelled" },
+                    { 4, "Completed" }
                 });
 
             migrationBuilder.InsertData(

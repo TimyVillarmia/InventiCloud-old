@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace InventiCloud.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250326155520_init")]
+    [Migration("20250328134916_init")]
     partial class init
     {
         /// <inheritdoc />
@@ -94,15 +94,15 @@ namespace InventiCloud.Migrations
                         {
                             Id = "your-user-id-1",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "8fefdc8a-483d-42f4-8eb8-1be600c78de8",
+                            ConcurrencyStamp = "aea2dfc5-1c5b-4b0f-8c82-b452ad757702",
                             Email = "admin@example.com",
                             EmailConfirmed = true,
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN@EXAMPLE.COM",
                             NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAECcNDPyihU4AS5a+71WbLa9GwHF7YDXL/4AwUif4vtKwtPCmr3NmPcQ1lAmpCfDYIg==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEDwdCEf1CKQYEkCkzwF31kLlf6CKbm/LtnhxU5zRfNnr7rU7vy42Etvabnp17IVEgA==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "b9956b54-5ecb-4080-a813-3a58e6c8da1d",
+                            SecurityStamp = "27d2d507-b760-428d-84f4-c5e3e5d9950c",
                             TwoFactorEnabled = false,
                             UserName = "admin"
                         });
@@ -1005,16 +1005,21 @@ namespace InventiCloud.Migrations
                         new
                         {
                             StockTransferStatusId = 1,
-                            StatusName = "Draft"
+                            StatusName = "Allocated"
                         },
                         new
                         {
                             StockTransferStatusId = 2,
-                            StatusName = "Pending"
+                            StatusName = "In Transit"
                         },
                         new
                         {
                             StockTransferStatusId = 3,
+                            StatusName = "Cancelled"
+                        },
+                        new
+                        {
+                            StockTransferStatusId = 4,
                             StatusName = "Completed"
                         });
                 });
