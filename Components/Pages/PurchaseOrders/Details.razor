@@ -294,16 +294,23 @@
 
     private async Task AddPurchaseOrderItem()
     {
+        try
+        {
+            NewPurchaseOrderItem.SubTotal = NewPurchaseOrderItem.Quantity * NewPurchaseOrderItem.UnitPrice;
 
 
-        NewPurchaseOrderItem.SubTotal = NewPurchaseOrderItem.Quantity * NewPurchaseOrderItem.UnitPrice;
+            await PurchaseOrderService.AddPurchaseOrderItemAsync(NewPurchaseOrderItem);
 
+            NewPurchaseOrderItem = new();
 
-        await PurchaseOrderService.AddPurchaseOrderItemAsync(NewPurchaseOrderItem);
+            await dataGrid.ReloadServerData();
+        }
+        catch (InvalidOperationException ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
 
-        NewPurchaseOrderItem = new();
-
-        await dataGrid.ReloadServerData();
+       
 
     }
 

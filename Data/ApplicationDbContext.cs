@@ -45,9 +45,10 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 
         // Seed StockTransferStatus data
         modelBuilder.Entity<StockTransferStatus>().HasData(
-            new StockTransferStatus { StockTransferStatusId = 1, StatusName = "Draft" },
-            new StockTransferStatus { StockTransferStatusId = 2, StatusName = "Pending" },
-            new StockTransferStatus { StockTransferStatusId = 3, StatusName = "Completed" }
+            new StockTransferStatus { StockTransferStatusId = 1, StatusName = "Allocated" },
+            new StockTransferStatus { StockTransferStatusId = 2, StatusName = "In Transit" },
+            new StockTransferStatus { StockTransferStatusId = 3, StatusName = "Cancelled" },
+            new StockTransferStatus { StockTransferStatusId = 4, StatusName = "Completed" }
         );
 
         modelBuilder.Entity<ApplicationUser>().HasData(

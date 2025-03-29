@@ -6,8 +6,8 @@
 @inject NavigationManager NavigationManager
 @inject IBranchService BranchService
 @inject IStockTransferService StockTransferService
-
-
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
 
 <PageTitle>Stock Transfers</PageTitle>
 
@@ -70,7 +70,7 @@ else
                     <CellTemplate>
                         <MudMenu Icon="@Icons.Material.Filled.MoreVert" AriaLabel="Open user menu">
                             <MudMenuItem Label="Edit" href="@($"/inventory/stock-transfers/{context.Item.ReferenceNumber}")" />
-                            @if (context.Item.Status.StatusName.ToLower() == "draft")
+                            @if (context.Item.Status.StatusName.ToLower() == "allocated")
                             {
                                 <MudMenuItem Label="Delete" Class="red-text" OnClick="@(() => OpenDialogAsync(context.Item))" />
 
@@ -111,14 +111,17 @@ else
     {
         switch (status.ToLower())
         {
-            case "draft":
+            case "allocated":
                 return Color.Default;
-            case "pending":
+            case "in transit":
                 return Color.Info;
+            case "cancelled":
+                return Color.Error;
             case "completed":
                 return Color.Success;
             default:
                 return Color.Default;
+
         }
     }
 
@@ -181,7 +184,35 @@ else
 
     async Task OpenDialogAsync(StockTransfer stockTransfer)
     {
-        
+        var parameters = new DialogParameters<DialogComponent>
+        {
+            {x => x.ContentText, $"Are you sure you want to delete the Stock Transfer '{stockTransfer.ReferenceNumber}'? This action cannot be undone."},
+            { "Button1Text", "Delete" },
+            { "Button2Text", "Cancel" },
+            { "Color", Color.Error }
+        };
+
+        var dialog = await DialogService.ShowAsync<DialogComponent>("Delete Stock Transfer", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            try
+            {
+                // delete from db
+                await StockTransferService.DeleteStockTransferAsync(stockTransfer.ReferenceNumber);
+                Snackbar.Add("Stock Transfer Deleted", Severity.Success);
+
+            }
+            catch (InvalidOperationException ex)
+            {
+                Snackbar.Add(ex.Message, Severity.Error);
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add("An error occurred while deleting the Stock Transfer.", Severity.Error);
+            }
+        }
     }
 
 
