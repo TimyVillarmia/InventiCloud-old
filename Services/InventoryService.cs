@@ -29,7 +29,7 @@ namespace InventiCloud.Services
                         OnHandquantity = 0,
                         IncomingQuantity = 0,
                         AvailableQuantity = 0,
-                        OutgoingQuantity = 0
+                        Allocated = 0
                     });
                 }
                 await context.SaveChangesAsync();

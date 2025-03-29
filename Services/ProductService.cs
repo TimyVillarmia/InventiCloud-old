@@ -71,7 +71,7 @@ namespace InventiCloud.Services
 
                 // Check if any inventory quantities are not zero
                 var inventory = await context.Inventories.FirstOrDefaultAsync(i => i.ProductId == product.ProductId);
-                if (inventory != null && (inventory.OnHandquantity != 0 && inventory.IncomingQuantity != 0 && inventory.AvailableQuantity != 0 && inventory.OutgoingQuantity != 0))
+                if (inventory != null && (inventory.OnHandquantity != 0 && inventory.IncomingQuantity != 0 && inventory.AvailableQuantity != 0 && inventory.Allocated != 0))
                 {
                     throw new InvalidOperationException("Unable to delete. Please adjust inventory to zero before deleting this product.");
                 }
