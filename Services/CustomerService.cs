@@ -1,28 +1,51 @@
 ﻿using InventiCloud.Entities;
 using Microsoft.EntityFrameworkCore;
-using InventiCloud.Services;
 using InventiCloud.Services.Interface;
+using Microsoft.Extensions.Logging;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using InventiCloud.Data;
 
 namespace InventiCloud.Services
 {
-    public class CustomerService(ILogger<CustomerService> _logger, IDbContextFactory<InventiCloud.Data.ApplicationDbContext> DbFactory) : ICustomerService
+    public class CustomerService : ICustomerService
     {
+        private readonly IDbContextFactory<ApplicationDbContext> _dbFactory;
+        private readonly ILogger<CustomerService> _logger;
+
+        public CustomerService(ILogger<CustomerService> logger, IDbContextFactory<ApplicationDbContext> dbFactory)
+        {
+            _dbFactory = dbFactory;
+            _logger = logger;
+        }
+
         public async Task<IEnumerable<Customer>> GetAllCustomerAsync()
         {
-            using var context = DbFactory.CreateDbContext();
-            return await context.Customers
-                .ToListAsync();
+            using var context = _dbFactory.CreateDbContext();
+            return await context.Customers.ToListAsync();
         }
 
         public async Task AddCustomerAsync(Customer customer)
         {
+            using var context = _dbFactory.CreateDbContext();
+
             try
             {
-                using var context = DbFactory.CreateDbContext();
+                bool emailExists = await context.Customers.AnyAsync(c => c.Email == customer.Email);
+                bool phoneNumberExists = await context.Customers.AnyAsync(c => c.PhoneNumber == customer.PhoneNumber);
 
-                if (await context.Customers.AnyAsync(c => c.CustomerName == customer.CustomerName))
+                if (emailExists && phoneNumberExists)
                 {
-                    throw new InvalidOperationException($"Customer name '{customer.CustomerName}' already exists.");
+                    throw new InvalidOperationException($"A customer with the email '{customer.Email}' and phone number '{customer.PhoneNumber}' already exists.");
+                }
+                else if (emailExists)
+                {
+                    throw new InvalidOperationException($"A customer with the email '{customer.Email}' already exists.");
+                }
+                else if (phoneNumberExists)
+                {
+                    throw new InvalidOperationException($"A customer with the phone number '{customer.PhoneNumber}' already exists.");
                 }
 
                 context.Customers.Add(customer);
@@ -30,63 +53,56 @@ namespace InventiCloud.Services
             }
             catch (DbUpdateException ex)
             {
-                _logger.LogError(ex, "An error occurred while adding the customer.", customer);
-                // Handle database-specific exceptions (e.g., unique constraint violations)
-                if (ex.InnerException != null && ex.InnerException.Message.Contains("UNIQUE constraint failed"))
-                {
-                    throw new InvalidOperationException($"Customer name '{customer.CustomerName}' already exists.");
-                }
-                throw; // Rethrow other DbUpdateExceptions
+                _logger.LogError(ex, "Database error adding customer: {Customer}", customer);
+                throw; // Rethrow DbUpdateException
             }
             catch (InvalidOperationException ex)
             {
-                _logger.LogError(ex, "An error occurred while adding the customer.", customer);
+                _logger.LogError(ex, "Validation error adding customer: {Customer}", customer);
                 throw;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "An unexpected error occurred while adding the customer.", customer);
+                _logger.LogError(ex, "Unexpected error adding customer: {Customer}", customer);
                 throw;
             }
         }
-
         public async Task DeleteCustomerAsync(Customer customer)
         {
+            using var context = _dbFactory.CreateDbContext();
+
             try
             {
-                using var context = DbFactory.CreateDbContext();
-
-                if (customer.CustomerName.Any())
+                if (await context.SalesOrders.AnyAsync(so => so.CustomerId == customer.CustomerId))
                 {
-                    throw new InvalidOperationException("Cannot delete customer.");
+                    throw new InvalidOperationException("Cannot delete customer with associated sales orders.");
                 }
 
-                context.Customers.Remove(customer!);
+                context.Customers.Remove(customer);
                 await context.SaveChangesAsync();
-
             }
             catch (InvalidOperationException ex)
             {
-                _logger.LogError(ex, "An error occurred while deleting the customer.", customer);
-                throw; // Re-throw the exception to be handled in the calling method
+                _logger.LogError(ex, "An error occurred while deleting the customer: {Customer}", customer);
+                throw;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "An error occurred while deleting the customer.", customer);
-                throw; // Re-throw the exception to be handled in the calling method
+                _logger.LogError(ex, "An unexpected error occurred while deleting the customer: {Customer}", customer);
+                throw;
             }
         }
 
-        public bool CustomerExists(int customerid)
+        public bool CustomerExists(int customerId)
         {
-            using var context = DbFactory.CreateDbContext();
-            return context.Customers.Any(e => e.CustomerId == customerid);
+            using var context = _dbFactory.CreateDbContext();
+            return context.Customers.Any(e => e.CustomerId == customerId);
         }
 
         public async Task UpdateCustomerAsync(Customer customer)
         {
-            using var context = DbFactory.CreateDbContext();
-            context.Attach(customer!).State = EntityState.Modified;
+            using var context = _dbFactory.CreateDbContext();
+            context.Attach(customer).State = EntityState.Modified;
 
             try
             {
@@ -94,7 +110,7 @@ namespace InventiCloud.Services
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!CustomerExists(customer!.CustomerId))
+                if (!CustomerExists(customer.CustomerId))
                 {
                     throw;
                 }
@@ -103,15 +119,16 @@ namespace InventiCloud.Services
 
         public async Task DisposeAsync()
         {
-            using var context = DbFactory.CreateDbContext();
+            using var context = _dbFactory.CreateDbContext();
             await context.DisposeAsync();
         }
 
         public async Task<Customer> GetCustomerByNameAsync(string customerName)
         {
-            using var context = DbFactory.CreateDbContext();
-            return await context.Customers.FirstAsync(e => e.CustomerName == customerName);
+            using var context = _dbFactory.CreateDbContext();
+            return await context.Customers.FirstOrDefaultAsync(e => e.CustomerName == customerName);
         }
 
+   
     }
 }

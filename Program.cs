@@ -57,6 +57,7 @@ builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IProductService, ProductService>(); 
 builder.Services.AddScoped<IBranchService, BranchService>(); 
 builder.Services.AddScoped<ISupplierService, SupplierService>();
+builder.Services.AddScoped<ICustomerService, CustomerService>();
 builder.Services.AddScoped<IAttributeSetService, AttributeSetService>();
 builder.Services.AddScoped<IStockTransferService, StockTransferService>();
 

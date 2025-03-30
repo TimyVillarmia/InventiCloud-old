@@ -12,7 +12,6 @@ namespace InventiCloud.Services.Interface
         Task<IEnumerable<Customer>> GetAllCustomerAsync();
 
         Task<Customer> GetCustomerByNameAsync(string customerName);
-
         Task DisposeAsync();
     }
 }

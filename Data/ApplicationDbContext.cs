@@ -29,7 +29,10 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<StockTransfer> StockTransfers { get; set; }
     public DbSet<StockTransferItem> StockTransferItems { get; set; }
     public DbSet<StockTransferStatus> StockTransferStatuses { get; set; }
+    public DbSet<SalesOrder> SalesOrders { get; set; }
+    public DbSet<SalesOrderItem> SalesOrderItems { get; set; }
     public DbSet<Supplier> Suppliers { get; set; }
+    public DbSet<SalesPerson> SalesPersons { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
