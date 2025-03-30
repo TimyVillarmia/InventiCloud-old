@@ -15,7 +15,7 @@
 
 <MudContainer Class="pt-5" MaxWidth="MaxWidth.Medium">
     <div class="d-flex gap-4 align-items-center mb-4">
-        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" aria-label="delete" Href="/catalog/products" />
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" aria-label="delete" Href="/sales/customers" />
         <MudText Typo="Typo.h4">CREATE SUPPLIER</MudText>
     </div>
 
@@ -40,7 +40,7 @@
 
         </MudGrid>
         <MudItem xs="12" Class="justify-center">
-            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">CREATE SUPPLIER</MudButton>
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Save</MudButton>
         </MudItem>
     </EditForm>
 </MudContainer>
@@ -94,22 +94,22 @@
     {
         var parameters = new DialogParameters<DialogComponent>
         {
-            {x => x.ContentText, $"Are you sure you want to delete the category '{Supplier.SupplierName}'? This action cannot be undone."},
+            {x => x.ContentText, $"Are you sure you want to delete the category '{Customer.CustomerName}'? This action cannot be undone."},
             { "Button1Text", "Delete" },
             { "Button2Text", "Cancel" },
             { "Color", Color.Error }
         };
 
-        var dialog = await DialogService.ShowAsync<DialogComponent>("Delete Supplier", parameters);
+        var dialog = await DialogService.ShowAsync<DialogComponent>("Delete Customers", parameters);
         var result = await dialog.Result;
 
         if (!result.Canceled)
         {
             try
             {
-                await SupplierService.DeleteSupplierAsync(Supplier);
-                Snackbar.Add("Supplier Deleted", Severity.Success);
-                NavigationManager.NavigateTo($"/purchase/suppliers");
+                await CustomerService.DeleteCustomerAsync(Customer);
+                Snackbar.Add("Customer Deleted", Severity.Success);
+                NavigationManager.NavigateTo($"/sales/customers");
 
 
             }
