@@ -1,4 +1,4 @@
-@page "/products/details/{SKU}"
+@page "/products/{SKU}"
 @using InventiCloud.Components.UI
 @using InventiCloud.Services.Interface
 @using Microsoft.EntityFrameworkCore
@@ -178,7 +178,7 @@
             Snackbar.Add("An error occurred while deleting the category.", Severity.Error);
 
         }
-        NavigationManager.NavigateTo("/inventory/products");
+        NavigationManager.NavigateTo("/products");
     }
 
     // events
