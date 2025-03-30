@@ -516,7 +516,7 @@ namespace InventiCloud.Migrations
             migrationBuilder.InsertData(
                 table: "AspNetUsers",
                 columns: new[] { "Id", "AccessFailedCount", "ConcurrencyStamp", "Email", "EmailConfirmed", "LockoutEnabled", "LockoutEnd", "NormalizedEmail", "NormalizedUserName", "PasswordHash", "PhoneNumber", "PhoneNumberConfirmed", "SecurityStamp", "TwoFactorEnabled", "UserName" },
-                values: new object[] { "your-user-id-1", 0, "7da4ec69-d502-46a6-9430-dfd9a7f4271d", "admin@example.com", true, false, null, "ADMIN@EXAMPLE.COM", "ADMIN", "AQAAAAIAAYagAAAAEO8jA0GpcRSNnPR/fOKm9QSnBcqgtRtPDIpeZiG3N3ITaLSot0vKM+dIeRv/kwfqzw==", null, false, "797f5db8-d836-41ee-b9fb-28b6695e8542", false, "admin" });
+                values: new object[] { "your-user-id-1", 0, "4e4ecfe5-ce27-4ff0-a628-bfd6b92055e3", "admin@example.com", true, false, null, "ADMIN@EXAMPLE.COM", "ADMIN", "AQAAAAIAAYagAAAAECEU3A+Rj3keQZWSL/Uh5W3UWwcV8MLv4BUvItqeZ3oVSBnIq1dcJvlu5JWxpntjrA==", null, false, "629a9179-a11a-486e-8798-5b5ddc1fee2f", false, "admin" });
 
             migrationBuilder.InsertData(
                 table: "Branches",
@@ -584,21 +584,21 @@ namespace InventiCloud.Migrations
                 columns: new[] { "InventoryId", "Allocated", "AvailableQuantity", "BranchId", "IncomingQuantity", "OnHandquantity", "ProductId" },
                 values: new object[,]
                 {
-                    { 1, 0, 0, 1, 0, 100, 1 },
-                    { 2, 0, 0, 2, 0, 50, 1 },
-                    { 3, 0, 0, 3, 0, 75, 1 },
-                    { 4, 0, 0, 1, 0, 200, 2 },
-                    { 5, 0, 0, 2, 0, 150, 2 },
-                    { 6, 0, 0, 3, 0, 150, 2 },
-                    { 7, 0, 0, 1, 0, 80, 3 },
-                    { 8, 0, 0, 2, 0, 120, 3 },
+                    { 1, 0, 100, 1, 0, 100, 1 },
+                    { 2, 0, 50, 2, 0, 50, 1 },
+                    { 3, 0, 75, 3, 0, 75, 1 },
+                    { 4, 0, 200, 1, 0, 200, 2 },
+                    { 5, 0, 150, 2, 0, 150, 2 },
+                    { 6, 0, 150, 3, 0, 150, 2 },
+                    { 7, 0, 80, 1, 0, 80, 3 },
+                    { 8, 0, 120, 2, 0, 120, 3 },
                     { 9, 0, 0, 3, 0, 90, 3 },
-                    { 10, 0, 0, 1, 0, 300, 4 },
-                    { 11, 0, 0, 2, 0, 250, 4 },
-                    { 12, 0, 0, 3, 0, 280, 4 },
-                    { 13, 0, 0, 1, 0, 60, 5 },
-                    { 14, 0, 0, 2, 0, 40, 5 },
-                    { 15, 0, 0, 3, 0, 70, 5 }
+                    { 10, 0, 300, 1, 0, 300, 4 },
+                    { 11, 0, 250, 2, 0, 250, 4 },
+                    { 12, 0, 280, 3, 0, 280, 4 },
+                    { 13, 0, 60, 1, 0, 60, 5 },
+                    { 14, 0, 40, 2, 0, 40, 5 },
+                    { 15, 0, 70, 3, 0, 70, 5 }
                 });
 
             migrationBuilder.CreateIndex(

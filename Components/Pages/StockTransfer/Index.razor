@@ -12,6 +12,7 @@
 <PageTitle>Stock Transfers</PageTitle>
 
 <MudText Class="bold mb-2" Typo="Typo.h4">Stock Transfers</MudText>
+
 @if (_stocktransfers == null)
 {
     <MudContainer Class="d-flex justify-center align-items-center" Style="height: 100vh;">
@@ -22,7 +23,6 @@ else
 {
     @if (!_stocktransfers.Any())
     {
-
         <MudPaper Height="500px" Class="justify-center align-content-center">
             <MudText Class="bol" Typo="Typo.h6" Align="Align.Center">No Stock Transfers Found</MudText>
             <MudText Typo="Typo.body1" Align="Align.Center">
@@ -37,22 +37,18 @@ else
     }
     else
     {
-
         <MudGrid>
             <MudItem sm="6">
                 <MudStack Row="true" AlignItems="AlignItems.Center">
-                    <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
-                    AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+                    <MudTextField T="string" ValueChanged="@(s => OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                                  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
                 </MudStack>
-
             </MudItem>
-
             <MudItem sm="6">
                 <MudButton Variant="Variant.Filled" Href="/inventory/stock-transfers/create" Color="Color.Primary" Class="text-uppercase">
                     Create Stock Transfer
                 </MudButton>
-            </MudItem>  
-
+            </MudItem>
         </MudGrid>
 
         <MudDataGrid @ref="dataGrid" T="StockTransfer" ServerData="ServerReload" MultiSelection="true" RowClick="@RowClicked">
@@ -73,7 +69,6 @@ else
                             @if (context.Item.Status.StatusName.ToLower() == "allocated")
                             {
                                 <MudMenuItem Label="Delete" Class="red-text" OnClick="@(() => OpenDialogAsync(context.Item))" />
-
                             }
                         </MudMenu>
                     </CellTemplate>
@@ -83,14 +78,8 @@ else
                 <MudDataGridPager T="PurchaseOrder" />
             </PagerContent>
         </MudDataGrid>
-
-
-
     }
-
 }
-
-
 
 @code {
     MudDataGrid<StockTransfer> dataGrid = new();
@@ -100,8 +89,12 @@ else
     private IEnumerable<StockTransfer>? _stocktransfers;
     private IEnumerable<StockTransfer>? _filteredstocktransfers;
 
-
     protected override async Task OnInitializedAsync()
+    {
+        await LoadStockTransfers();
+    }
+
+    private async Task LoadStockTransfers()
     {
         _branches = await BranchService.GetAllBranchAsync();
         _stocktransfers = await StockTransferService.GetAllStockTransferAsync();
@@ -121,7 +114,6 @@ else
                 return Color.Success;
             default:
                 return Color.Default;
-
         }
     }
 
@@ -150,7 +142,6 @@ else
                         po => po.ReferenceNumber
                     );
                     break;
-
             }
         }
 
@@ -166,27 +157,23 @@ else
     {
         searchString = text;
         return dataGrid.ReloadServerData();
-
     }
 
     void RowClicked(DataGridRowClickEventArgs<StockTransfer> args)
     {
-
-
         if (args.Item == null)
         {
             return;
         }
 
         NavigationManager.NavigateTo($"/inventory/stock-transfers/{args.Item.ReferenceNumber}");
-
     }
 
     async Task OpenDialogAsync(StockTransfer stockTransfer)
     {
         var parameters = new DialogParameters<DialogComponent>
         {
-            {x => x.ContentText, $"Are you sure you want to delete the Stock Transfer '{stockTransfer.ReferenceNumber}'? This action cannot be undone."},
+            { x => x.ContentText, $"Are you sure you want to delete the Stock Transfer '{stockTransfer.ReferenceNumber}'? This action cannot be undone." },
             { "Button1Text", "Delete" },
             { "Button2Text", "Cancel" },
             { "Color", Color.Error }
@@ -199,10 +186,10 @@ else
         {
             try
             {
-                // delete from db
                 await StockTransferService.DeleteStockTransferAsync(stockTransfer.ReferenceNumber);
                 Snackbar.Add("Stock Transfer Deleted", Severity.Success);
-
+                await LoadStockTransfers(); // Reload data after deletion
+                await dataGrid.ReloadServerData(); // Reload DataGrid
             }
             catch (InvalidOperationException ex)
             {
@@ -215,7 +202,5 @@ else
         }
     }
 
-
     public async ValueTask DisposeAsync() => await StockTransferService.DisposeAsync();
-
 }
