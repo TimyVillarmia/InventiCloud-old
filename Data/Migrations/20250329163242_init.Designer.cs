@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace InventiCloud.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250329080714_init")]
+    [Migration("20250329163242_init")]
     partial class init
     {
         /// <inheritdoc />
@@ -94,15 +94,15 @@ namespace InventiCloud.Migrations
                         {
                             Id = "your-user-id-1",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "7da4ec69-d502-46a6-9430-dfd9a7f4271d",
+                            ConcurrencyStamp = "4e4ecfe5-ce27-4ff0-a628-bfd6b92055e3",
                             Email = "admin@example.com",
                             EmailConfirmed = true,
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN@EXAMPLE.COM",
                             NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAEO8jA0GpcRSNnPR/fOKm9QSnBcqgtRtPDIpeZiG3N3ITaLSot0vKM+dIeRv/kwfqzw==",
+                            PasswordHash = "AQAAAAIAAYagAAAAECEU3A+Rj3keQZWSL/Uh5W3UWwcV8MLv4BUvItqeZ3oVSBnIq1dcJvlu5JWxpntjrA==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "797f5db8-d836-41ee-b9fb-28b6695e8542",
+                            SecurityStamp = "629a9179-a11a-486e-8798-5b5ddc1fee2f",
                             TwoFactorEnabled = false,
                             UserName = "admin"
                         });
@@ -391,7 +391,7 @@ namespace InventiCloud.Migrations
                         {
                             InventoryId = 1,
                             Allocated = 0,
-                            AvailableQuantity = 0,
+                            AvailableQuantity = 100,
                             BranchId = 1,
                             IncomingQuantity = 0,
                             OnHandquantity = 100,
@@ -401,7 +401,7 @@ namespace InventiCloud.Migrations
                         {
                             InventoryId = 2,
                             Allocated = 0,
-                            AvailableQuantity = 0,
+                            AvailableQuantity = 50,
                             BranchId = 2,
                             IncomingQuantity = 0,
                             OnHandquantity = 50,
@@ -411,7 +411,7 @@ namespace InventiCloud.Migrations
                         {
                             InventoryId = 3,
                             Allocated = 0,
-                            AvailableQuantity = 0,
+                            AvailableQuantity = 75,
                             BranchId = 3,
                             IncomingQuantity = 0,
                             OnHandquantity = 75,
@@ -421,7 +421,7 @@ namespace InventiCloud.Migrations
                         {
                             InventoryId = 4,
                             Allocated = 0,
-                            AvailableQuantity = 0,
+                            AvailableQuantity = 200,
                             BranchId = 1,
                             IncomingQuantity = 0,
                             OnHandquantity = 200,
@@ -431,7 +431,7 @@ namespace InventiCloud.Migrations
                         {
                             InventoryId = 5,
                             Allocated = 0,
-                            AvailableQuantity = 0,
+                            AvailableQuantity = 150,
                             BranchId = 2,
                             IncomingQuantity = 0,
                             OnHandquantity = 150,
@@ -441,7 +441,7 @@ namespace InventiCloud.Migrations
                         {
                             InventoryId = 6,
                             Allocated = 0,
-                            AvailableQuantity = 0,
+                            AvailableQuantity = 150,
                             BranchId = 3,
                             IncomingQuantity = 0,
                             OnHandquantity = 150,
@@ -451,7 +451,7 @@ namespace InventiCloud.Migrations
                         {
                             InventoryId = 7,
                             Allocated = 0,
-                            AvailableQuantity = 0,
+                            AvailableQuantity = 80,
                             BranchId = 1,
                             IncomingQuantity = 0,
                             OnHandquantity = 80,
@@ -461,7 +461,7 @@ namespace InventiCloud.Migrations
                         {
                             InventoryId = 8,
                             Allocated = 0,
-                            AvailableQuantity = 0,
+                            AvailableQuantity = 120,
                             BranchId = 2,
                             IncomingQuantity = 0,
                             OnHandquantity = 120,
@@ -481,7 +481,7 @@ namespace InventiCloud.Migrations
                         {
                             InventoryId = 10,
                             Allocated = 0,
-                            AvailableQuantity = 0,
+                            AvailableQuantity = 300,
                             BranchId = 1,
                             IncomingQuantity = 0,
                             OnHandquantity = 300,
@@ -491,7 +491,7 @@ namespace InventiCloud.Migrations
                         {
                             InventoryId = 11,
                             Allocated = 0,
-                            AvailableQuantity = 0,
+                            AvailableQuantity = 250,
                             BranchId = 2,
                             IncomingQuantity = 0,
                             OnHandquantity = 250,
@@ -501,7 +501,7 @@ namespace InventiCloud.Migrations
                         {
                             InventoryId = 12,
                             Allocated = 0,
-                            AvailableQuantity = 0,
+                            AvailableQuantity = 280,
                             BranchId = 3,
                             IncomingQuantity = 0,
                             OnHandquantity = 280,
@@ -511,7 +511,7 @@ namespace InventiCloud.Migrations
                         {
                             InventoryId = 13,
                             Allocated = 0,
-                            AvailableQuantity = 0,
+                            AvailableQuantity = 60,
                             BranchId = 1,
                             IncomingQuantity = 0,
                             OnHandquantity = 60,
@@ -521,7 +521,7 @@ namespace InventiCloud.Migrations
                         {
                             InventoryId = 14,
                             Allocated = 0,
-                            AvailableQuantity = 0,
+                            AvailableQuantity = 40,
                             BranchId = 2,
                             IncomingQuantity = 0,
                             OnHandquantity = 40,
@@ -531,7 +531,7 @@ namespace InventiCloud.Migrations
                         {
                             InventoryId = 15,
                             Allocated = 0,
-                            AvailableQuantity = 0,
+                            AvailableQuantity = 70,
                             BranchId = 3,
                             IncomingQuantity = 0,
                             OnHandquantity = 70,
