@@ -47,7 +47,7 @@ else
                 </MudStack>
             </MudItem>
 
-             <MudItem sm="6">
+            <MudItem sm="6">
                 <MudButton Variant="Variant.Filled" Href="/sales/customers/create" Color="Color.Primary" Class="text-uppercase">
                     ADD
                 </MudButton>
@@ -57,15 +57,15 @@ else
 
         <MudDataGrid @ref="dataGrid" T="Customer" ServerData="ServerReload" MultiSelection="true" RowClick="@RowClicked">
             <Columns>
-                <PropertyColumn Property="cu => cu.CustomerName == LastName" Title="Last Name" />
-                <PropertyColumn Property="cu => cu.CustomerName == FirstName" Title="First Name" />
-                <PropertyColumn Property="cu => cu.PhoneNumber" Title="Contact#" />
+                <PropertyColumn Property="cu => cu.CustomerName" Title="Name" />
+                <PropertyColumn Property="cu => cu.PhoneNumber" Title="Contact" />
                 <PropertyColumn Property="cu => cu.Email" Title="Email" />
-                <PropertyColumn Property="cu => cu.BirthDate" Title="Date" />
                 <TemplateColumn CellClass="d-flex justify-end">
                     <CellTemplate>
                         <MudMenu Icon="@Icons.Material.Filled.MoreVert" AriaLabel="Open user menu">
                             <MudMenuItem Label="Edit" href="@($"/sales/customers/{context.Item.CustomerName}")" />
+                            <MudMenuItem Label="Delete" Class="red-text" OnClick="@(() => OpenDialogAsync(context.Item))" />
+
                         </MudMenu>
                     </CellTemplate>
                 </TemplateColumn>
@@ -87,9 +87,8 @@ else
     private string LastName;
     private string FirstName;
 
-    // private Category Customer { get; set; } = new();
-
     private IEnumerable<Customer>? _customers;
+    private IEnumerable<Customer>? _filteredcustomers;
 
     protected override async Task OnInitializedAsync()
     {
@@ -98,16 +97,21 @@ else
 
     private async Task<GridData<Customer>> ServerReload(GridState<Customer> state)
     {
+        _filteredcustomers = _customers;
 
-        _customers = _customers.Where(cu =>
+        _filteredcustomers = _filteredcustomers.Where(cu =>
         {
             if (string.IsNullOrWhiteSpace(searchString))
                 return true;
             if (cu.CustomerName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
                 return true;
+            if (cu.Email.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+                return true;
+            if (cu.PhoneNumber.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+                return true;
             return false;
         }).ToArray();
-        var totalItems = _customers.Count();
+        var totalItems = _filteredcustomers.Count();
 
         var sortDefinition = state.SortDefinitions.FirstOrDefault();
         if (sortDefinition != null)
@@ -115,7 +119,7 @@ else
             switch (sortDefinition.SortBy)
             {
                 case nameof(Customer.CustomerName):
-                    _customers = _customers.OrderByDirection(
+                    _filteredcustomers = _filteredcustomers.OrderByDirection(
                         sortDefinition.Descending ? SortDirection.Descending : SortDirection.Ascending,
                         cu => cu.CustomerName
                     );
@@ -124,7 +128,7 @@ else
             }
         }
 
-        var pagedData = _customers.Skip(state.Page * state.PageSize).Take(state.PageSize).ToArray();
+        var pagedData = _filteredcustomers.Skip(state.Page * state.PageSize).Take(state.PageSize).ToArray();
         return new GridData<Customer>
             {
                 TotalItems = totalItems,
@@ -171,6 +175,8 @@ else
                 // delete from db
                 await CustomerService.DeleteCustomerAsync(customer);
                 Snackbar.Add("Customer Deleted", Severity.Success);
+
+                await dataGrid.ReloadServerData();
 
             }
             catch (InvalidOperationException ex)
