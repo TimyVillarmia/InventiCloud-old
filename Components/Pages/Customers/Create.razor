@@ -1,0 +1,75 @@
+﻿@page "/sales/customers/create"
+@using InventiCloud.Data
+@using InventiCloud.Services.Interface
+@using InventiCloud.Utils
+@using Microsoft.EntityFrameworkCore
+@using InventiCloud.Entities
+@inject NavigationManager NavigationManager
+@inject ICustomerService CustomerService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+
+
+<PageTitle>Create</PageTitle>
+
+<MudContainer Class="pt-5" MaxWidth="MaxWidth.Medium">
+    <div class="d-flex gap-4 align-items-center mb-4">
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" aria-label="delete" Href="/sales/customers" />
+        <MudText Typo="Typo.h4">Add Customer</MudText>
+    </div>
+
+    <EditForm method="post" Model="Customer" OnValidSubmit="AddCustomer" FormName="create" Enhance>
+        <DataAnnotationsValidator />
+        <MudGrid>
+            <MudItem xs="12">
+                <MudText Typo="Typo.h6">CUSTOMER DETAILS</MudText>
+                <MudTextField @bind-Value="Customer.CustomerName" Label="Last Name" For="@(() => Customer.CustomerName)" Variant="Variant.Outlined" />
+                <MudTextField @bind-Value="Customer.CustomerName" Label="First Name" For="@(() => Customer.CustomerName)" Variant="Variant.Outlined" />
+                <MudTextField @bind-Value="Customer.Address" Label="Address" For="@(() => Customer.Address)" Variant="Variant.Outlined" />
+                <MudTextField @bind-Value="Customer.PhoneNumber" Label="Contact#" For="@(() => Customer.PhoneNumber)" Variant="Variant.Outlined" />
+                <MudTextField @bind-Value="Customer.Email" Label="Email Address" For="@(() => Customer.Email)" Variant="Variant.Outlined" />
+            </MudItem>
+
+            <MudItem xs="12" sm="4">
+                <MudTextField @bind-Value="Customer.BirthDate" Label="Birthday" For="@(() => Customer.BirthDate)" Variant="Variant.Outlined" />
+            </MudItem>
+            <MudItem xs="12" sm="4">
+                <MudNumericField @bind-Value="Customer.Occupation" HideSpinButtons="true" Label="Occupation" For="@(() => Customer.Occupation)" Variant="Variant.Outlined" />
+            </MudItem>
+
+        </MudGrid>
+        <MudItem xs="12" Class="justify-center">
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Save</MudButton>
+        </MudItem>
+    </EditForm>
+</MudContainer>
+
+@code {
+    [SupplyParameterFromForm]
+    private Customer Customer { get; set; } = new();
+    public string LastName;
+    public string FirstName;
+
+
+    private async Task AddCustomer()
+    {
+        try
+        {
+            await CustomerService.AddCustomerAsync(Customer);
+            Snackbar.Add($"{Customer.CustomerName} Added", Severity.Success);
+            NavigationManager.NavigateTo("/sales/customers");
+
+        }
+        catch (InvalidOperationException ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+
+    }
+
+}
