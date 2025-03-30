@@ -27,11 +27,17 @@
         <MudNavLink Href="sales/customers" Match="NavLinkMatch.Prefix">Customers</MudNavLink>
     </MudNavGroup>
 
+    <MudNavGroup Title="Store" Expanded="true" Icon="@Icons.Material.Outlined.Storefront">
+        <MudNavLink Href="store/branches" Match="NavLinkMatch.Prefix">Branches</MudNavLink>
+        <MudNavLink Href="store/sales-persons" Match="NavLinkMatch.Prefix">Sales Person</MudNavLink>
+    </MudNavGroup>
+
     <MudNavLink Href="/analytics" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.BarChart">Analytics</MudNavLink>
 
     <MudText Typo="Typo.body2" Class="px-4 mud-text-secondary">Settings</MudText>
     <MudNavLink Href="/account" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.AccountCircle">Account</MudNavLink>
-    <MudNavLink Href="/branches" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Storefront">Branches</MudNavLink>
+
+
 </MudNavMenu>
 
 
