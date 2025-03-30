@@ -1,0 +1,127 @@
+﻿@page "/sales/customers/{CustomerName}"
+@using InventiCloud.Components.UI
+@using InventiCloud.Data
+@using InventiCloud.Services.Interface
+@using InventiCloud.Utils
+@using Microsoft.EntityFrameworkCore
+@using InventiCloud.Entities
+@inject NavigationManager NavigationManager
+@inject ICustomerService CustomerService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+
+<PageTitle>Create</PageTitle>
+
+<MudContainer Class="pt-5" MaxWidth="MaxWidth.Medium">
+    <div class="d-flex gap-4 align-items-center mb-4">
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" aria-label="delete" Href="/catalog/products" />
+        <MudText Typo="Typo.h4">CREATE SUPPLIER</MudText>
+    </div>
+
+    <EditForm method="post" Model="Customer" OnValidSubmit="SaveChanges" FormName="create" Enhance>
+        <DataAnnotationsValidator />
+        <MudGrid>
+            <MudItem xs="12">
+                <MudText Typo="Typo.h6">CUSTOMER DETAILS</MudText>
+                <MudTextField @bind-Value="Customer.CustomerName" Label="Last Name" For="@(() => Customer.CustomerName)" Variant="Variant.Outlined" />
+                <MudTextField @bind-Value="Customer.CustomerName" Label="First Name" For="@(() => Customer.CustomerName)" Variant="Variant.Outlined" />
+                <MudTextField @bind-Value="Customer.Address" Label="Address" For="@(() => Customer.Address)" Variant="Variant.Outlined" />
+                <MudTextField @bind-Value="Customer.PhoneNumber" Label="Contact#" For="@(() => Customer.PhoneNumber)" Variant="Variant.Outlined" />
+                <MudTextField @bind-Value="Customer.Email" Label="Email Address" For="@(() => Customer.Email)" Variant="Variant.Outlined" />
+            </MudItem>
+
+            <MudItem xs="12" sm="4">
+                <MudTextField @bind-Value="Customer.BirthDate" Label="Birthday" For="@(() => Customer.BirthDate)" Variant="Variant.Outlined" />
+            </MudItem>
+            <MudItem xs="12" sm="4">
+                <MudNumericField @bind-Value="Customer.Occupation" HideSpinButtons="true" Label="Occupation" For="@(() => Customer.Occupation)" Variant="Variant.Outlined" />
+            </MudItem>
+
+        </MudGrid>
+        <MudItem xs="12" Class="justify-center">
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">CREATE SUPPLIER</MudButton>
+        </MudItem>
+    </EditForm>
+</MudContainer>
+
+
+@code {
+    [SupplyParameterFromForm]
+    private Customer Customer { get; set; } = new();
+
+
+    [Parameter]
+    public string CustomerName { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Customer = await CustomerService.GetCustomerByNameAsync(CustomerName);
+
+        if (Customer is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+
+    }
+
+    private async Task SaveChanges()
+    {
+
+        try
+        {
+            await CustomerService.UpdateCustomerAsync(Customer);
+            Snackbar.Add($"{Customer.CustomerName} Updated", Severity.Success);
+            NavigationManager.NavigateTo("/sales/customers");
+
+        }
+        catch (InvalidOperationException ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+
+    }
+
+
+
+
+    // events
+    async Task OpenDialogAsync()
+    {
+        var parameters = new DialogParameters<DialogComponent>
+        {
+            {x => x.ContentText, $"Are you sure you want to delete the category '{Supplier.SupplierName}'? This action cannot be undone."},
+            { "Button1Text", "Delete" },
+            { "Button2Text", "Cancel" },
+            { "Color", Color.Error }
+        };
+
+        var dialog = await DialogService.ShowAsync<DialogComponent>("Delete Supplier", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            try
+            {
+                await SupplierService.DeleteSupplierAsync(Supplier);
+                Snackbar.Add("Supplier Deleted", Severity.Success);
+                NavigationManager.NavigateTo($"/purchase/suppliers");
+
+
+            }
+            catch (InvalidOperationException ex)
+            {
+                Snackbar.Add(ex.Message, Severity.Error);
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add("An error occurred while deleting the category.", Severity.Error);
+            }
+        }
+
+    }
+}

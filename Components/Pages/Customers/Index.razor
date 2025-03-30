@@ -1,0 +1,191 @@
+﻿@page "/sales/customers"
+@using InventiCloud.Components.UI
+@using InventiCloud.Data
+@using InventiCloud.Services.Interface
+@using InventiCloud.Utils
+@using Microsoft.EntityFrameworkCore
+@using InventiCloud.Entities
+@inject NavigationManager NavigationManager
+@inject ICustomerService CustomerService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<PageTitle>Customers</PageTitle>
+
+<MudText Class="bold mb-2" Typo="Typo.h4">Customers</MudText>
+@if (_customers == null)
+{
+    <MudContainer Class="d-flex justify-center align-items-center" Style="height: 100vh;">
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    </MudContainer>
+}
+else
+{
+    @if (!_customers.Any())
+    {
+
+        <MudPaper Height="500px" Class="justify-center align-content-center">
+            <MudText Class="bol" Typo="Typo.h6" Align="Align.Center">No Customers Found</MudText>
+            <MudText Typo="Typo.body1" Align="Align.Center">
+                Create Customers.
+            </MudText>
+            <MudContainer Class="d-flex justify-center mt-2">
+                <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Href="/sales/customers/create" Color="Color.Primary" Class="text-uppercase">
+                    Create Customers
+                </MudButton>
+            </MudContainer>
+        </MudPaper>
+    }
+    else
+    {
+
+        <MudGrid>
+            <MudItem sm="6">
+                <MudStack Row="true" AlignItems="AlignItems.Center">
+                    <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                    AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+                </MudStack>
+            </MudItem>
+
+             <MudItem sm="6">
+                <MudButton Variant="Variant.Filled" Href="/sales/customers/create" Color="Color.Primary" Class="text-uppercase">
+                    ADD
+                </MudButton>
+            </MudItem>
+
+        </MudGrid>
+
+        <MudDataGrid @ref="dataGrid" T="Customer" ServerData="ServerReload" MultiSelection="true" RowClick="@RowClicked">
+            <Columns>
+                <PropertyColumn Property="cu => cu.CustomerName == LastName" Title="Last Name" />
+                <PropertyColumn Property="cu => cu.CustomerName == FirstName" Title="First Name" />
+                <PropertyColumn Property="cu => cu.PhoneNumber" Title="Contact#" />
+                <PropertyColumn Property="cu => cu.Email" Title="Email" />
+                <PropertyColumn Property="cu => cu.BirthDate" Title="Date" />
+                <TemplateColumn CellClass="d-flex justify-end">
+                    <CellTemplate>
+                        <MudMenu Icon="@Icons.Material.Filled.MoreVert" AriaLabel="Open user menu">
+                            <MudMenuItem Label="Edit" href="@($"/sales/customers/{context.Item.CustomerName}")" />
+                        </MudMenu>
+                    </CellTemplate>
+                </TemplateColumn>
+            </Columns>
+            <PagerContent>
+                <MudDataGridPager T="Customer" />
+            </PagerContent>
+        </MudDataGrid>
+
+
+
+    }
+
+}
+
+@code {
+    MudDataGrid<Customer> dataGrid = new();
+    private string? searchString;
+    private string LastName;
+    private string FirstName;
+
+    // private Category Customer { get; set; } = new();
+
+    private IEnumerable<Customer>? _customers;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _customers = await CustomerService.GetAllCustomerAsync();
+    }
+
+    private async Task<GridData<Customer>> ServerReload(GridState<Customer> state)
+    {
+
+        _customers = _customers.Where(cu =>
+        {
+            if (string.IsNullOrWhiteSpace(searchString))
+                return true;
+            if (cu.CustomerName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+                return true;
+            return false;
+        }).ToArray();
+        var totalItems = _customers.Count();
+
+        var sortDefinition = state.SortDefinitions.FirstOrDefault();
+        if (sortDefinition != null)
+        {
+            switch (sortDefinition.SortBy)
+            {
+                case nameof(Customer.CustomerName):
+                    _customers = _customers.OrderByDirection(
+                        sortDefinition.Descending ? SortDirection.Descending : SortDirection.Ascending,
+                        cu => cu.CustomerName
+                    );
+                    break;
+
+            }
+        }
+
+        var pagedData = _customers.Skip(state.Page * state.PageSize).Take(state.PageSize).ToArray();
+        return new GridData<Customer>
+            {
+                TotalItems = totalItems,
+                Items = pagedData
+            };
+    }
+
+    private Task OnSearch(string text)
+    {
+        searchString = text;
+        return dataGrid.ReloadServerData();
+
+    }
+
+    void RowClicked(DataGridRowClickEventArgs<Customer> args)
+    {
+
+
+        if (args.Item == null)
+        {
+            return;
+        }
+
+        NavigationManager.NavigateTo($"/sales/customers/{args.Item.CustomerName}");
+    }
+
+    async Task OpenDialogAsync(Customer customer)
+    {
+        var parameters = new DialogParameters<DialogComponent>
+        {
+            {x => x.ContentText, $"Are you sure you want to delete the Customer '{customer.CustomerName}'? This action cannot be undone."},
+            { "Button1Text", "Delete" },
+            { "Button2Text", "Cancel" },
+            { "Color", Color.Error }
+        };
+
+        var dialog = await DialogService.ShowAsync<DialogComponent>("Delete Customer", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            try
+            {
+                // delete from db
+                await CustomerService.DeleteCustomerAsync(customer);
+                Snackbar.Add("Customer Deleted", Severity.Success);
+
+            }
+            catch (InvalidOperationException ex)
+            {
+                Snackbar.Add(ex.Message, Severity.Error);
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add("An error occurred while deleting the Stock Transfer.", Severity.Error);
+            }
+        }
+    }
+
+
+    public async ValueTask DisposeAsync() => await CustomerService.DisposeAsync();
+
+
+}
