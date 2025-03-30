@@ -54,6 +54,24 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             new StockTransferStatus { StockTransferStatusId = 4, StatusName = "Completed" }
         );
 
+        // Seed StockAdjustmentStatus data
+        modelBuilder.Entity<StockAdjustmentStatus>().HasData(
+            new StockAdjustmentStatus { StockAdjustmentStatusId = 1, StatusName = "Draft" },
+            new StockAdjustmentStatus { StockAdjustmentStatusId = 2, StatusName = "Completed" }
+        );
+
+        // Seed StockAdjustmentReason data
+        modelBuilder.Entity<StockAdjustmentReason>().HasData(
+            new StockAdjustmentReason { StockAdjustmentReasonId = 1, Reason = "Damaged/Defective" },
+            new StockAdjustmentReason { StockAdjustmentReasonId = 2, Reason = "Loss/Shrinkage" },
+            new StockAdjustmentReason { StockAdjustmentReasonId = 3, Reason = "Unexpected Receipt/Found" },
+            new StockAdjustmentReason { StockAdjustmentReasonId = 4, Reason = "Physical Count Variance" },
+            new StockAdjustmentReason { StockAdjustmentReasonId = 5, Reason = "Expired/Obsolete" },
+            new StockAdjustmentReason { StockAdjustmentReasonId = 6, Reason = "Initial Inventory Adjustment:" }
+        );
+
+
+
         modelBuilder.Entity<ApplicationUser>().HasData(
             new ApplicationUser
             {
