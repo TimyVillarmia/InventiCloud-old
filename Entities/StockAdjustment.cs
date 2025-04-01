@@ -9,6 +9,11 @@ namespace InventiCloud.Entities
         [Key]
         public int StockAdjustmentId { get; set; }
 
+        public string? ReferenceNumber { get; set; }
+
+        [ForeignKey("SourceBranch")]
+        public int SourceBranchId { get; set; }
+
         [ForeignKey("StockAdjustmentReason")]
         public int ReasonId { get; set; }
 
@@ -21,9 +26,10 @@ namespace InventiCloud.Entities
 
         // navigation properties
         public virtual StockAdjustmentStatus StockAdjustmentStatus { get; set; }
+        public virtual Branch SourceBranch { get; set; }
         public virtual ApplicationUser ApplicationUser { get; set; }
         public virtual StockAdjustmentReason StockAdjustmentReason { get; set; }
-        public ICollection<StockAdjustmentDetail> Details { get; set; } 
+        public ICollection<StockAdjustmentItem> StockAdjustmentItems { get; set; } 
 
 
 

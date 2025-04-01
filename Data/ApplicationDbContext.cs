@@ -23,7 +23,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<PurchaseOrderItem> PurchaseOrderItems { get; set; }
     public DbSet<PurchaseOrderStatus> PurchaseOrderStatuses { get; set; }
     public DbSet<StockAdjustment> StockAdjustments { get; set; }
-    public DbSet<StockAdjustmentDetail> StockAdjustmentDetails { get; set; }
+    public DbSet<StockAdjustmentItem> StockAdjustmentItems { get; set; }
     public DbSet<StockAdjustmentReason> StockAdjustmentReasons { get; set; }
     public DbSet<StockAdjustmentStatus> StockAdjustmentStatuses { get; set; }
     public DbSet<StockTransfer> StockTransfers { get; set; }

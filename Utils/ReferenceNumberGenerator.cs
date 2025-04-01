@@ -2,10 +2,10 @@
 {
     public class ReferenceNumberGenerator
     {
-
         private const string PurchaseOrderPrefix = "PO-";
         private const string StockTransferPrefix = "ST-";
-        private const string SalesOrderPrefix = "SO-"; 
+        private const string SalesOrderPrefix = "SO-";
+        private const string StockAdjustmentPrefix = "SA-"; // Add Stock Adjustment Prefix
         private const int IdLength = 8;
 
         public static string GeneratePurchaseOrderReference(int purchaseOrderId)
@@ -18,9 +18,14 @@
             return $"{StockTransferPrefix}{stockTransferId:D8}";
         }
 
-        public static string GenerateSalesOrderReference(int salesOrderId) // Add Sales Order Generator
+        public static string GenerateSalesOrderReference(int salesOrderId)
         {
             return $"{SalesOrderPrefix}{salesOrderId:D8}";
+        }
+
+        public static string GenerateStockAdjustmentReference(int stockAdjustmentId) // Add Stock Adjustment Generator
+        {
+            return $"{StockAdjustmentPrefix}{stockAdjustmentId:D8}";
         }
 
         public static int? ParsePurchaseOrderId(string referenceNumber)
@@ -33,9 +38,14 @@
             return ParseId(referenceNumber, StockTransferPrefix);
         }
 
-        public static int? ParseSalesOrderId(string referenceNumber) // Add Sales Order Parser
+        public static int? ParseSalesOrderId(string referenceNumber)
         {
             return ParseId(referenceNumber, SalesOrderPrefix);
+        }
+
+        public static int? ParseStockAdjustmentId(string referenceNumber) // Add Stock Adjustment Parser
+        {
+            return ParseId(referenceNumber, StockAdjustmentPrefix);
         }
 
         private static int? ParseId(string referenceNumber, string prefix)
@@ -59,4 +69,3 @@
         }
     }
 }
-

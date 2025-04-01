@@ -79,11 +79,11 @@ namespace InventiCloud.Migrations
                     CustomerId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     CustomerName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Email = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    PhoneNumber = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Occupation = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Age = table.Column<int>(type: "int", nullable: false),
-                    BirthDate = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    Address = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    PhoneNumber = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
+                    Email = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
+                    BirthDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    Occupation = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -101,6 +101,20 @@ namespace InventiCloud.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_PurchaseOrderStatuses", x => x.PurchaseOrderStatusId);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SalesPersons",
+                columns: table => new
+                {
+                    SalesPersonId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    FullName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Email = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SalesPersons", x => x.SalesPersonId);
                 });
 
             migrationBuilder.CreateTable(
@@ -239,6 +253,41 @@ namespace InventiCloud.Migrations
                         column: x => x.CategoryId,
                         principalTable: "Categories",
                         principalColumn: "CategoryId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SalesOrders",
+                columns: table => new
+                {
+                    SalesOrderId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ReferenceNumber = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    OrderBranchId = table.Column<int>(type: "int", nullable: false),
+                    CustomerId = table.Column<int>(type: "int", nullable: false),
+                    SalesPersonId = table.Column<int>(type: "int", nullable: false),
+                    OrderedDate = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SalesOrders", x => x.SalesOrderId);
+                    table.ForeignKey(
+                        name: "FK_SalesOrders_Branches_OrderBranchId",
+                        column: x => x.OrderBranchId,
+                        principalTable: "Branches",
+                        principalColumn: "BranchId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_SalesOrders_Customers_CustomerId",
+                        column: x => x.CustomerId,
+                        principalTable: "Customers",
+                        principalColumn: "CustomerId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_SalesOrders_SalesPersons_SalesPersonId",
+                        column: x => x.SalesPersonId,
+                        principalTable: "SalesPersons",
+                        principalColumn: "SalesPersonId",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -429,6 +478,36 @@ namespace InventiCloud.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "SalesOrderItems",
+                columns: table => new
+                {
+                    SalesOrderItemId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    SalesOrderId = table.Column<int>(type: "int", nullable: false),
+                    ProductId = table.Column<int>(type: "int", nullable: false),
+                    Quantity = table.Column<int>(type: "int", nullable: false),
+                    Discount = table.Column<decimal>(type: "decimal(19,4)", precision: 19, scale: 4, nullable: true),
+                    UnitPrice = table.Column<decimal>(type: "decimal(19,2)", precision: 19, scale: 2, nullable: false),
+                    SubTotal = table.Column<decimal>(type: "decimal(19,2)", precision: 19, scale: 2, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SalesOrderItems", x => x.SalesOrderItemId);
+                    table.ForeignKey(
+                        name: "FK_SalesOrderItems_Products_ProductId",
+                        column: x => x.ProductId,
+                        principalTable: "Products",
+                        principalColumn: "ProductId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_SalesOrderItems_SalesOrders_SalesOrderId",
+                        column: x => x.SalesOrderId,
+                        principalTable: "SalesOrders",
+                        principalColumn: "SalesOrderId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "StockTransferItems",
                 columns: table => new
                 {
@@ -485,10 +564,10 @@ namespace InventiCloud.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "StockAdjustmentDetails",
+                name: "StockAdjustmentItems",
                 columns: table => new
                 {
-                    StockAdjustmentDetailId = table.Column<int>(type: "int", nullable: false)
+                    StockAdjustmentItemId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     StockAdjustmentId = table.Column<int>(type: "int", nullable: false),
                     InventoryId = table.Column<int>(type: "int", nullable: false),
@@ -498,15 +577,15 @@ namespace InventiCloud.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_StockAdjustmentDetails", x => x.StockAdjustmentDetailId);
+                    table.PrimaryKey("PK_StockAdjustmentItems", x => x.StockAdjustmentItemId);
                     table.ForeignKey(
-                        name: "FK_StockAdjustmentDetails_Inventories_InventoryId",
+                        name: "FK_StockAdjustmentItems_Inventories_InventoryId",
                         column: x => x.InventoryId,
                         principalTable: "Inventories",
                         principalColumn: "InventoryId",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_StockAdjustmentDetails_StockAdjustments_StockAdjustmentId",
+                        name: "FK_StockAdjustmentItems_StockAdjustments_StockAdjustmentId",
                         column: x => x.StockAdjustmentId,
                         principalTable: "StockAdjustments",
                         principalColumn: "StockAdjustmentId",
@@ -516,7 +595,7 @@ namespace InventiCloud.Migrations
             migrationBuilder.InsertData(
                 table: "AspNetUsers",
                 columns: new[] { "Id", "AccessFailedCount", "ConcurrencyStamp", "Email", "EmailConfirmed", "LockoutEnabled", "LockoutEnd", "NormalizedEmail", "NormalizedUserName", "PasswordHash", "PhoneNumber", "PhoneNumberConfirmed", "SecurityStamp", "TwoFactorEnabled", "UserName" },
-                values: new object[] { "your-user-id-1", 0, "4e4ecfe5-ce27-4ff0-a628-bfd6b92055e3", "admin@example.com", true, false, null, "ADMIN@EXAMPLE.COM", "ADMIN", "AQAAAAIAAYagAAAAECEU3A+Rj3keQZWSL/Uh5W3UWwcV8MLv4BUvItqeZ3oVSBnIq1dcJvlu5JWxpntjrA==", null, false, "629a9179-a11a-486e-8798-5b5ddc1fee2f", false, "admin" });
+                values: new object[] { "your-user-id-1", 0, "f32f3431-5170-4953-885b-625e5c922430", "admin@example.com", true, false, null, "ADMIN@EXAMPLE.COM", "ADMIN", "AQAAAAIAAYagAAAAED7a+XJO21cqg2Sjrv+taG8Snhj5eiXhjArNPcKNBYiPiMlfkGdogeG59pSNBAzGKA==", null, false, "199ec236-cb4e-483c-8d47-9e41aff245df", false, "admin" });
 
             migrationBuilder.InsertData(
                 table: "Branches",
@@ -549,6 +628,28 @@ namespace InventiCloud.Migrations
                     { 2, "Ordered" },
                     { 3, "Completed" },
                     { 4, "Cancelled" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "StockAdjustmentReasons",
+                columns: new[] { "StockAdjustmentReasonId", "Reason" },
+                values: new object[,]
+                {
+                    { 1, "Damaged/Defective" },
+                    { 2, "Loss/Shrinkage" },
+                    { 3, "Unexpected Receipt/Found" },
+                    { 4, "Physical Count Variance" },
+                    { 5, "Expired/Obsolete" },
+                    { 6, "Initial Inventory Adjustment:" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "StockAdjustmentStatuses",
+                columns: new[] { "StockAdjustmentStatusId", "StatusName" },
+                values: new object[,]
+                {
+                    { 1, "Draft" },
+                    { 2, "Completed" }
                 });
 
             migrationBuilder.InsertData(
@@ -621,6 +722,20 @@ namespace InventiCloud.Migrations
                 table: "Categories",
                 column: "CategoryName",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Customers_Email",
+                table: "Customers",
+                column: "Email",
+                unique: true,
+                filter: "[Email] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Customers_PhoneNumber",
+                table: "Customers",
+                column: "PhoneNumber",
+                unique: true,
+                filter: "[PhoneNumber] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Inventories_BranchId",
@@ -700,13 +815,38 @@ namespace InventiCloud.Migrations
                 column: "SupplierCode");
 
             migrationBuilder.CreateIndex(
-                name: "IX_StockAdjustmentDetails_InventoryId",
-                table: "StockAdjustmentDetails",
+                name: "IX_SalesOrderItems_ProductId",
+                table: "SalesOrderItems",
+                column: "ProductId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SalesOrderItems_SalesOrderId",
+                table: "SalesOrderItems",
+                column: "SalesOrderId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SalesOrders_CustomerId",
+                table: "SalesOrders",
+                column: "CustomerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SalesOrders_OrderBranchId",
+                table: "SalesOrders",
+                column: "OrderBranchId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SalesOrders_SalesPersonId",
+                table: "SalesOrders",
+                column: "SalesPersonId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_StockAdjustmentItems_InventoryId",
+                table: "StockAdjustmentItems",
                 column: "InventoryId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_StockAdjustmentDetails_StockAdjustmentId",
-                table: "StockAdjustmentDetails",
+                name: "IX_StockAdjustmentItems_StockAdjustmentId",
+                table: "StockAdjustmentItems",
                 column: "StockAdjustmentId");
 
             migrationBuilder.CreateIndex(
@@ -768,16 +908,16 @@ namespace InventiCloud.Migrations
                 name: "BranchAccounts");
 
             migrationBuilder.DropTable(
-                name: "Customers");
-
-            migrationBuilder.DropTable(
                 name: "ProductAttributeValues");
 
             migrationBuilder.DropTable(
                 name: "PurchaseOrderItems");
 
             migrationBuilder.DropTable(
-                name: "StockAdjustmentDetails");
+                name: "SalesOrderItems");
+
+            migrationBuilder.DropTable(
+                name: "StockAdjustmentItems");
 
             migrationBuilder.DropTable(
                 name: "StockTransferItems");
@@ -790,6 +930,9 @@ namespace InventiCloud.Migrations
 
             migrationBuilder.DropTable(
                 name: "PurchaseOrders");
+
+            migrationBuilder.DropTable(
+                name: "SalesOrders");
 
             migrationBuilder.DropTable(
                 name: "Inventories");
@@ -805,6 +948,12 @@ namespace InventiCloud.Migrations
 
             migrationBuilder.DropTable(
                 name: "Suppliers");
+
+            migrationBuilder.DropTable(
+                name: "Customers");
+
+            migrationBuilder.DropTable(
+                name: "SalesPersons");
 
             migrationBuilder.DropTable(
                 name: "Products");

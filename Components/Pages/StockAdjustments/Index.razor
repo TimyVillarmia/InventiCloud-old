@@ -1,0 +1,160 @@
+﻿@page "/inventory/stock-adjustments"
+@using InventiCloud.Services.Interface
+@using Microsoft.EntityFrameworkCore
+@using InventiCloud.Entities
+@using InventiCloud.Data
+@implements IAsyncDisposable
+@inject IInventoryService InventoryService
+@inject IBranchService BranchService
+
+<PageTitle>Index</PageTitle>
+
+<MudText Class="bold mb-2" Typo="Typo.h4">Stock Levels</MudText>
+@if (_inventories == null)
+{
+    <MudContainer Class="d-flex justify-center align-items-center" Style="height: 100vh;">
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    </MudContainer>
+}
+else
+{
+    @if (!_inventories.Any())
+    {
+
+        <MudPaper Height="500px" Class="justify-center align-content-center">
+            <MudText Class="bol" Typo="Typo.h6" Align="Align.Center">No Products in Stock</MudText>
+            <MudText Typo="Typo.body1" Align="Align.Center">
+                "Add products to your inventory to start tracking stock levels.
+            </MudText>
+            <MudContainer Class="d-flex justify-center mt-2">
+                <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Href="products/create" Color="Color.Primary" Class="text-uppercase">
+                    Add Product
+                </MudButton>
+            </MudContainer>
+        </MudPaper>
+    }
+    else
+    {
+
+        <MudGrid>
+            <MudItem sm="6">
+                <MudStack Row="true" AlignItems="AlignItems.Center">
+                    <div>
+                        <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                                      AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+                    </div>
+                    <div>
+                        <MudSelect @bind-Value="@selectedBranch" @bind-Value:after="OnSelect" Variant="Variant.Outlined">
+                            @foreach (Branch branch in _branches)
+                            {
+                                <MudSelectItem Value="@branch.BranchId">@branch.BranchName</MudSelectItem>
+                            }
+                        </MudSelect>
+
+                    </div>
+                </MudStack>
+
+            </MudItem>
+
+        </MudGrid>
+
+        <MudDataGrid @ref="dataGrid" T="Inventory" ServerData="ServerReload" MultiSelection="true" Filterable="false">
+            <Columns>
+                <PropertyColumn Property="inventory => inventory.Product.SKU" />
+                <PropertyColumn Property="inventory => inventory.Product.ProductName" Title="Product Name" />
+                <PropertyColumn Property="inventory => inventory.OnHandquantity" Title="On hand" />
+                <PropertyColumn Property="inventory => inventory.AvailableQuantity" Title="Available" />
+                <PropertyColumn Property="inventory => inventory.IncomingQuantity" Title="Incoming" />
+                <PropertyColumn Property="inventory => inventory.Allocated" Title="Allocated" />
+            </Columns>
+            <PagerContent>
+                <MudDataGridPager T="Inventory" />
+            </PagerContent>
+        </MudDataGrid>
+
+
+
+    }
+
+}
+
+
+
+@code {
+    string searchString = null;
+    private int selectedBranch;
+    private int selectedCategory;
+
+
+    private IEnumerable<Inventory>? _inventories;
+    private IEnumerable<Inventory> _filteredinventories = new List<Inventory>();
+    private IEnumerable<Branch> _branches = new List<Branch>();
+
+    MudDataGrid<Inventory> dataGrid = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        _inventories = await InventoryService.GetAllInventoryAsync();
+        _branches = await BranchService.GetAllBranchAsync();
+        selectedBranch = _branches.First().BranchId;
+
+    }
+
+    private async Task<GridData<Inventory>> ServerReload(GridState<Inventory> state)
+    {
+        _filteredinventories = _inventories.Where(b => b.BranchId == selectedBranch);
+
+        _filteredinventories = _filteredinventories.Where(inventory =>
+        {
+            if (string.IsNullOrWhiteSpace(searchString))
+                return true;
+            if (inventory.Product.SKU.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+                return true;
+            if (inventory.Product.ProductName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+                return true;
+            if (inventory.Product.CategoryId.Equals(selectedCategory))
+                return true;
+            return false;
+        }).ToArray();
+        var totalItems = _filteredinventories.Count();
+
+        var sortDefinition = state.SortDefinitions.FirstOrDefault();
+        if (sortDefinition != null)
+        {
+            switch (sortDefinition.SortBy)
+            {
+                case nameof(Inventory.OnHandquantity):
+                    _filteredinventories = _inventories.OrderByDirection(
+                        sortDefinition.Descending ? SortDirection.Descending : SortDirection.Ascending,
+                        i => i.OnHandquantity
+                    );
+                    break;
+            }
+        }
+
+        var pagedData = _filteredinventories.Skip(state.Page * state.PageSize).Take(state.PageSize).ToArray();
+        return new GridData<Inventory>
+            {
+                TotalItems = totalItems,
+                Items = pagedData
+            };
+    }
+
+
+
+    private Task OnSearch(string text)
+    {
+        searchString = text;
+        return dataGrid.ReloadServerData();
+    }
+
+    private Task OnSelect()
+    {
+        return dataGrid.ReloadServerData();
+    }
+
+
+
+    public async ValueTask DisposeAsync() => await InventoryService.DisposeAsync();
+}
