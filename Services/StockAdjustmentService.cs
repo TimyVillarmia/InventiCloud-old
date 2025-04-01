@@ -38,6 +38,15 @@ namespace InventiCloud.Services
                 .ToListAsync();
         }
 
+        public async Task<IEnumerable<StockAdjustmentReason>> GetAllStockAdjustmentReasonAsync()
+        {
+            using var context = _dbFactory.CreateDbContext();
+
+            return await context.StockAdjustmentReasons
+                .AsNoTracking()
+                .ToListAsync();
+        }
+
         public  async Task<IEnumerable<StockAdjustmentItem>> GetAllStockAdjustmentItemByIdAsync(int? stockAdjustmentId)
         {
             if (!stockAdjustmentId.HasValue) throw new ArgumentNullException(nameof(stockAdjustmentId), "Stock Adjustment ID cannot be null.");
@@ -70,90 +79,322 @@ namespace InventiCloud.Services
 
         public async Task AddStockAdjustmentAsync(StockAdjustment stockAdjustment, ICollection<StockAdjustmentItem> stockAdjustmentItems)
         {
-            if (stockAdjustment == null) throw new ArgumentNullException(nameof(stockAdjustment), "Stock Adjustment cannot be null.");
-            if (stockAdjustmentItems == null || !stockAdjustmentItems.Any()) throw new InvalidOperationException("Stock Adjustment must have at least one item.");
+            if (stockAdjustment == null)
+            {
+                throw new ArgumentNullException(nameof(stockAdjustment), "Stock Adjustment cannot be null.");
+            }
+
+            if (stockAdjustmentItems == null || !stockAdjustmentItems.Any())
+            {
+                throw new InvalidOperationException("Stock Adjustment must have at least one item.");
+            }
 
             using var context = _dbFactory.CreateDbContext();
 
-            //try
-            //{
-            //    stockAdjustment.StatusId = 1; // Draft
-            //    context.StockAdjustments.Add(stockAdjustment);
-            //    await context.SaveChangesAsync(); // Save to get StockAdjustmentId
+            try
+            {
+                stockAdjustment.StatusId = 1; // Draft
+                context.StockAdjustments.Add(stockAdjustment);
+                await context.SaveChangesAsync(); // Save to get StockAdjustmentId
 
-            //    stockAdjustment.ReferenceNumber = ReferenceNumberGenerator.GenerateStockAdjustmentReference(stockAdjustment.StockAdjustmentId);
-            //    context.StockAdjustments.Update(stockAdjustment);
-
-            //    foreach (var item in stockAdjustmentItems)
-            //    {
-            //        item.StockAdjustmentId = stockAdjustment.StockAdjustmentId;
-            //        var sourceInventory = await _inventoryService.GetInventoryByProductIdAndBranchIdAsync(item.Inventory.ProductId, stockAdjustment.SourceBranchId);
-
-            //        if (sourceInventory == null || sourceInventory.OnHandquantity < item.NewQuantity)
-            //        {
-            //            throw new InvalidOperationException($"Insufficient inventory for ProductId: {item.ProductId} in SourceBranchId: {stockTransfer.SourceBranchId}");
-            //        }
-
-            //        sourceInventory.Allocated += item.TransferQuantity;
-            //        sourceInventory.AvailableQuantity = sourceInventory.OnHandquantity - sourceInventory.Allocated;
-            //        await _inventoryService.UpdateInventoryAsync(sourceInventory);
-            //    }
-
-            //    context.StockTransferItems.AddRange(stockTransferItems);
-            //    await context.SaveChangesAsync();
+                stockAdjustment.ReferenceNumber = ReferenceNumberGenerator.GenerateStockAdjustmentReference(stockAdjustment.StockAdjustmentId);
+                context.StockAdjustments.Update(stockAdjustment);
 
 
-            //    _navigationManager.NavigateTo($"/inventory/stock-transfers/{stockTransfer.ReferenceNumber}");
-            //    _logger.LogInformation("Stock Transfer {StockTransferId} added successfully.", stockTransfer.StockTransferId);
-            //}
-            //catch (Exception ex)
-            //{
-            //    _logger.LogError(ex, "Error adding stock transfer {StockTransferId}.", stockTransfer.StockTransferId);
-            //    throw;
-            //}
+                foreach (var item in stockAdjustmentItems)
+                {
+                    item.StockAdjustmentId = stockAdjustment.StockAdjustmentId;
+
+                    // Retrieve the inventory item based on ProductId and BranchId
+                    var inventory = await _inventoryService.GetInventoryByProductIdAndBranchIdAsync(item.ProductId, stockAdjustment.SourceBranchId);
+
+                    if (inventory == null)
+                    {
+                        throw new InvalidOperationException($"Inventory not found for ProductId: {item.ProductId} in BranchId: {stockAdjustment.SourceBranchId}.");
+                    }
+
+                    // Check if NewQuantity is the same as PreviousQuantity
+                    if (item.NewQuantity == item.PreviousQuantity)
+                    {
+                        throw new InvalidOperationException($"New quantity cannot be the same as previous quantity for ProductId: {item.ProductId}.");
+                    }
+                }
+
+                context.StockAdjustmentItems.AddRange(stockAdjustmentItems);
+                await context.SaveChangesAsync();
+
+                _navigationManager.NavigateTo($"/inventory/stock-adjustments/{stockAdjustment.ReferenceNumber}");
+                _logger.LogInformation("Stock Adjustment {StockAdjustmentId} added successfully.", stockAdjustment.StockAdjustmentId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error adding stock adjustment {StockAdjustmentId}.", stockAdjustment.StockAdjustmentId);
+                throw;
+            }
         }
 
-        public Task DeleteStockAdjustmentAsync(string referenceNumber)
+        public async Task DeleteStockAdjustmentAsync(string referenceNumber)
         {
-            throw new NotImplementedException();
+            if (string.IsNullOrEmpty(referenceNumber))
+            {
+                throw new ArgumentNullException(nameof(referenceNumber), "Reference number cannot be null or empty.");
+            }
+
+            using var context = _dbFactory.CreateDbContext();
+
+            try
+            {
+                // Find the StockAdjustment by ReferenceNumber
+                var stockAdjustment = await context.StockAdjustments
+                    .Include(sa => sa.StockAdjustmentStatus) // Include Status
+                    .FirstOrDefaultAsync(sa => sa.ReferenceNumber == referenceNumber);
+
+                if (stockAdjustment == null)
+                {
+                    throw new InvalidOperationException($"Stock Adjustment with reference number '{referenceNumber}' not found.");
+                }
+
+                // Check if status is Draft
+                if (stockAdjustment.StockAdjustmentStatus.StatusName != "Draft")
+                {
+                    throw new InvalidOperationException($"Stock Adjustment with reference number '{referenceNumber}' cannot be deleted as its status is '{stockAdjustment.StockAdjustmentStatus.StatusName}'.");
+                }
+
+                // Remove StockAdjustmentItems first (if any)
+                var adjustmentItems = await context.StockAdjustmentItems
+                    .Where(sai => sai.StockAdjustmentId == stockAdjustment.StockAdjustmentId)
+                    .ToListAsync();
+
+                if (adjustmentItems.Any())
+                {
+                    context.StockAdjustmentItems.RemoveRange(adjustmentItems);
+                    await context.SaveChangesAsync();
+                }
+
+                // Remove the StockAdjustment
+                context.StockAdjustments.Remove(stockAdjustment);
+                await context.SaveChangesAsync();
+
+                _logger.LogInformation("Stock Adjustment {ReferenceNumber} deleted successfully.", referenceNumber);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting Stock Adjustment {ReferenceNumber}.", referenceNumber);
+                throw;
+            }
         }
 
-        public Task DisposeAsync()
+        public async Task DisposeAsync()
         {
-            throw new NotImplementedException();
+            using var context = _dbFactory.CreateDbContext();
+            await context.DisposeAsync();
         }
 
-        
-
-        
-        public Task<StockAdjustment> GetAllStockAdjustmentItemByIdAsync(string stockAdjustmentId)
+        public async Task<StockAdjustment> GetStockAdjustmentByReferenceNumberAsync(string referenceNumber)
         {
-            throw new NotImplementedException();
+            if (string.IsNullOrEmpty(referenceNumber))
+            {
+                return null;
+            }
+
+            using var context = _dbFactory.CreateDbContext();
+
+            return await context.StockAdjustments
+                .Include(sa => sa.StockAdjustmentStatus)
+                .Include(sa => sa.SourceBranch)
+                .Include(sa => sa.ApplicationUser)
+                .Include(sa => sa.StockAdjustmentReason)
+                .Include(sa => sa.StockAdjustmentItems)
+                    .ThenInclude(sai => sai.Product)
+                .FirstOrDefaultAsync(sa => sa.ReferenceNumber == referenceNumber);
         }
 
-        public Task<StockAdjustment> GetStockAdjustmentByReferenceNumberAsync(string referenceNumber)
+        public async Task<StockAdjustment> GetStockAdjustmentByIdAsync(int? stockAdjustmentId)
         {
-            throw new NotImplementedException();
+            if (!stockAdjustmentId.HasValue)
+            {
+                return null; // Or throw ArgumentNullException, depending on your needs
+            }
+
+            using var context = _dbFactory.CreateDbContext();
+
+            return await context.StockAdjustments
+                .Include(sa => sa.StockAdjustmentStatus)
+                .Include(sa => sa.SourceBranch)
+                .Include(sa => sa.ApplicationUser)
+                .Include(sa => sa.StockAdjustmentReason)
+                .Include(sa => sa.StockAdjustmentItems)
+                    .ThenInclude(sai => sai.Product)
+                .FirstOrDefaultAsync(sa => sa.StockAdjustmentId == stockAdjustmentId.Value);
         }
 
-        public Task StockTransferToCompleteAsync(string referenceNumber)
+        public async Task UpdateStockAdjustmentAsync(string referenceNumber, StockAdjustment newStockAdjustment)
         {
-            throw new NotImplementedException();
+            if (newStockAdjustment == null)
+            {
+                throw new ArgumentNullException(nameof(newStockAdjustment), "Stock Adjustment cannot be null.");
+            }
+
+            using var context = _dbFactory.CreateDbContext();
+
+            try
+            {
+                var existingStockAdjustment = await context.StockAdjustments
+                    .Include(sa => sa.StockAdjustmentStatus)
+                    .FirstOrDefaultAsync(sa => sa.ReferenceNumber == referenceNumber);
+
+                if (existingStockAdjustment == null)
+                {
+                    throw new InvalidOperationException($"Stock Adjustment with Reference Number {referenceNumber} not found.");
+                }
+
+                if (existingStockAdjustment.StockAdjustmentStatus.StatusName != "Draft")
+                {
+                    throw new InvalidOperationException("Cannot update Stock Adjustment. It is not in 'Draft' status.");
+                }
+
+                // Update Stock Adjustment Details
+                existingStockAdjustment.SourceBranchId = newStockAdjustment.SourceBranchId;
+                existingStockAdjustment.ReasonId = newStockAdjustment.ReasonId;
+
+                context.StockAdjustments.Update(existingStockAdjustment);
+                await context.SaveChangesAsync();
+
+                _logger.LogInformation("Stock Adjustment {ReferenceNumber} updated.", referenceNumber);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating stock adjustment {ReferenceNumber}.", referenceNumber);
+                throw;
+            }
         }
 
-        public Task StockTransferToDraftAsync(string referenceNumber)
+
+        public async Task UpdateStockAdjustmentItemsAsync(string referenceNumber, ICollection<StockAdjustmentItem> newStockAdjustmentItems)
         {
-            throw new NotImplementedException();
+            using var context = _dbFactory.CreateDbContext();
+
+            var existingAdjustment = await context.StockAdjustments
+                .Include(sa => sa.StockAdjustmentItems)
+                .FirstOrDefaultAsync(sa => sa.ReferenceNumber == referenceNumber);
+
+            if (existingAdjustment == null)
+            {
+                throw new InvalidOperationException($"Stock Adjustment with Reference Number {referenceNumber} not found.");
+            }
+
+            // Delete items that are in the existing list but not in the new list
+            var itemsToDelete = existingAdjustment.StockAdjustmentItems
+                .Where(existingItem => !newStockAdjustmentItems.Any(newItem => newItem.StockAdjustmentItemId == existingItem.StockAdjustmentItemId))
+                .ToList();
+
+            context.StockAdjustmentItems.RemoveRange(itemsToDelete);
+
+            // Update items that exist in both lists
+            foreach (var newItem in newStockAdjustmentItems)
+            {
+                var existingItem = existingAdjustment.StockAdjustmentItems.FirstOrDefault(item => item.StockAdjustmentItemId == newItem.StockAdjustmentItemId);
+
+                if (existingItem != null)
+                {
+                    // Check if NewQuantity is the same as PreviousQuantity
+                    if (newItem.NewQuantity == newItem.PreviousQuantity)
+                    {
+                        throw new InvalidOperationException($"New quantity cannot be the same as previous quantity for StockAdjustmentItemId: {newItem.StockAdjustmentItemId}.");
+                    }
+
+                    // Update existing item
+                    existingItem.PreviousQuantity = newItem.PreviousQuantity;
+                    existingItem.NewQuantity = newItem.NewQuantity;
+                    existingItem.AdjustedQuantity = newItem.NewQuantity - newItem.PreviousQuantity;
+
+                    context.StockAdjustmentItems.Update(existingItem);
+                }
+                else
+                {
+                    // Check if NewQuantity is the same as PreviousQuantity
+                    if (newItem.NewQuantity == newItem.PreviousQuantity)
+                    {
+                        throw new InvalidOperationException($"New quantity cannot be the same as previous quantity for a new StockAdjustmentItem.");
+                    }
+
+                    // Add new item
+                    newItem.StockAdjustmentId = existingAdjustment.StockAdjustmentId;
+
+                    context.StockAdjustmentItems.Add(newItem);
+                }
+            }
+
+            await context.SaveChangesAsync();
         }
 
-        public Task UpdateStockAdjustmentAsync(string referenceNumber, StockAdjustment newStockAdjustment)
+        public async Task StockAdjustmentToCompleteAsync(string referenceNumber)
         {
-            throw new NotImplementedException();
+            if (string.IsNullOrEmpty(referenceNumber))
+            {
+                throw new ArgumentNullException(nameof(referenceNumber), "Reference number cannot be null or empty.");
+            }
+
+            using var context = _dbFactory.CreateDbContext();
+
+            try
+            {
+                var stockAdjustment = await context.StockAdjustments
+                    .Include(sa => sa.StockAdjustmentItems)
+                    .Include(sa => sa.StockAdjustmentStatus)
+                    .FirstOrDefaultAsync(sa => sa.ReferenceNumber == referenceNumber);
+
+                if (stockAdjustment == null)
+                {
+                    throw new InvalidOperationException($"Stock Adjustment with reference number '{referenceNumber}' not found.");
+                }
+
+                if (stockAdjustment.StockAdjustmentStatus.StatusName != "Draft")
+                {
+                    throw new InvalidOperationException($"Stock Adjustment with reference number '{referenceNumber}' cannot be completed as its status is '{stockAdjustment.StockAdjustmentStatus.StatusName}'.");
+                }
+
+                foreach (var item in stockAdjustment.StockAdjustmentItems)
+                {
+                    // Retrieve the inventory item based on ProductId and BranchId
+                    var inventory = await _inventoryService.GetInventoryByProductIdAndBranchIdAsync(item.ProductId, stockAdjustment.SourceBranchId);
+
+                    if (inventory == null)
+                    {
+                        throw new InvalidOperationException($"Inventory not found for ProductId: {item.ProductId} in BranchId: {stockAdjustment.SourceBranchId}.");
+                    }
+
+                    // Check if NewQuantity is the same as PreviousQuantity
+                    if (item.NewQuantity == item.PreviousQuantity)
+                    {
+                        throw new InvalidOperationException($"New quantity cannot be the same as previous quantity for ProductId: {item.ProductId}.");
+                    }
+
+                    // Calculate the adjusted quantity
+                    item.AdjustedQuantity = item.NewQuantity - item.PreviousQuantity;
+
+                    // Update the inventory based on the adjustment
+                    inventory.OnHandquantity = item.NewQuantity;
+                    inventory.AvailableQuantity = item.NewQuantity - inventory.Allocated;
+
+                    // Update the inventory in the database
+                    await _inventoryService.UpdateInventoryAsync(inventory);
+                }
+
+                // Update StockAdjustment Status to "Completed"
+                stockAdjustment.StatusId = context.StockAdjustmentStatuses.FirstOrDefault(s => s.StatusName == "Completed").StockAdjustmentStatusId;
+
+                await context.SaveChangesAsync();
+
+                _logger.LogInformation("Stock Adjustment {ReferenceNumber} completed successfully.", referenceNumber);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error completing Stock Adjustment {ReferenceNumber}.", referenceNumber);
+                throw;
+            }
         }
 
-        public Task UpdateStockAdjustmentItemsAsync(string referenceNumber, ICollection<StockAdjustmentItem> newStockAdjustmentItems)
-        {
-            throw new NotImplementedException();
-        }
+      
     }
 }

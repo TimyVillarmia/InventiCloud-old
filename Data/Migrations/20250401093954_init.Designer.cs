@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace InventiCloud.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250331010229_init")]
+    [Migration("20250401093954_init")]
     partial class init
     {
         /// <inheritdoc />
@@ -94,15 +94,15 @@ namespace InventiCloud.Migrations
                         {
                             Id = "your-user-id-1",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "f32f3431-5170-4953-885b-625e5c922430",
+                            ConcurrencyStamp = "76f265fe-8f54-4e0b-864c-c8dad039dcce",
                             Email = "admin@example.com",
                             EmailConfirmed = true,
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN@EXAMPLE.COM",
                             NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAED7a+XJO21cqg2Sjrv+taG8Snhj5eiXhjArNPcKNBYiPiMlfkGdogeG59pSNBAzGKA==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEEundGMvNML6V5Z9QkRdnKEu2MpgUBVFn9RC5nSuMEt+uJnx/ozmotUKRh4SJSwcbA==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "199ec236-cb4e-483c-8d47-9e41aff245df",
+                            SecurityStamp = "a7f4347f-3409-498c-ba30-c2ee57caba4c",
                             TwoFactorEnabled = false,
                             UserName = "admin"
                         });
@@ -941,6 +941,12 @@ namespace InventiCloud.Migrations
                     b.Property<int>("ReasonId")
                         .HasColumnType("int");
 
+                    b.Property<string>("ReferenceNumber")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("SourceBranchId")
+                        .HasColumnType("int");
+
                     b.Property<int>("StatusId")
                         .HasColumnType("int");
 
@@ -949,6 +955,8 @@ namespace InventiCloud.Migrations
                     b.HasIndex("AdjustedBy");
 
                     b.HasIndex("ReasonId");
+
+                    b.HasIndex("SourceBranchId");
 
                     b.HasIndex("StatusId");
 
@@ -966,13 +974,13 @@ namespace InventiCloud.Migrations
                     b.Property<int>("AdjustedQuantity")
                         .HasColumnType("int");
 
-                    b.Property<int>("InventoryId")
-                        .HasColumnType("int");
-
                     b.Property<int>("NewQuantity")
                         .HasColumnType("int");
 
                     b.Property<int>("PreviousQuantity")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProductId")
                         .HasColumnType("int");
 
                     b.Property<int>("StockAdjustmentId")
@@ -980,7 +988,7 @@ namespace InventiCloud.Migrations
 
                     b.HasKey("StockAdjustmentItemId");
 
-                    b.HasIndex("InventoryId");
+                    b.HasIndex("ProductId");
 
                     b.HasIndex("StockAdjustmentId");
 
@@ -1577,6 +1585,12 @@ namespace InventiCloud.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("InventiCloud.Entities.Branch", "SourceBranch")
+                        .WithMany()
+                        .HasForeignKey("SourceBranchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("InventiCloud.Entities.StockAdjustmentStatus", "StockAdjustmentStatus")
                         .WithMany()
                         .HasForeignKey("StatusId")
@@ -1585,6 +1599,8 @@ namespace InventiCloud.Migrations
 
                     b.Navigation("ApplicationUser");
 
+                    b.Navigation("SourceBranch");
+
                     b.Navigation("StockAdjustmentReason");
 
                     b.Navigation("StockAdjustmentStatus");
@@ -1592,9 +1608,9 @@ namespace InventiCloud.Migrations
 
             modelBuilder.Entity("InventiCloud.Entities.StockAdjustmentItem", b =>
                 {
-                    b.HasOne("InventiCloud.Entities.Inventory", "Inventory")
+                    b.HasOne("InventiCloud.Entities.Product", "Product")
                         .WithMany()
-                        .HasForeignKey("InventoryId")
+                        .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -1604,7 +1620,7 @@ namespace InventiCloud.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Inventory");
+                    b.Navigation("Product");
 
                     b.Navigation("StockAdjustment");
                 });
