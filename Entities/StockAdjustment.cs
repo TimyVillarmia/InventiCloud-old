@@ -22,7 +22,7 @@ namespace InventiCloud.Entities
 
         [ForeignKey("ApplicationUser")]
         public string AdjustedBy { get; set; }
-        public DateTime AdjustedDate { get; set; }
+        public DateTime AdjustedDate { get; set; } = DateTime.Now;
 
         // navigation properties
         public virtual StockAdjustmentStatus StockAdjustmentStatus { get; set; }

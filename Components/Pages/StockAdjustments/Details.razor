@@ -1,4 +1,4 @@
-﻿@page "/inventory/stock-adjustments/create"
+﻿@page "/inventory/stock-adjustments/{ReferenceNumber}"
 @using InventiCloud.Components.UI
 @using InventiCloud.Services
 @using InventiCloud.Services.Interface
@@ -19,23 +19,23 @@
 
     <div class="d-flex align-items-center mb-4">
         <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" aria-label="delete" Href="/inventory/stock-adjustments" />
-        <MudText Typo="Typo.h4">CREATE STOCK ADJUSTMENT</MudText>
+        <MudText Typo="Typo.h4">@ReferenceNumber</MudText>
     </div>
 
-    <EditForm method="post" Model="@StockAdjustment" Context="StockAdjustmentForm" OnValidSubmit="@AddStockAdjustmentToDraft"  FormName="createStockAdjustment" Enhance>
+    <EditForm method="post" Model="@StockAdjustment" Context="StockAdjustmentForm" OnValidSubmit="@AddStockAdjustmentToDraft" FormName="createStockAdjustment" Enhance>
         <DataAnnotationsValidator />
         <MudText Typo="Typo.h6">DETAILS</MudText>
         <MudGrid>
 
             <MudItem xs="12" sm="6">
                 <MudAutocomplete T="Branch" Label="Source Branch" @bind-Value="StockAdjustment.SourceBranch" For="@(()=> StockAdjustment.SourceBranch)" @bind-Value:after="HandleChangeSourceBranch"
-                SearchFunc="@SearchBranch" ToStringFunc="@(branch=> branch==null?null : $"{branch.BranchName}")" Variant="Variant.Outlined" />
+                                 SearchFunc="@SearchBranch" ToStringFunc="@(branch=> branch==null?null : $"{branch.BranchName}")" Variant="Variant.Outlined" />
                 <MudTextField T="string" Class="mb-4" Label="Stock Adjustment Number" ReadOnly="true" Disabled="true" Variant="Variant.Outlined" />
             </MudItem>
 
             <MudItem xs="12" sm="6">
                 <MudAutocomplete T="StockAdjustmentReason" Label="Reason" @bind-Value="StockAdjustment.Reason"
-                SearchFunc="@SearchReason" ToStringFunc="@(reason=> reason==null?null : $"{reason.Reason}")" For="@(() => StockAdjustment.Reason)" Variant="Variant.Outlined" />
+                                 SearchFunc="@SearchReason" ToStringFunc="@(reason=> reason==null?null : $"{reason.Reason}")" For="@(() => StockAdjustment.Reason)" Variant="Variant.Outlined" />
                 <MudDatePicker Label="Date Created" Editable="true" @bind-Date="StockAdjustment.DateCreated" ReadOnly="true"
                                Mask="@(new DateMask("MM/dd/yyyy"))" DateFormat="MM/dd/yyyy" Placeholder="Date Created" Variant="Variant.Outlined" />
             </MudItem>
@@ -51,7 +51,7 @@
                     <MudGrid Class="d-flex align-center flex-wrap flex-grow-1">
                         <MudItem xs="12" sm="5">
                             <MudAutocomplete T="Product" Label="Products" @bind-Value="StockAdjustmentItem.Product" Margin="Margin.Dense" For="@(() => StockAdjustmentItem.Product)"
-                            SearchFunc="@SearchProduct" ToStringFunc="@(product=> product==null?null : $"{product.ProductName}")" Variant="Variant.Outlined" @bind-Value:after="After" />
+                                             SearchFunc="@SearchProduct" ToStringFunc="@(product=> product==null?null : $"{product.ProductName}")" Variant="Variant.Outlined" @bind-Value:after="After" />
                         </MudItem>
 
                         <MudItem xs="12" sm="2">
@@ -106,12 +106,21 @@
 </MudContainer>
 
 @code {
+
+    [Parameter]
+    public string ReferenceNumber { get; set; }
+
+    private string? Status = "Draft";
+    public Color SelectedColor;
+    public bool isDraft = true;
+    public bool isEmpty = true;
+
     MudDataGrid<StockAdjustmentItemViewModel> dataGrid = new();
 
-    [SupplyParameterFromForm(FormName = "createStockAdjustment")]
+    [SupplyParameterFromForm(FormName = "updateStockAdjustment")]
     private StockAdjustmentViewModel StockAdjustment { get; set; } = new();
 
-    [SupplyParameterFromForm(FormName = "createStockAdjustmentItem")]
+    [SupplyParameterFromForm(FormName = "updateStockAdjustmentItem")]
     private StockAdjustmentItemViewModel StockAdjustmentItem { get; set; } = new();
 
 
@@ -125,6 +134,9 @@
 
     class StockAdjustmentViewModel
     {
+
+        public int Id { get; set; }
+
         [Required(ErrorMessage = "Source Branch is required.")]
         public Branch SourceBranch { get; set; }
 
@@ -138,6 +150,7 @@
 
     class StockAdjustmentItemViewModel : IValidatableObject
     {
+        public int Id { get; set; }
 
         [Required(ErrorMessage = " ")]
         public Product Product { get; set; }
@@ -165,9 +178,58 @@
 
 
     protected override async Task OnInitializedAsync()
-    {
+    {   
         _branches = await BranchService.GetAllBranchAsync();
         _reasons = await StockAdjustmentService.GetAllStockAdjustmentReasonAsync();
+
+        var data = await StockAdjustmentService.GetStockAdjustmentByReferenceNumberAsync(ReferenceNumber);
+
+        if (data is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+
+        Status = data.StockAdjustmentStatus.StatusName;
+        _sourceBranchInventories = await InventoryService.GetAllInventoryByBranchAsync(data.SourceBranch.BranchId);
+
+        // map data
+        StockAdjustment.Id = data.StockAdjustmentId;
+        StockAdjustment.SourceBranch = data.SourceBranch;
+        StockAdjustment.Reason = data.StockAdjustmentReason;
+        StockAdjustment.ReferenceNumber = data.ReferenceNumber;
+        StockAdjustment.DateCreated = data.AdjustedDate;
+
+        var items = data.StockAdjustmentItems.ToList();
+
+        StockAdjustmentItems = items.Select(vm => new StockAdjustmentItemViewModel
+            {
+                Id = vm.StockAdjustmentItemId,
+                Product = vm.Product,
+                PreviousQuantity = _sourceBranchInventories
+                                .FirstOrDefault(i => i.Product.ProductId == vm.Product.ProductId)?.OnHandquantity ?? 0, // Use vm.Product.ProductId and handle null,
+                NewQuantity = vm.NewQuantity
+            }).ToList();
+
+        switch (Status.ToLower()) // Use ToLower() for case-insensitive comparison
+        {
+            case "draft":
+                SelectedColor = Color.Default;
+                isDraft = true;
+                break;
+            case "completed":
+                SelectedColor = Color.Info;
+                isDraft = false;
+                break;
+            default:
+                SelectedColor = Color.Default; // Or some other default color
+                break;
+        }
+
+
+        // source  is only editable when
+        // StockAdjustmentItems is empty
+        isEmpty = !StockAdjustmentItems.Any();
+
     }
 
     private async Task AddStockAdjustmentToDraft(EditContext context)
@@ -220,6 +282,7 @@
             // StockAdjustmentItem.AdjustedQuantity = StockAdjustmentItem.NewQuantity - StockAdjustmentItem.PreviousQuantity;
             StockAdjustmentItems.Add(StockAdjustmentItem);
             StockAdjustmentItem = new StockAdjustmentItemViewModel(); // Reset
+            isEmpty = !StockAdjustmentItems.Any();
 
         }
 
@@ -230,7 +293,7 @@
     private void HandleInvalidSubmit(EditContext context)
     {
         var validationResults = context.GetValidationMessages();
-       
+
         // Check for specific validation errors
         if (StockAdjustmentItem.Product == null)
         {
@@ -315,6 +378,8 @@
     Task RemoveBatchProduct(StockAdjustmentItemViewModel item)
     {
         StockAdjustmentItems.Remove(item);
+        isEmpty = !StockAdjustmentItems.Any();
+
         return dataGrid.ReloadServerData();
 
     }

@@ -118,6 +118,8 @@ namespace InventiCloud.Services
                     {
                         throw new InvalidOperationException($"New quantity cannot be the same as previous quantity for ProductId: {item.ProductId}.");
                     }
+
+
                 }
 
                 context.StockAdjustmentItems.AddRange(stockAdjustmentItems);
