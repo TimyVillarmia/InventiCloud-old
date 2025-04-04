@@ -258,45 +258,7 @@
 
     }
 
-    private async Task AddStockAdjustmentToDraft(EditContext context)
-    {
-
-
-
-        if (context.Validate())
-        {
-            try
-            {
-
-
-                var sa_data = new StockAdjustment
-                    {
-                        SourceBranchId = StockAdjustment.SourceBranch.BranchId,
-                        ReasonId = StockAdjustment.Reason.StockAdjustmentReasonId,
-                        AdjustedBy = "your-user-id-1", // Replace with actual user ID
-
-                    };
-
-                var sai_data = StockAdjustmentItems.Select(vm => new StockAdjustmentItem
-                    {
-                        ProductId = vm.Product.ProductId,
-                        PreviousQuantity = vm.PreviousQuantity,
-                        NewQuantity = vm.NewQuantity,
-                        AdjustedQuantity = vm.AdjustedQuantity,
-                    }).ToList();
-
-                await StockAdjustmentService.AddStockAdjustmentAsync(sa_data, sai_data);
-                Snackbar.Add("Stock Adjustment added to draft.", Severity.Success);
-                StockAdjustment = new(); // Reset
-                await dataGrid.ReloadServerData(); // Reload grid if it exists
-            }
-            catch (InvalidOperationException ex)
-            {
-                Snackbar.Add(ex.Message, Severity.Error);
-            }
-        }
-
-    }
+    
 
     private async Task DeleteStockAdjustment()
     {
@@ -352,8 +314,6 @@
                 // update stock adjustment from db
                 await StockAdjustmentService.UpdateStockAdjustmentAsync(ReferenceNumber, new StockAdjustment
                     {
-                        StockAdjustmentId = StockAdjustment.Id,
-                        ReferenceNumber = StockAdjustment.ReferenceNumber,
                         SourceBranchId = StockAdjustment.SourceBranch.BranchId,
                         ReasonId = StockAdjustment.Reason.StockAdjustmentReasonId,
                     }
