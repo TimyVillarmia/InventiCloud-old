@@ -276,58 +276,59 @@ namespace InventiCloud.Services
         {
             using var context = _dbFactory.CreateDbContext();
 
-            var existingAdjustment = await context.StockAdjustments
-                .Include(sa => sa.StockAdjustmentItems)
-                .FirstOrDefaultAsync(sa => sa.ReferenceNumber == referenceNumber);
-
-            if (existingAdjustment == null)
+            try
             {
-                throw new InvalidOperationException($"Stock Adjustment with Reference Number {referenceNumber} not found.");
+                var existingAdjustment = await context.StockAdjustments
+                    .Include(sa => sa.StockAdjustmentItems)
+                    .FirstOrDefaultAsync(sa => sa.ReferenceNumber == referenceNumber);
+
+                if (existingAdjustment == null)
+                {
+                    throw new InvalidOperationException($"Stock Adjustment with Reference Number {referenceNumber} not found.");
+                }
+
+                var existingItems = existingAdjustment.StockAdjustmentItems.ToList();
+
+                // Delete items not in the new list
+                var itemsToDelete = existingItems.Where(existingItem => !newStockAdjustmentItems.Any(newItem => newItem.StockAdjustmentItemId == existingItem.StockAdjustmentItemId)).ToList();
+                context.StockAdjustmentItems.RemoveRange(itemsToDelete);
+
+                foreach (var newItem in newStockAdjustmentItems)
+                {
+                    var existingItem = existingItems.FirstOrDefault(item => item.StockAdjustmentItemId == newItem.StockAdjustmentItemId);
+
+                    if (existingItem != null)
+                    {
+                        // Update existing item
+                        if (newItem.NewQuantity == newItem.PreviousQuantity)
+                        {
+                            throw new InvalidOperationException($"New quantity cannot be the same as previous quantity for StockAdjustmentItemId: {newItem.StockAdjustmentItemId}.");
+                        }
+
+                        existingItem.PreviousQuantity = newItem.PreviousQuantity;
+                        existingItem.NewQuantity = newItem.NewQuantity;
+                        existingItem.AdjustedQuantity = newItem.NewQuantity - newItem.PreviousQuantity;
+                    }
+                    else
+                    {
+                        // Add new item
+                        if (newItem.NewQuantity == newItem.PreviousQuantity)
+                        {
+                            throw new InvalidOperationException("New quantity cannot be the same as previous quantity for a new StockAdjustmentItem.");
+                        }
+
+                        newItem.StockAdjustmentId = existingAdjustment.StockAdjustmentId;
+                        context.StockAdjustmentItems.Add(newItem); // Let the database generate StockAdjustmentItemId
+                    }
+                }
+
+                await context.SaveChangesAsync();
             }
-
-            // Delete items that are in the existing list but not in the new list
-            var itemsToDelete = existingAdjustment.StockAdjustmentItems
-                .Where(existingItem => !newStockAdjustmentItems.Any(newItem => newItem.StockAdjustmentItemId == existingItem.StockAdjustmentItemId))
-                .ToList();
-
-            context.StockAdjustmentItems.RemoveRange(itemsToDelete);
-
-            // Update items that exist in both lists
-            foreach (var newItem in newStockAdjustmentItems)
+            catch (Exception ex)
             {
-                var existingItem = existingAdjustment.StockAdjustmentItems.FirstOrDefault(item => item.StockAdjustmentItemId == newItem.StockAdjustmentItemId);
-
-                if (existingItem != null)
-                {
-                    // Check if NewQuantity is the same as PreviousQuantity
-                    if (newItem.NewQuantity == newItem.PreviousQuantity)
-                    {
-                        throw new InvalidOperationException($"New quantity cannot be the same as previous quantity for StockAdjustmentItemId: {newItem.StockAdjustmentItemId}.");
-                    }
-
-                    // Update existing item
-                    existingItem.PreviousQuantity = newItem.PreviousQuantity;
-                    existingItem.NewQuantity = newItem.NewQuantity;
-                    existingItem.AdjustedQuantity = newItem.NewQuantity - newItem.PreviousQuantity;
-
-                    context.StockAdjustmentItems.Update(existingItem);
-                }
-                else
-                {
-                    // Check if NewQuantity is the same as PreviousQuantity
-                    if (newItem.NewQuantity == newItem.PreviousQuantity)
-                    {
-                        throw new InvalidOperationException($"New quantity cannot be the same as previous quantity for a new StockAdjustmentItem.");
-                    }
-
-                    // Add new item
-                    newItem.StockAdjustmentId = existingAdjustment.StockAdjustmentId;
-
-                    context.StockAdjustmentItems.Add(newItem);
-                }
+                _logger.LogError(ex, "Error updating Stock Adjustment Items for ReferenceNumber: {ReferenceNumber}", referenceNumber);
+                throw; // Rethrow the exception
             }
-
-            await context.SaveChangesAsync();
         }
 
         public async Task StockAdjustmentToCompleteAsync(string referenceNumber)

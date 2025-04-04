@@ -31,7 +31,7 @@ else
             </MudText>
             <MudContainer Class="d-flex justify-center mt-2">
                 <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Href="inventory/stock-adjustments/create" Color="Color.Primary" Class="text-uppercase">
-                    New Adjustment
+                    New Stock Adjustment
                 </MudButton>
             </MudContainer>
         </MudPaper>
@@ -40,23 +40,24 @@ else
     {
 
         <MudGrid>
-            <MudItem sm="6">
+            <MudItem sm="5">
                 <MudStack Row="true" AlignItems="AlignItems.Center">
-                    <div>
-                        <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
-                                      AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
-                    </div>
-                    <div>
-                        <MudSelect @bind-Value="@selectedBranch" @bind-Value:after="OnSelect" Variant="Variant.Outlined">
-                            @foreach (Branch branch in _branches)
-                            {
-                                <MudSelectItem Value="@branch.BranchId">@branch.BranchName</MudSelectItem>
-                            }
-                        </MudSelect>
-
-                    </div>
+                    <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                                  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
                 </MudStack>
-
+            </MudItem>
+            <MudItem sm="2">
+                <MudSelect @bind-Value="@selectedBranch" @bind-Value:after="OnSelect" Variant="Variant.Outlined">
+                    @foreach (Branch branch in _branches)
+                    {
+                        <MudSelectItem Value="@branch.BranchId">@branch.BranchName</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem sm="5">
+                <MudButton Variant="Variant.Filled" Href="/inventory/stock-adjustments/create" Color="Color.Primary" Class="text-uppercase">
+                    Create Stock Adjustment
+                </MudButton>
             </MudItem>
 
         </MudGrid>
