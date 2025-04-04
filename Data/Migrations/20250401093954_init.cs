@@ -297,6 +297,8 @@ namespace InventiCloud.Migrations
                 {
                     StockAdjustmentId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
+                    ReferenceNumber = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    SourceBranchId = table.Column<int>(type: "int", nullable: false),
                     ReasonId = table.Column<int>(type: "int", nullable: false),
                     StatusId = table.Column<int>(type: "int", nullable: false),
                     AdjustedBy = table.Column<string>(type: "nvarchar(450)", nullable: false),
@@ -310,6 +312,12 @@ namespace InventiCloud.Migrations
                         column: x => x.AdjustedBy,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_StockAdjustments_Branches_SourceBranchId",
+                        column: x => x.SourceBranchId,
+                        principalTable: "Branches",
+                        principalColumn: "BranchId",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_StockAdjustments_StockAdjustmentReasons_ReasonId",
@@ -508,6 +516,35 @@ namespace InventiCloud.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "StockAdjustmentItems",
+                columns: table => new
+                {
+                    StockAdjustmentItemId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    StockAdjustmentId = table.Column<int>(type: "int", nullable: false),
+                    ProductId = table.Column<int>(type: "int", nullable: false),
+                    PreviousQuantity = table.Column<int>(type: "int", nullable: false),
+                    NewQuantity = table.Column<int>(type: "int", nullable: false),
+                    AdjustedQuantity = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_StockAdjustmentItems", x => x.StockAdjustmentItemId);
+                    table.ForeignKey(
+                        name: "FK_StockAdjustmentItems_Products_ProductId",
+                        column: x => x.ProductId,
+                        principalTable: "Products",
+                        principalColumn: "ProductId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_StockAdjustmentItems_StockAdjustments_StockAdjustmentId",
+                        column: x => x.StockAdjustmentId,
+                        principalTable: "StockAdjustments",
+                        principalColumn: "StockAdjustmentId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "StockTransferItems",
                 columns: table => new
                 {
@@ -563,39 +600,10 @@ namespace InventiCloud.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
-            migrationBuilder.CreateTable(
-                name: "StockAdjustmentItems",
-                columns: table => new
-                {
-                    StockAdjustmentItemId = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    StockAdjustmentId = table.Column<int>(type: "int", nullable: false),
-                    InventoryId = table.Column<int>(type: "int", nullable: false),
-                    PreviousQuantity = table.Column<int>(type: "int", nullable: false),
-                    NewQuantity = table.Column<int>(type: "int", nullable: false),
-                    AdjustedQuantity = table.Column<int>(type: "int", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_StockAdjustmentItems", x => x.StockAdjustmentItemId);
-                    table.ForeignKey(
-                        name: "FK_StockAdjustmentItems_Inventories_InventoryId",
-                        column: x => x.InventoryId,
-                        principalTable: "Inventories",
-                        principalColumn: "InventoryId",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_StockAdjustmentItems_StockAdjustments_StockAdjustmentId",
-                        column: x => x.StockAdjustmentId,
-                        principalTable: "StockAdjustments",
-                        principalColumn: "StockAdjustmentId",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
             migrationBuilder.InsertData(
                 table: "AspNetUsers",
                 columns: new[] { "Id", "AccessFailedCount", "ConcurrencyStamp", "Email", "EmailConfirmed", "LockoutEnabled", "LockoutEnd", "NormalizedEmail", "NormalizedUserName", "PasswordHash", "PhoneNumber", "PhoneNumberConfirmed", "SecurityStamp", "TwoFactorEnabled", "UserName" },
-                values: new object[] { "your-user-id-1", 0, "f32f3431-5170-4953-885b-625e5c922430", "admin@example.com", true, false, null, "ADMIN@EXAMPLE.COM", "ADMIN", "AQAAAAIAAYagAAAAED7a+XJO21cqg2Sjrv+taG8Snhj5eiXhjArNPcKNBYiPiMlfkGdogeG59pSNBAzGKA==", null, false, "199ec236-cb4e-483c-8d47-9e41aff245df", false, "admin" });
+                values: new object[] { "your-user-id-1", 0, "76f265fe-8f54-4e0b-864c-c8dad039dcce", "admin@example.com", true, false, null, "ADMIN@EXAMPLE.COM", "ADMIN", "AQAAAAIAAYagAAAAEEundGMvNML6V5Z9QkRdnKEu2MpgUBVFn9RC5nSuMEt+uJnx/ozmotUKRh4SJSwcbA==", null, false, "a7f4347f-3409-498c-ba30-c2ee57caba4c", false, "admin" });
 
             migrationBuilder.InsertData(
                 table: "Branches",
@@ -840,9 +848,9 @@ namespace InventiCloud.Migrations
                 column: "SalesPersonId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_StockAdjustmentItems_InventoryId",
+                name: "IX_StockAdjustmentItems_ProductId",
                 table: "StockAdjustmentItems",
-                column: "InventoryId");
+                column: "ProductId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_StockAdjustmentItems_StockAdjustmentId",
@@ -858,6 +866,11 @@ namespace InventiCloud.Migrations
                 name: "IX_StockAdjustments_ReasonId",
                 table: "StockAdjustments",
                 column: "ReasonId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_StockAdjustments_SourceBranchId",
+                table: "StockAdjustments",
+                column: "SourceBranchId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_StockAdjustments_StatusId",
@@ -908,6 +921,9 @@ namespace InventiCloud.Migrations
                 name: "BranchAccounts");
 
             migrationBuilder.DropTable(
+                name: "Inventories");
+
+            migrationBuilder.DropTable(
                 name: "ProductAttributeValues");
 
             migrationBuilder.DropTable(
@@ -935,10 +951,10 @@ namespace InventiCloud.Migrations
                 name: "SalesOrders");
 
             migrationBuilder.DropTable(
-                name: "Inventories");
+                name: "StockAdjustments");
 
             migrationBuilder.DropTable(
-                name: "StockAdjustments");
+                name: "Products");
 
             migrationBuilder.DropTable(
                 name: "StockTransfers");
@@ -956,25 +972,22 @@ namespace InventiCloud.Migrations
                 name: "SalesPersons");
 
             migrationBuilder.DropTable(
-                name: "Products");
-
-            migrationBuilder.DropTable(
                 name: "StockAdjustmentReasons");
 
             migrationBuilder.DropTable(
                 name: "StockAdjustmentStatuses");
 
             migrationBuilder.DropTable(
-                name: "Branches");
-
-            migrationBuilder.DropTable(
-                name: "StockTransferStatuses");
-
-            migrationBuilder.DropTable(
                 name: "AttributeSets");
 
             migrationBuilder.DropTable(
                 name: "Categories");
+
+            migrationBuilder.DropTable(
+                name: "Branches");
+
+            migrationBuilder.DropTable(
+                name: "StockTransferStatuses");
 
             migrationBuilder.DeleteData(
                 table: "AspNetUsers",

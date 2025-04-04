@@ -1,16 +1,19 @@
 ﻿@page "/inventory/stock-adjustments"
+@using InventiCloud.Components.UI
 @using InventiCloud.Services.Interface
 @using Microsoft.EntityFrameworkCore
 @using InventiCloud.Entities
 @using InventiCloud.Data
 @implements IAsyncDisposable
-@inject IInventoryService InventoryService
+@inject IStockAdjustmentService StockAdjustmentService
 @inject IBranchService BranchService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
 
-<PageTitle>Index</PageTitle>
+<PageTitle>Stock Adjustments</PageTitle>
 
-<MudText Class="bold mb-2" Typo="Typo.h4">Stock Levels</MudText>
-@if (_inventories == null)
+<MudText Class="bold mb-2" Typo="Typo.h4">Stock Adjustments</MudText>
+@if (_stockAdjustments == null)
 {
     <MudContainer Class="d-flex justify-center align-items-center" Style="height: 100vh;">
         <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
@@ -18,17 +21,17 @@
 }
 else
 {
-    @if (!_inventories.Any())
+    @if (!_stockAdjustments.Any())
     {
 
         <MudPaper Height="500px" Class="justify-center align-content-center">
-            <MudText Class="bol" Typo="Typo.h6" Align="Align.Center">No Products in Stock</MudText>
+            <MudText Class="bol" Typo="Typo.h6" Align="Align.Center">No Stock Adjustments Found</MudText>
             <MudText Typo="Typo.body1" Align="Align.Center">
-                "Add products to your inventory to start tracking stock levels.
+               Click the button below to create a new stock adjustment to record changes in your inventory.
             </MudText>
             <MudContainer Class="d-flex justify-center mt-2">
-                <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Href="products/create" Color="Color.Primary" Class="text-uppercase">
-                    Add Product
+                <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Href="inventory/stock-adjustments/create" Color="Color.Primary" Class="text-uppercase">
+                    New Adjustment
                 </MudButton>
             </MudContainer>
         </MudPaper>
@@ -58,17 +61,32 @@ else
 
         </MudGrid>
 
-        <MudDataGrid @ref="dataGrid" T="Inventory" ServerData="ServerReload" MultiSelection="true" Filterable="false">
+        <MudDataGrid @ref="dataGrid" T="StockAdjustment" ServerData="ServerReload" MultiSelection="true" Filterable="false">
             <Columns>
-                <PropertyColumn Property="inventory => inventory.Product.SKU" />
-                <PropertyColumn Property="inventory => inventory.Product.ProductName" Title="Product Name" />
-                <PropertyColumn Property="inventory => inventory.OnHandquantity" Title="On hand" />
-                <PropertyColumn Property="inventory => inventory.AvailableQuantity" Title="Available" />
-                <PropertyColumn Property="inventory => inventory.IncomingQuantity" Title="Incoming" />
-                <PropertyColumn Property="inventory => inventory.Allocated" Title="Allocated" />
+                <PropertyColumn Property="sa => sa.ReferenceNumber" Title="Reference#" />
+                <PropertyColumn Property="sa => sa.SourceBranch.BranchName" Title="Branch" />
+                <PropertyColumn Property="sa => sa.StockAdjustmentReason.Reason" Title="Reason" />
+                <TemplateColumn Title="Status">
+                    <CellTemplate>
+                        <MudChip Color="@GetChipColor(context.Item.StockAdjustmentStatus.StatusName)" Size="Size.Small">@context.Item.StockAdjustmentStatus.StatusName</MudChip>
+                    </CellTemplate>
+                </TemplateColumn>
+                <PropertyColumn Property="sa => sa.AdjustedDate" Title="Date" />
+                <TemplateColumn CellClass="d-flex justify-end">
+                    <CellTemplate>
+                        <MudMenu Icon="@Icons.Material.Filled.MoreVert" AriaLabel="Open user menu">
+                            <MudMenuItem Label="Edit" href="@($"/inventory/stock-adjustments/{context.Item.ReferenceNumber}")" />
+                            @if (context.Item.StockAdjustmentStatus.StatusName.ToLower() == "draft")
+                            {
+                                <MudMenuItem Label="Delete" Class="red-text" OnClick="@(() => OpenDialogAsync(context.Item))" />
+
+                            }
+                        </MudMenu>
+                    </CellTemplate>
+                </TemplateColumn>
             </Columns>
             <PagerContent>
-                <MudDataGridPager T="Inventory" />
+                <MudDataGridPager T="StockAdjustment" />
             </PagerContent>
         </MudDataGrid>
 
@@ -86,59 +104,110 @@ else
     private int selectedCategory;
 
 
-    private IEnumerable<Inventory>? _inventories;
-    private IEnumerable<Inventory> _filteredinventories = new List<Inventory>();
+    private IEnumerable<StockAdjustment>? _stockAdjustments;
+    private IEnumerable<StockAdjustment> _filteredstockAdjustments = new List<StockAdjustment>();
     private IEnumerable<Branch> _branches = new List<Branch>();
 
-    MudDataGrid<Inventory> dataGrid = new();
+    MudDataGrid<StockAdjustment> dataGrid = new();
+
+
+    private Color GetChipColor(string status)
+    {
+        switch (status.ToLower())
+        {
+            case "draft":
+                return Color.Default;
+            case "ordered":
+                return Color.Info;
+            case "completed":
+                return Color.Success;
+            default:
+                return Color.Default;
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
 
-        _inventories = await InventoryService.GetAllInventoryAsync();
+        _stockAdjustments = await StockAdjustmentService.GetAllStockAdjustmentAsync();
         _branches = await BranchService.GetAllBranchAsync();
         selectedBranch = _branches.First().BranchId;
 
     }
 
-    private async Task<GridData<Inventory>> ServerReload(GridState<Inventory> state)
+    private async Task<GridData<StockAdjustment>> ServerReload(GridState<StockAdjustment> state)
     {
-        _filteredinventories = _inventories.Where(b => b.BranchId == selectedBranch);
+        _stockAdjustments = await StockAdjustmentService.GetAllStockAdjustmentAsync();
 
-        _filteredinventories = _filteredinventories.Where(inventory =>
+        _filteredstockAdjustments = _stockAdjustments.Where(b => b.SourceBranchId == selectedBranch);
+
+        _filteredstockAdjustments = _filteredstockAdjustments.Where(stockadjustment =>
         {
             if (string.IsNullOrWhiteSpace(searchString))
                 return true;
-            if (inventory.Product.SKU.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            if (stockadjustment.ReferenceNumber.Contains(searchString, StringComparison.OrdinalIgnoreCase))
                 return true;
-            if (inventory.Product.ProductName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
-                return true;
-            if (inventory.Product.CategoryId.Equals(selectedCategory))
+            if (stockadjustment.StockAdjustmentReason.Reason.Contains(searchString, StringComparison.OrdinalIgnoreCase))
                 return true;
             return false;
         }).ToArray();
-        var totalItems = _filteredinventories.Count();
+        var totalItems = _filteredstockAdjustments.Count();
 
         var sortDefinition = state.SortDefinitions.FirstOrDefault();
         if (sortDefinition != null)
         {
             switch (sortDefinition.SortBy)
             {
-                case nameof(Inventory.OnHandquantity):
-                    _filteredinventories = _inventories.OrderByDirection(
+                case nameof(StockAdjustment.AdjustedDate):
+                    _filteredstockAdjustments = _filteredstockAdjustments.OrderByDirection(
                         sortDefinition.Descending ? SortDirection.Descending : SortDirection.Ascending,
-                        i => i.OnHandquantity
+                        sa => sa.AdjustedDate
                     );
                     break;
             }
         }
 
-        var pagedData = _filteredinventories.Skip(state.Page * state.PageSize).Take(state.PageSize).ToArray();
-        return new GridData<Inventory>
+        var pagedData = _filteredstockAdjustments.Skip(state.Page * state.PageSize).Take(state.PageSize).ToArray();
+        return new GridData<StockAdjustment>
             {
                 TotalItems = totalItems,
                 Items = pagedData
             };
+    }
+
+    async Task OpenDialogAsync(StockAdjustment stockAdjustment)
+    {
+
+        var parameters = new DialogParameters<DialogComponent>
+        {
+            {x => x.ContentText, $"Are you sure you want to delete the Stock Adjustment '{stockAdjustment.ReferenceNumber}'? This action cannot be undone."},
+            { "Button1Text", "Delete" },
+            { "Button2Text", "Cancel" },
+            { "Color", Color.Error }
+        };
+
+        var dialog = await DialogService.ShowAsync<DialogComponent>("Delete Stock Adjustment", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            try
+            {
+                await StockAdjustmentService.DeleteStockAdjustmentAsync(stockAdjustment.ReferenceNumber);
+                Snackbar.Add("Stock Adjustment Deleted", Severity.Success);
+                await dataGrid.ReloadServerData();
+
+            }
+            catch (InvalidOperationException ex)
+            {
+                Snackbar.Add(ex.Message, Severity.Error);
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add("An error occurred while deleting the Stock Adjustment.", Severity.Error);
+            }
+        }
+
     }
 
 
@@ -156,5 +225,5 @@ else
 
 
 
-    public async ValueTask DisposeAsync() => await InventoryService.DisposeAsync();
+    public async ValueTask DisposeAsync() => await StockAdjustmentService.DisposeAsync();
 }
