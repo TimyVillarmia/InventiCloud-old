@@ -10,15 +10,17 @@
 @inject IProductService ProductService
 @inject IDbContextFactory<InventiCloud.Data.ApplicationDbContext> DbFactory
 @inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
 
 <PageTitle>Create</PageTitle>
 
 <MudContainer Class="pt-5" MaxWidth="MaxWidth.Large">
     <div class="d-flex gap-4 align-items-center mb-4">
-        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" aria-label="delete" Href="/products/list" />
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" aria-label="delete" Href="/products" />
         <MudText Typo="Typo.h4">CREATE PRODUCT</MudText>
     </div>
-    <EditForm method="post" Model="Product" OnValidSubmit="AddProduct" FormName="create" Enhance>
+    <EditForm method="post" Model="Product" Context="ProductForm" OnValidSubmit="AddProduct" FormName="create" Enhance>
         <DataAnnotationsValidator />
         <MudGrid>
             <MudItem xs="12">
@@ -135,11 +137,22 @@
     // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
     private async Task AddProduct()
     {
+     
+        try
+        {
+            await ProductService.AddProductAsync(Product);
+            Snackbar.Add($"{Product.ProductName} Added", Severity.Success);
+            NavigationManager.NavigateTo("/products");
 
-        await ProductService.AddProductAsync(Product);
-
-        
-        NavigationManager.NavigateTo("/products/list");
+        }
+        catch (InvalidOperationException ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
     }
 
     private string Profit = "--";

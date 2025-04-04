@@ -9,12 +9,12 @@
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
 
-<PageTitle>Create</PageTitle>
+<PageTitle>Details</PageTitle>
 
 <MudContainer Class="pt-5" MaxWidth="MaxWidth.Large">
     <div class="d-flex gap-4 align-items-center mb-4">
-        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" aria-label="delete" Href="/catalog/products" />
-        <MudText Typo="Typo.h4">CREATE PRODUCT</MudText>
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" aria-label="delete" Href="/products" />
+        <MudText Typo="Typo.h4">@Product.ProductName</MudText>
     </div>
     <EditForm method="post" Model="Product" OnValidSubmit="UpdateProduct" FormName="create" Enhance>
         <DataAnnotationsValidator />
@@ -154,10 +154,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        using var context = DbFactory.CreateDbContext();
-        Product = await context.Products.FirstAsync(m => m.SKU == SKU);
-
-
+        Product = await ProductService.GetProductBySKUAsync(SKU);
 
         if (Product is null)
         {
