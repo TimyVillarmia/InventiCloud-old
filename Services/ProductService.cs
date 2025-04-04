@@ -15,10 +15,25 @@ namespace InventiCloud.Services
             try
             {
                 using var context = DbFactory.CreateDbContext();
+
+
                 // Check for existing SKU
-                if (await context.Products.AnyAsync(p => p.SKU == product.SKU))
+                bool skuExists = await context.Products.AnyAsync(p => p.SKU == product.SKU);
+
+                // Check for existing Product Name
+                bool productNameExists = await context.Products.AnyAsync(p => p.ProductName == product.ProductName);
+
+                if (skuExists && productNameExists)
                 {
-                    throw new InvalidOperationException($"SKU '{product.SKU}' already exists.");
+                    throw new InvalidOperationException($"A product with the SKU '{product.SKU}' and name '{product.ProductName}' already exists.");
+                }
+                else if (skuExists)
+                {
+                    throw new InvalidOperationException($"A product with the SKU '{product.SKU}' already exists.");
+                }
+                else if (productNameExists)
+                {
+                    throw new InvalidOperationException($"A product with the name '{product.ProductName}' already exists.");
                 }
 
                 context.Products.Add(product);
@@ -108,16 +123,32 @@ namespace InventiCloud.Services
                 .ToListAsync();
         }
 
-        public async Task<Product> GetProductByIdAsync(int id)
+        public async Task<Product?> GetProductByIdAsync(int id)
         {
             using var context = DbFactory.CreateDbContext();
-            return await context.Products.SingleAsync(e => e.ProductId == id);
+            try
+            {
+                return await context.Products.FirstOrDefaultAsync(e => e.ProductId == id);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting product by ID: {ProductId}", id);
+                return null; // Or re-throw, depending on your error handling policy
+            }
         }
 
-        public async Task<Product> GetProductBySKUAsync(string sku)
+        public async Task<Product?> GetProductBySKUAsync(string sku)
         {
             using var context = DbFactory.CreateDbContext();
-            return await context.Products.SingleAsync(e => e.SKU == sku);
+            try
+            {
+                return await context.Products.FirstOrDefaultAsync(e => e.SKU == sku);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting product by SKU: {SKU}", sku);
+                return null; // Or re-throw, depending on your error handling policy
+            }
         }
 
         public bool ProductExists(int productid)
