@@ -114,9 +114,9 @@ namespace InventiCloud.Services
                     }
 
                     // Check if NewQuantity is the same as PreviousQuantity
-                    if (item.NewQuantity == item.PreviousQuantity)
+                    if (item.NewQuantity == inventory.AvailableQuantity)
                     {
-                        throw new InvalidOperationException($"New quantity cannot be the same as previous quantity for ProductId: {item.ProductId}.");
+                        throw new InvalidOperationException($"New quantity cannot be the same as current quantity for ProductId: {item.ProductId}.");
                     }
 
 
@@ -366,18 +366,18 @@ namespace InventiCloud.Services
                         throw new InvalidOperationException($"Inventory not found for ProductId: {item.ProductId} in BranchId: {stockAdjustment.SourceBranchId}.");
                     }
 
-                    // Check if NewQuantity is the same as PreviousQuantity
-                    if (item.NewQuantity == item.PreviousQuantity)
+                    // Check if NewQuantity is valid against AvailableQuantity
+                    if (item.NewQuantity == inventory.AvailableQuantity)
                     {
-                        throw new InvalidOperationException($"New quantity cannot be the same as previous quantity for ProductId: {item.ProductId}.");
+                        throw new InvalidOperationException($"New quantity cannot be the same as current quantity for ProductId: {item.ProductId}.");
                     }
 
                     // Calculate the adjusted quantity
                     item.AdjustedQuantity = item.NewQuantity - item.PreviousQuantity;
 
-                    // Update the inventory based on the adjustment
-                    inventory.OnHandquantity = item.NewQuantity;
-                    inventory.AvailableQuantity = item.NewQuantity - inventory.Allocated;
+                    // Update the inventory based on the adjustment (using AvailableQuantity)
+                    inventory.AvailableQuantity = item.NewQuantity;
+                    inventory.OnHandquantity = inventory.AvailableQuantity + inventory.Allocated;
 
                     // Update the inventory in the database
                     await _inventoryService.UpdateInventoryAsync(inventory);

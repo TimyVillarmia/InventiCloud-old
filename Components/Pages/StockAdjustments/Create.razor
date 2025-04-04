@@ -55,7 +55,7 @@
                         </MudItem>
 
                         <MudItem xs="12" sm="2">
-                            <MudNumericField HideSpinButtons="true" T="int" Variant="Variant.Outlined" Label="Onhand Quantity" ReadOnly="true" For="@(() => StockAdjustmentItem.PreviousQuantity)"
+                            <MudNumericField HideSpinButtons="true" T="int" Variant="Variant.Outlined" Label="Availability" ReadOnly="true" For="@(() => StockAdjustmentItem.PreviousQuantity)"
                                              @bind-Value="StockAdjustmentItem.PreviousQuantity" Margin="Margin.Dense" />
                         </MudItem>
 
@@ -82,7 +82,7 @@
         <MudDataGrid Items="StockAdjustmentItems" Class="mt-4">
             <Columns>
                 <PropertyColumn Property="poi => poi.Product" Title="Product" />
-                <PropertyColumn Property="poi => poi.PreviousQuantity" Title="Onhand Quantity" />
+                <PropertyColumn Property="poi => poi.PreviousQuantity" Title="Availability" />
                 <PropertyColumn Property="poi => poi.NewQuantity" Title="New Quantity" />
                 <PropertyColumn Property="poi => poi.AdjustedQuantity" Title="Adjusted Quantity" />
                 <TemplateColumn CellClass="d-flex justify-end">
@@ -300,7 +300,7 @@
     private void After()
     {
         StockAdjustmentItem.PreviousQuantity = _sourceBranchInventories.Where(i => i.Product.ProductId == StockAdjustmentItem.Product.ProductId)
-                                                          .First().OnHandquantity;
+                                                          .First().AvailableQuantity;
 
     }
 
