@@ -15,7 +15,6 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<Customer> Customers { get; set; }
     public DbSet<Category> Categories { get; set; }
     public DbSet<Branch> Branches { get; set; }
-    public DbSet<BranchAccount> BranchAccounts { get; set; }
     public DbSet<Inventory> Inventories { get; set; }
 
 
@@ -71,20 +70,6 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         );
 
 
-
-        modelBuilder.Entity<ApplicationUser>().HasData(
-            new ApplicationUser
-            {
-                Id = "your-user-id-1", // Generate a unique ID (GUID)
-                UserName = "admin",
-                NormalizedUserName = "ADMIN",
-                Email = "admin@example.com",
-                NormalizedEmail = "ADMIN@EXAMPLE.COM",
-                EmailConfirmed = true,
-                PasswordHash = PasswordHasherUtility.HashPassword("YourSecurePassword123!"),
-                SecurityStamp = Guid.NewGuid().ToString(), // Generate a unique SecurityStamp
-            }
-        );
 
         modelBuilder.Entity<Supplier>().HasData(
            new Supplier
@@ -185,7 +170,6 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 City = "Anytown",
                 Region = "State",
                 PhoneNumber = "555-123-4567",
-                Email = "warehouse@example.com"
             },
             new Branch
             {
@@ -197,7 +181,6 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 City = "Springfield",
                 Region = "Province",
                 PhoneNumber = "123-456-7890",
-                Email = "retailA@example.com"
             },
             new Branch
             {
@@ -209,7 +192,6 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 City = "London",
                 Region = "England",
                 PhoneNumber = "+44 20 1234 5678",
-                Email = "distribution@example.com"
             }
         );
 

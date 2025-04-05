@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace InventiCloud.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250401093954_init")]
+    [Migration("20250405074027_init")]
     partial class init
     {
         /// <inheritdoc />
@@ -31,6 +31,9 @@ namespace InventiCloud.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<int>("AccessFailedCount")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("BranchId")
                         .HasColumnType("int");
 
                     b.Property<string>("ConcurrencyStamp")
@@ -79,6 +82,10 @@ namespace InventiCloud.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("BranchId")
+                        .IsUnique()
+                        .HasFilter("[BranchId] IS NOT NULL");
+
                     b.HasIndex("NormalizedEmail")
                         .HasDatabaseName("EmailIndex");
 
@@ -88,24 +95,6 @@ namespace InventiCloud.Migrations
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
                     b.ToTable("AspNetUsers", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = "your-user-id-1",
-                            AccessFailedCount = 0,
-                            ConcurrencyStamp = "76f265fe-8f54-4e0b-864c-c8dad039dcce",
-                            Email = "admin@example.com",
-                            EmailConfirmed = true,
-                            LockoutEnabled = false,
-                            NormalizedEmail = "ADMIN@EXAMPLE.COM",
-                            NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAEEundGMvNML6V5Z9QkRdnKEu2MpgUBVFn9RC5nSuMEt+uJnx/ozmotUKRh4SJSwcbA==",
-                            PhoneNumberConfirmed = false,
-                            SecurityStamp = "a7f4347f-3409-498c-ba30-c2ee57caba4c",
-                            TwoFactorEnabled = false,
-                            UserName = "admin"
-                        });
                 });
 
             modelBuilder.Entity("InventiCloud.Entities.Attribute", b =>
@@ -190,10 +179,6 @@ namespace InventiCloud.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("PhoneNumber")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -218,7 +203,6 @@ namespace InventiCloud.Migrations
                             BranchName = "Branch A",
                             City = "Anytown",
                             Country = "USA",
-                            Email = "warehouse@example.com",
                             PhoneNumber = "555-123-4567",
                             PostalCode = "12345",
                             Region = "State"
@@ -230,7 +214,6 @@ namespace InventiCloud.Migrations
                             BranchName = "Branch B",
                             City = "Springfield",
                             Country = "Canada",
-                            Email = "retailA@example.com",
                             PhoneNumber = "123-456-7890",
                             PostalCode = "A1B 2C3",
                             Region = "Province"
@@ -242,35 +225,10 @@ namespace InventiCloud.Migrations
                             BranchName = "Branch C",
                             City = "London",
                             Country = "UK",
-                            Email = "distribution@example.com",
                             PhoneNumber = "+44 20 1234 5678",
                             PostalCode = "SW1A 1AA",
                             Region = "England"
                         });
-                });
-
-            modelBuilder.Entity("InventiCloud.Entities.BranchAccount", b =>
-                {
-                    b.Property<int>("BranchAccountId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("BranchAccountId"));
-
-                    b.Property<string>("ApplicationUserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<int>("BranchId")
-                        .HasColumnType("int");
-
-                    b.HasKey("BranchAccountId");
-
-                    b.HasIndex("ApplicationUserId");
-
-                    b.HasIndex("BranchId");
-
-                    b.ToTable("BranchAccounts");
                 });
 
             modelBuilder.Entity("InventiCloud.Entities.Category", b =>
@@ -1081,14 +1039,14 @@ namespace InventiCloud.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("StockTransferId"));
 
-                    b.Property<string>("CreatedById")
+                    b.Property<string>("ApprovedById")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<DateTime?>("DateCompleted")
+                    b.Property<DateTime?>("DateApproved")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime>("DateCreated")
+                    b.Property<DateTime?>("DateCompleted")
                         .HasColumnType("datetime2");
 
                     b.Property<int>("DestinationBranchId")
@@ -1096,6 +1054,13 @@ namespace InventiCloud.Migrations
 
                     b.Property<string>("ReferenceNumber")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RequestedById")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime?>("RequestedDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<int>("SourceBranchId")
                         .HasColumnType("int");
@@ -1105,9 +1070,11 @@ namespace InventiCloud.Migrations
 
                     b.HasKey("StockTransferId");
 
-                    b.HasIndex("CreatedById");
+                    b.HasIndex("ApprovedById");
 
                     b.HasIndex("DestinationBranchId");
+
+                    b.HasIndex("RequestedById");
 
                     b.HasIndex("SourceBranchId");
 
@@ -1378,6 +1345,15 @@ namespace InventiCloud.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("InventiCloud.Data.ApplicationUser", b =>
+                {
+                    b.HasOne("InventiCloud.Entities.Branch", "Branch")
+                        .WithOne("ApplicationUser")
+                        .HasForeignKey("InventiCloud.Data.ApplicationUser", "BranchId");
+
+                    b.Navigation("Branch");
+                });
+
             modelBuilder.Entity("InventiCloud.Entities.Attribute", b =>
                 {
                     b.HasOne("InventiCloud.Entities.AttributeSet", "AttributeSet")
@@ -1387,25 +1363,6 @@ namespace InventiCloud.Migrations
                         .IsRequired();
 
                     b.Navigation("AttributeSet");
-                });
-
-            modelBuilder.Entity("InventiCloud.Entities.BranchAccount", b =>
-                {
-                    b.HasOne("InventiCloud.Data.ApplicationUser", "ApplicationUser")
-                        .WithMany()
-                        .HasForeignKey("ApplicationUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("InventiCloud.Entities.Branch", "Branch")
-                        .WithMany("BranchAccounts")
-                        .HasForeignKey("BranchId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ApplicationUser");
-
-                    b.Navigation("Branch");
                 });
 
             modelBuilder.Entity("InventiCloud.Entities.Inventory", b =>
@@ -1474,7 +1431,7 @@ namespace InventiCloud.Migrations
             modelBuilder.Entity("InventiCloud.Entities.PurchaseOrder", b =>
                 {
                     b.HasOne("InventiCloud.Data.ApplicationUser", "CreatedBy")
-                        .WithMany()
+                        .WithMany("PurchaseOrders")
                         .HasForeignKey("CreatedById")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1627,15 +1584,21 @@ namespace InventiCloud.Migrations
 
             modelBuilder.Entity("InventiCloud.Entities.StockTransfer", b =>
                 {
-                    b.HasOne("InventiCloud.Data.ApplicationUser", "CreatedBy")
+                    b.HasOne("InventiCloud.Data.ApplicationUser", "ApprovedBy")
                         .WithMany()
-                        .HasForeignKey("CreatedById")
+                        .HasForeignKey("ApprovedById")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("InventiCloud.Entities.Branch", "DestinationBranch")
                         .WithMany()
                         .HasForeignKey("DestinationBranchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("InventiCloud.Data.ApplicationUser", "RequestedBy")
+                        .WithMany()
+                        .HasForeignKey("RequestedById")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -1651,9 +1614,11 @@ namespace InventiCloud.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("CreatedBy");
+                    b.Navigation("ApprovedBy");
 
                     b.Navigation("DestinationBranch");
+
+                    b.Navigation("RequestedBy");
 
                     b.Navigation("SourceBranch");
 
@@ -1730,6 +1695,11 @@ namespace InventiCloud.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("InventiCloud.Data.ApplicationUser", b =>
+                {
+                    b.Navigation("PurchaseOrders");
+                });
+
             modelBuilder.Entity("InventiCloud.Entities.AttributeSet", b =>
                 {
                     b.Navigation("Attributes");
@@ -1737,7 +1707,8 @@ namespace InventiCloud.Migrations
 
             modelBuilder.Entity("InventiCloud.Entities.Branch", b =>
                 {
-                    b.Navigation("BranchAccounts");
+                    b.Navigation("ApplicationUser")
+                        .IsRequired();
 
                     b.Navigation("Inventories");
                 });

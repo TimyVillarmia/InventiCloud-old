@@ -30,8 +30,8 @@ namespace InventiCloud.Entities
         [ForeignKey("ApprovedBy")]
         public string ApprovedById { get; set; }
 
-        public virtual BranchAccount RequestedBy { get; set; }
-        public virtual BranchAccount? ApprovedBy { get; set; }
+        public virtual ApplicationUser RequestedBy { get; set; }
+        public virtual ApplicationUser ApprovedBy { get; set; }
 
         [Required(ErrorMessage = "Source Branch is required.")]
         public virtual Branch SourceBranch { get; set; }

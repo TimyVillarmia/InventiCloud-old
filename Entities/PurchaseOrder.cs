@@ -31,7 +31,6 @@ public class PurchaseOrder
     Precision(19, 2)]
     public decimal TotalAmount { get; set; }
 
-
     public string? ReferenceNumber { get; set; }
     public DateTime? EstimatedArrival { get; set; }
     public DateTime DateCreated { get; set; } = DateTime.UtcNow;

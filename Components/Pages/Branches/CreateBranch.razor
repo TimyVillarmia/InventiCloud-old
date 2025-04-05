@@ -1,4 +1,4 @@
-﻿@page "/store/branches/create"
+﻿@page "/store/branches/create-branch"
 @using InventiCloud.Data
 @using InventiCloud.Utils
 @using Microsoft.EntityFrameworkCore
@@ -26,13 +26,13 @@
             </MudItem>
             <MudTextField @bind-Value="Branch.BranchName" Label="Branch Name" For="@(() => Branch.BranchName)" Variant="Variant.Outlined" />
             <MudTextField @bind-Value="Branch.Address" Label="Address" For="@(() => Branch.Address)" Variant="Variant.Outlined" />
+            <MudTextField @bind-Value="Branch.PhoneNumber" Label="Phone Number" For="@(() => Branch.PhoneNumber)" Variant="Variant.Outlined" />
+
             <MudItem xs="12" sm="6">
                 <MudNumericField @bind-Value="Branch.Country" HideSpinButtons="true" Label="Country" For="@(() => Branch.Country)" Variant="Variant.Outlined" />
                 <MudNumericField @bind-Value="Branch.City" HideSpinButtons="true" Label="City" For="@(() => Branch.City)" Variant="Variant.Outlined" />
                 <MudNumericField @bind-Value="Branch.PostalCode" HideSpinButtons="true" Label="Postal Code" For="@(() => Branch.PostalCode)" Variant="Variant.Outlined" />
             </MudItem>
-            <MudTextField @bind-Value="Branch.Email" Label="Email Address" For="@(() => Branch.Email)" Variant="Variant.Outlined" />
-            <MudTextField @bind-Value="Branch.PhoneNumber" Label="Phone Number" For="@(() => Branch.PhoneNumber)" Variant="Variant.Outlined" />
         </MudGrid>
         <MudItem xs="12" Class="d-flex align-end mt-12">
             <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">CREATE BRANCH</MudButton>

@@ -1,3 +1,4 @@
+using InventiCloud.Data;
 using System;
 using System.ComponentModel.DataAnnotations;
 
@@ -14,11 +15,10 @@ public class Branch
     public string City { get; set; }
     public string Region { get; set; }
     public string PhoneNumber { get; set; }
-    public string Email { get; set; }
 
     // navigation properties
     public virtual ICollection<Inventory> Inventories { get; set; }
-    public virtual ICollection<BranchAccount> BranchAccounts { get; set; }
+    public virtual ApplicationUser ApplicationUser { get; set; }
 
 
 }

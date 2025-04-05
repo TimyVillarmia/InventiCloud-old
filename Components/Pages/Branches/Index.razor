@@ -1,95 +1,137 @@
 ﻿@page "/store/branches"
 @using InventiCloud.Components.UI
+@using InventiCloud.Data
 @using InventiCloud.Services
 @using InventiCloud.Services.Interface
 @using InventiCloud.Entities
 @inject IBranchService BranchService
+@inject IBranchAccountService BranchAccountService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
 
 
 <PageTitle>Branches</PageTitle>
 
 <MudText Class="bold mb-2" Typo="Typo.h4">Branches</MudText>
-@if (!_branches.Any())
+@if (_branches == null)
 {
-
-    <MudContainer Class="d-flex justify-center align-items-center" Style="height: 100vh;">
+    <MudContainer Class="d-flex justify-center align-items-center" Style="height: 50vh;">
         <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
     </MudContainer>
 }
 else
 {
-    <MudGrid>
-        <MudItem sm="6">
-            <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
-                          AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
-        </MudItem>
-        <MudItem sm="6" Class="align-end">
-            <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Href="branches/create" Color="Color.Primary" Class="text-uppercase">
-                Add Branch
-            </MudButton>
-        </MudItem>
-    </MudGrid>
-    <MudDataGrid @ref="dataGrid" T="Branch" ServerData="ServerReload" RowClick="@RowClicked">
-        <Columns>
-            <PropertyColumn Property="branch => branch.BranchName" Title="Branch Name" />
-            <PropertyColumn Property="branch => branch.Address" Title="Location" />
-            <PropertyColumn Property="branch => branch.PhoneNumber" Title="Phone Number" />
-            <PropertyColumn Property="branch => branch.Email" Title="Email" />
-            <TemplateColumn CellClass="d-flex justify-end">
-                <CellTemplate>
-                    <MudStack Row>
-                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" aria-label="delete" OnClick="@(() => OpenDialogAsync(context.Item))" />
-                    </MudStack>
-                </CellTemplate>
-            </TemplateColumn>
-        </Columns>
-        <PagerContent>
-            <MudDataGridPager T="Category" />
-        </PagerContent>
-    </MudDataGrid>
+    @if (!_branches.Any())
+    {
+        <MudPaper Height="500px" Class="justify-center align-content-center">
+            <MudText Class="bol" Typo="Typo.h6" Align="Align.Center">No Branches Found</MudText>
+            <MudText Typo="Typo.body1" Align="Align.Center">
+                Click the "Add Branch" button to create a new branch.
+            </MudText>
+            <MudContainer Class="d-flex justify-center mt-2">
+                <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Href="/store/branches/create-branch" Color="Color.Primary" Class="text-uppercase">
+                    Add Branch
+                </MudButton>
+            </MudContainer>
+        </MudPaper>
+
+    }
+    else
+    {
+        <MudGrid>
+            <MudItem sm="6">
+                <MudTextField T="string" ValueChanged="@(s=>OnSearchBranches(s))" Variant="Variant.Outlined" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+            </MudItem>
+            <MudItem sm="6" Class="align-end">
+                <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Href="/store/branches/create-branch" Color="Color.Primary" Class="text-uppercase">
+                    Add Branch
+                </MudButton>
+            </MudItem>
+        </MudGrid>
+        <MudDataGrid @ref="dataGridBranches" T="Branch" ServerData="ServerReloadBranches" RowClick="@RowClicked" EditMode="DataGridEditMode.Form" >
+            <Columns>
+                <PropertyColumn Property="branch => branch.BranchName" Title="Branch Name" />
+                <PropertyColumn Property="branch => branch.Address" Title="Location" />
+                <PropertyColumn Property="branch => branch.PhoneNumber" Title="Phone Number" />
+                <TemplateColumn CellClass="d-flex justify-end">
+                    <CellTemplate>
+                        <MudMenu Icon="@Icons.Material.Filled.MoreVert" AriaLabel="Open user menu">
+                            <MudMenuItem Label="Edit" href="@($"/store/branches/branch/{context.Item.BranchName}")" />
+                            <MudMenuItem Label="Delete" Class="red-text" OnClick="@(() => OpenDialogBranchAsync(context.Item))" />
+
+                        </MudMenu>
+                    </CellTemplate>
+                </TemplateColumn>
+            </Columns>
+            <PagerContent>
+                <MudDataGridPager T="Branch" />
+            </PagerContent>
+        </MudDataGrid>
+
+    }
 
 }
 
 
 <MudText Class="bold mb-2" Typo="Typo.h4">Branch Accounts</MudText>
-@if (!_branches.Any())
+@if (_branchAccounts == null)
 {
-
-    <MudContainer Class="d-flex justify-center align-items-center" Style="height: 100vh;">
+    <MudContainer Class="d-flex justify-center align-items-center" Style="height: 50vh;">
         <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
     </MudContainer>
 }
 else
 {
-    <MudGrid>
-        <MudItem sm="6">
-            <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
-                          AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
-        </MudItem>
-        <MudItem sm="6" Class="align-end">
-            <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Href="branches/create" Color="Color.Primary" Class="text-uppercase">
-                Add Branch Account
-            </MudButton>
-        </MudItem>
-    </MudGrid>
-    <MudDataGrid @ref="dataGrid" T="Branch" ServerData="ServerReload" RowClick="@RowClicked">
-        <Columns>
-            <PropertyColumn Property="branch => branch.BranchName" Title="Branch Name" />
-            <PropertyColumn Property="branch => branch.Address" Title="Location" />
-            <PropertyColumn Property="branch => branch.PhoneNumber" Title="Phone Number" />
-            <PropertyColumn Property="branch => branch.Email" Title="Email" />
-            <TemplateColumn CellClass="d-flex justify-end">
-                <CellTemplate>
-                    <MudStack Row>
-                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" aria-label="delete" OnClick="@(() => OpenDialogAsync(context.Item))" />
-                    </MudStack>
-                </CellTemplate>
-            </TemplateColumn>
-        </Columns>
-        <PagerContent>
-            <MudDataGridPager T="Category" />
-        </PagerContent>
-    </MudDataGrid>
+    @if (!_branchAccounts.Any())
+    {
+        <MudPaper Height="500px" Class="justify-center align-content-center">
+            <MudText Class="bol" Typo="Typo.h6" Align="Align.Center">No Users Assigned to This Branch Yet</MudText>
+            <MudText Typo="Typo.body1" Align="Align.Center">
+                Add your first branch and assign a user account to manage its operations.
+            </MudText>
+            <MudContainer Class="d-flex justify-center mt-2">
+                <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Href="/store/branches/create-account"  Color="Color.Primary" Class="text-uppercase">
+                    Add Branch
+                </MudButton>
+            </MudContainer>
+        </MudPaper>
+
+    }
+    else
+    {
+        <MudGrid>
+            <MudItem sm="6">
+                <MudTextField T="string" ValueChanged="@(s=>OnSearchAccounts(s))" Variant="Variant.Outlined" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+            </MudItem>
+            <MudItem sm="6" Class="align-end">
+                <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Href="/store/branches/create-account" Color="Color.Primary" Class="text-uppercase">
+                    Add Branch
+                </MudButton>
+            </MudItem>
+        </MudGrid>
+        <MudDataGrid @ref="dataGridAccounts" T="ApplicationUser" ServerData="ServerReloadAccounts">
+            <Columns>
+                <PropertyColumn Property="u => u.UserName" Title="Username" />
+                <PropertyColumn Property="u => u.Email" Title="Email" />
+                <PropertyColumn Property="u => u.Branch.BranchName" Title="Branch" />
+                <TemplateColumn CellClass="d-flex justify-end">
+                    <CellTemplate>
+                        <MudMenu Icon="@Icons.Material.Filled.MoreVert" AriaLabel="Open user menu">
+                            <MudMenuItem Label="Edit" href="@($"/store/branches/account/{context.Item.UserName}")" />
+                            <MudMenuItem Label="Delete" Class="red-text" OnClick="@(() => OpenDialogApplicationUserAsync(context.Item))" />
+
+                        </MudMenu>
+                    </CellTemplate>
+                </TemplateColumn>
+            </Columns>
+            <PagerContent>
+                <MudDataGridPager T="ApplicationUser" />
+            </PagerContent>
+        </MudDataGrid>
+
+    }
 
 }
 
@@ -98,26 +140,32 @@ else
 @code {
 
 
-    MudDataGrid<Branch> dataGrid = new();
-    private string? searchString;
+    MudDataGrid<Branch> dataGridBranches = new();
+    MudDataGrid<ApplicationUser> dataGridAccounts = new();
+    private string? searchStringBranch;
+    private string? searchStringAccount;
 
     private IEnumerable<Branch>? _branches;
+    private IEnumerable<ApplicationUser>? _branchAccounts;
 
 
     protected override async Task OnInitializedAsync()
     {
         _branches = await BranchService.GetAllBranchAsync();
+        _branchAccounts = await BranchAccountService.GetAllBranchAccountsAsync();
     }
 
-    private async Task<GridData<Branch>> ServerReload(GridState<Branch> state)
+    private async Task<GridData<Branch>> ServerReloadBranches(GridState<Branch> state)
     {
 
         _branches = await BranchService.GetAllBranchAsync();
         _branches = _branches.Where(branch =>
         {
-            if (string.IsNullOrWhiteSpace(searchString))
+            if (string.IsNullOrWhiteSpace(searchStringBranch))
                 return true;
-            if (branch.BranchName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            if (branch.BranchName.Contains(searchStringBranch, StringComparison.OrdinalIgnoreCase))
+                return true;
+            if (branch.PhoneNumber.Contains(searchStringBranch, StringComparison.OrdinalIgnoreCase))
                 return true;
             return false;
         }).ToArray();
@@ -137,6 +185,8 @@ else
             }
         }
 
+
+
         var pagedData = _branches.Skip(state.Page * state.PageSize).Take(state.PageSize).ToArray();
         return new GridData<Branch>
             {
@@ -144,6 +194,49 @@ else
                 Items = pagedData
             };
     }
+
+    private async Task<GridData<ApplicationUser>> ServerReloadAccounts(GridState<ApplicationUser> state)
+    {
+
+        _branchAccounts = await BranchAccountService.GetAllBranchAccountsAsync();
+        _branchAccounts = _branchAccounts.Where(branch =>
+        {
+            if (string.IsNullOrWhiteSpace(searchStringAccount))
+                return true;
+            if (branch.UserName.Contains(searchStringAccount, StringComparison.OrdinalIgnoreCase))
+                return true;
+            if (branch.Email.Contains(searchStringAccount, StringComparison.OrdinalIgnoreCase))
+                return true;
+            if (branch.Branch.BranchName.Contains(searchStringAccount, StringComparison.OrdinalIgnoreCase))
+                return true;
+            return false;
+        }).ToArray();
+        var totalItems = _branchAccounts.Count();
+
+        var sortDefinition = state.SortDefinitions.FirstOrDefault();
+        if (sortDefinition != null)
+        {
+            switch (sortDefinition.SortBy)
+            {
+                case nameof(Branch.BranchName):
+                    _branchAccounts = _branchAccounts.OrderByDirection(
+                        sortDefinition.Descending ? SortDirection.Descending : SortDirection.Ascending,
+                        b => b.BranchId
+                    );
+                    break;
+            }
+        }
+
+
+
+        var pagedData = _branchAccounts.Skip(state.Page * state.PageSize).Take(state.PageSize).ToArray();
+        return new GridData<ApplicationUser>
+            {
+                TotalItems = totalItems,
+                Items = pagedData
+            };
+    }
+
 
     void RowClicked(DataGridRowClickEventArgs<Branch> args)
     {
@@ -157,41 +250,83 @@ else
 
     }
 
-    // events
-    async Task OpenDialogAsync(Branch branch)
+    async Task OpenDialogApplicationUserAsync(ApplicationUser applicationUser)
     {
-        // var parameters = new DialogParameters<DialogComponent>
-        // {
-        //     {x => x.ContentText, $"Are you sure you want to delete the category '{branch.BranchName}'? This action cannot be undone."}
-        // };
+        var parameters = new DialogParameters<DialogComponent>
+      {
+          {x => x.ContentText, $"Are you sure you want to delete the branch account for user '{applicationUser.UserName}'? This action cannot be undone."},
+          { "Button1Text", "Delete" },
+          { "Button2Text", "Cancel" },
+          { "Color", Color.Error }
+      };
 
-        // var dialog = await DialogService.ShowAsync<DialogComponent>("Delete Category", parameters);
-        // var result = await dialog.Result;
+        var dialog = await DialogService.ShowAsync<DialogComponent>("Delete Branch Account", parameters);
+        var result = await dialog.Result;
 
-        // if (!result.Canceled)
-        // {
-        //     try
-        //     {
-        //         await CategoryService.DeleteCategoryyAsync(category);
-        //         Snackbar.Add("Category Deleted", Severity.Success);
-        //         await dataGrid.ReloadServerData();
+        if (!result.Canceled)
+        {
+            try
+            {
+                await BranchAccountService.DeleteBranchAccountAsync(applicationUser.Id);
+                Snackbar.Add($"Branch account for user '{applicationUser.UserName}' deleted successfully.", Severity.Success);
+                await dataGridAccounts.ReloadServerData();
 
-        //     }
-        //     catch (InvalidOperationException ex)
-        //     {
-        //         Snackbar.Add(ex.Message, Severity.Error);
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         Snackbar.Add("An error occurred while deleting the category.", Severity.Error);
-        //     }
-        // }
-
+            }
+            catch (InvalidOperationException ex)
+            {
+                Snackbar.Add(ex.Message, Severity.Error);
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"An error occurred while deleting the branch account for user '{applicationUser.UserName}'.", Severity.Error);
+            }
+        }
     }
 
-    private Task OnSearch(string text)
+
+    async Task OpenDialogBranchAsync(Branch branch)
     {
-        searchString = text;
-        return dataGrid.ReloadServerData();
+        var parameters = new DialogParameters<DialogComponent>
+      {
+          { x => x.ContentText, $"Are you sure you want to delete the branch '{branch.BranchName}'? This action cannot be undone and will affect associated data." },
+           { "Button1Text", "Delete" },
+          { "Button2Text", "Cancel" },
+          { "Color", Color.Error }
+      };
+
+        var dialog = await DialogService.ShowAsync<DialogComponent>("Delete Branch", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            try
+            {
+                // Assuming you have a BranchService injected
+                await BranchService.DeleteBranch(branch);
+                Snackbar.Add($"Branch '{branch.BranchName}' deleted successfully.", Severity.Success);
+                // Assuming you have a MudDataGrid named dataGridBranches
+                await dataGridBranches.ReloadServerData();
+            }
+            catch (InvalidOperationException ex)
+            {
+                Snackbar.Add(ex.Message, Severity.Error);
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"An error occurred while deleting the branch '{branch.BranchName}'.", Severity.Error);
+            }
+        }
+    }
+
+    private Task OnSearchBranches(string text)
+    {
+        searchStringBranch = text;
+        return dataGridBranches.ReloadServerData();
+    }
+
+    private Task OnSearchAccounts(string text)
+    {
+        searchStringAccount = text;
+        return dataGridAccounts.ReloadServerData();
     }
 }
