@@ -13,7 +13,11 @@
 
     <MudNavGroup Title="Inventory" Expanded="true" Icon="@Icons.Material.Outlined.Warehouse">
         <MudNavLink Href="inventory/stock-levels" Match="NavLinkMatch.Prefix">Stock Levels</MudNavLink>
-        <MudNavLink Href="inventory/stock-transfers" Match="NavLinkMatch.Prefix">Stock Transfer</MudNavLink>
+        <MudNavGroup Title="Stock Transfers" Expanded="true">
+            <MudNavLink Href="inventory/stock-transfers/create" Match="NavLinkMatch.Prefix">Create Transfer</MudNavLink>
+            <MudNavLink Href="inventory/stock-transfers/requested" Match="NavLinkMatch.Prefix">My Requests</MudNavLink>
+            <MudNavLink Href="inventory/stock-transfers/approvals" Match="NavLinkMatch.Prefix">Awaiting Approval</MudNavLink>
+        </MudNavGroup>
         <MudNavLink Href="inventory/stock-adjustments" Match="NavLinkMatch.Prefix">Stock Adjustments</MudNavLink>
     </MudNavGroup>
 

@@ -34,7 +34,8 @@ namespace InventiCloud.Services
         {
             using var context = _dbFactory.CreateDbContext();
             return await context.StockTransfers
-                .Include(st => st.CreatedBy)
+                .Include(st => st.RequestedBy)
+                .Include(st => st.ApprovedBy)
                 .Include(st => st.SourceBranch)
                 .Include(st => st.DestinationBranch)
                 .Include(st => st.Status)
@@ -81,7 +82,7 @@ namespace InventiCloud.Services
 
             try
             {
-                stockTransfer.StatusId = 1; // Allocated
+                stockTransfer.StatusId = 1; // Requested
                 context.StockTransfers.Add(stockTransfer);
                 await context.SaveChangesAsync(); // Save to get StockTransferId
 
@@ -98,8 +99,6 @@ namespace InventiCloud.Services
                         throw new InvalidOperationException($"Insufficient inventory for ProductId: {item.ProductId} in SourceBranchId: {stockTransfer.SourceBranchId}");
                     }
 
-                    sourceInventory.Allocated += item.TransferQuantity;
-                    sourceInventory.AvailableQuantity = sourceInventory.OnHandquantity - sourceInventory.Allocated;
                     await _inventoryService.UpdateInventoryAsync(sourceInventory);
                 }
 
@@ -126,7 +125,8 @@ namespace InventiCloud.Services
             try
             {
                 return await context.StockTransfers
-                    .Include(st => st.CreatedBy)
+                    .Include(st => st.RequestedBy)
+                    .Include(st => st.ApprovedBy)
                     .Include(st => st.SourceBranch)
                     .Include(st => st.DestinationBranch)
                     .Include(st => st.Status)
@@ -218,7 +218,8 @@ namespace InventiCloud.Services
 
         public async Task DeleteStockTransferAsync(string referenceNumber)
         {
-            if (string.IsNullOrEmpty(referenceNumber)) throw new ArgumentNullException(nameof(referenceNumber), "Reference number cannot be null or empty.");
+            if (string.IsNullOrEmpty(referenceNumber))
+                throw new ArgumentNullException(nameof(referenceNumber), "Reference number cannot be null or empty.");
 
             using var context = _dbFactory.CreateDbContext();
 
@@ -229,20 +230,12 @@ namespace InventiCloud.Services
                     .Include(st => st.StockTransferItems)
                     .FirstOrDefaultAsync(st => st.ReferenceNumber == referenceNumber);
 
-                if (stockTransfer == null) throw new InvalidOperationException($"Stock Transfer with Reference Number {referenceNumber} not found.");
-                if (stockTransfer.Status.StatusName != "Allocated") throw new InvalidOperationException($"Stock Transfer with Reference Number {referenceNumber} is not in 'Allocated' status and cannot be deleted.");
+                if (stockTransfer == null)
+                    throw new InvalidOperationException($"Stock Transfer with Reference Number {referenceNumber} not found.");
 
-                foreach (var item in stockTransfer.StockTransferItems)
-                {
-                    var sourceInventory = await _inventoryService.GetInventoryByProductIdAndBranchIdAsync(item.ProductId, stockTransfer.SourceBranchId);
+                if (stockTransfer.Status.StatusName != "Requested")
+                    throw new InvalidOperationException($"Stock Transfer with Reference Number {referenceNumber} is not in 'Requested' status and cannot be deleted through this method.");
 
-                    if (sourceInventory == null) throw new InvalidOperationException($"Inventory not found for ProductId: {item.ProductId} and BranchId: {stockTransfer.SourceBranchId}");
-
-                    sourceInventory.Allocated -= item.TransferQuantity;
-                    sourceInventory.AvailableQuantity = sourceInventory.OnHandquantity - sourceInventory.Allocated;
-
-                    await _inventoryService.UpdateInventoryAsync(sourceInventory);
-                }
 
                 context.StockTransfers.Remove(stockTransfer);
                 await context.SaveChangesAsync();
@@ -353,11 +346,11 @@ namespace InventiCloud.Services
             }
         }
 
-        public async Task StockTransferToInTransitAsync(string referenceNumber) => await UpdateStockTransferStatusAndInventory(referenceNumber, "In Transit");
+        public async Task StockTransferToApprovedAsync(string referenceNumber) => await UpdateStockTransferStatusAndInventory(referenceNumber, "Approved");
 
-        public async Task StockTransferToCompleteAsync(string referenceNumber) => await UpdateStockTransferStatusAndInventory(referenceNumber, "Completed");
+        public async Task StockTransferToCompletedAsync(string referenceNumber) => await UpdateStockTransferStatusAndInventory(referenceNumber, "Completed");
 
-        public async Task StockTransferCancelledAsync(string referenceNumber) => await UpdateStockTransferStatusAndInventory(referenceNumber, "Cancelled");
+        public async Task StockTransferToRejectedAsync(string referenceNumber) => await UpdateStockTransferStatusAndInventory(referenceNumber, "Rejected");
 
         private async Task UpdateStockTransferStatusAndInventory(string referenceNumber, string statusName)
         {
@@ -395,9 +388,9 @@ namespace InventiCloud.Services
 
                 switch (statusName.ToLower())
                 {
-                    case "in transit": await UpdateInventoryForInTransit(stockTransfer); break;
+                    case "approved": await UpdateInventoryForApproved(stockTransfer); break;
                     case "completed": await UpdateInventoryForComplete(stockTransfer); break;
-                    case "cancelled": await RevertInventoryChanges(stockTransfer); break;
+                    case "rejected": await UpdateStockTransferToRejected(stockTransfer); break;
                 }
 
                 _logger.LogInformation("Stock Transfer {ReferenceNumber} status changed to '{StatusName}'.", referenceNumber, statusName);
@@ -409,34 +402,69 @@ namespace InventiCloud.Services
             }
         }
 
-        private async Task UpdateInventoryForInTransit(StockTransfer stockTransfer)
+        private async Task UpdateInventoryForApproved(StockTransfer stockTransfer)
         {
             foreach (var item in stockTransfer.StockTransferItems)
             {
+                // Get inventory for source and destination branches
                 var sourceInventory = await _inventoryService.GetInventoryByProductIdAndBranchIdAsync(item.ProductId, stockTransfer.SourceBranchId);
                 var destinationInventory = await _inventoryService.GetInventoryByProductIdAndBranchIdAsync(item.ProductId, stockTransfer.DestinationBranchId);
 
-                if (sourceInventory != null)
+                // Validate source inventory exists
+                if (sourceInventory == null)
                 {
-                    sourceInventory.Allocated -= item.TransferQuantity;
-                    sourceInventory.OnHandquantity -= item.TransferQuantity;
-                    sourceInventory.AvailableQuantity = sourceInventory.OnHandquantity - sourceInventory.Allocated;
-                    await _inventoryService.UpdateInventoryAsync(sourceInventory);
+                    throw new InvalidOperationException($"Source inventory not found for ProductId: {item.ProductId} in BranchId: {stockTransfer.SourceBranchId}.");
                 }
 
+                // Validate sufficient available quantity in source
+                if (sourceInventory.AvailableQuantity < item.TransferQuantity)
+                {
+                    throw new InvalidOperationException($"Insufficient available quantity in source branch (ProductId: {item.ProductId}" +
+                                                        $"Available: {sourceInventory.AvailableQuantity}, Requested: {item.TransferQuantity}.");
+                }
+
+                // Update source inventory
+                sourceInventory.Allocated += item.TransferQuantity;
+                sourceInventory.AvailableQuantity = sourceInventory.OnHandquantity - sourceInventory.Allocated;
+
+                await _inventoryService.UpdateInventoryAsync(sourceInventory);
+
+                // Update destination inventory (it should exist, but handle gracefully if not)
                 if (destinationInventory != null)
                 {
                     destinationInventory.IncomingQuantity += item.TransferQuantity;
                     await _inventoryService.UpdateInventoryAsync(destinationInventory);
                 }
+                else
+                {
+                    // Consider logging a warning or creating the inventory if business rules allow
+                    _logger.LogWarning($"Destination inventory not found for ProductId: {item.ProductId} in BranchId: {stockTransfer.DestinationBranchId}. Incoming quantity not updated.");
+                }
             }
+
         }
 
         private async Task UpdateInventoryForComplete(StockTransfer stockTransfer)
         {
             foreach (var item in stockTransfer.StockTransferItems)
             {
+                // approver
+                var sourceInventory = await _inventoryService.GetInventoryByProductIdAndBranchIdAsync(item.ProductId, stockTransfer.SourceBranchId);
+                // requester
                 var destinationInventory = await _inventoryService.GetInventoryByProductIdAndBranchIdAsync(item.ProductId, stockTransfer.DestinationBranchId);
+
+                if (sourceInventory != null)
+                {
+
+                    // after completed
+                    sourceInventory.Allocated -= item.TransferQuantity; // decrease the allocated since transfer is already at the source/requester branch
+                    //recalculate
+                    sourceInventory.OnHandquantity = sourceInventory.AvailableQuantity + sourceInventory.Allocated;
+                    sourceInventory.AvailableQuantity = sourceInventory.OnHandquantity - sourceInventory.Allocated;
+
+                    await _inventoryService.UpdateInventoryAsync(sourceInventory);
+                }
+
 
                 if (destinationInventory != null)
                 {
@@ -448,26 +476,14 @@ namespace InventiCloud.Services
             }
         }
 
-        private async Task RevertInventoryChanges(StockTransfer stockTransfer)
+        private async Task UpdateStockTransferToRejected(StockTransfer stockTransfer)
         {
-            foreach (var item in stockTransfer.StockTransferItems)
-            {
-                var sourceInventory = await _inventoryService.GetInventoryByProductIdAndBranchIdAsync(item.ProductId, stockTransfer.SourceBranchId);
-                var destinationInventory = await _inventoryService.GetInventoryByProductIdAndBranchIdAsync(item.ProductId, stockTransfer.DestinationBranchId);
+            // No inventory updates are needed when a "Requested" Stock Transfer is rejected.
+            // The inventory levels should remain as they were before the request was made.
 
-                if (sourceInventory != null)
-                {
-                    sourceInventory.OnHandquantity += item.TransferQuantity; // Add back to OnHandquantity
-                    sourceInventory.AvailableQuantity = sourceInventory.OnHandquantity - sourceInventory.Allocated; // Recalculate AvailableQuantity
-                    await _inventoryService.UpdateInventoryAsync(sourceInventory);
-                }
+            // You might want to add logging here for auditing purposes.
+            _logger.LogInformation($"Stock Transfer '{stockTransfer.ReferenceNumber}' rejected. No inventory changes applied.");
 
-                if (destinationInventory != null)
-                {
-                    destinationInventory.IncomingQuantity -= item.TransferQuantity;
-                    await _inventoryService.UpdateInventoryAsync(destinationInventory);
-                }
-            }
         }
 
         public async Task DisposeAsync()
@@ -481,10 +497,10 @@ namespace InventiCloud.Services
         {
             switch (currentStatus)
             {
-                case "allocated":
-                    return newStatus == "in transit";
-                case "in transit":
-                    return newStatus == "completed" || newStatus == "cancelled";
+                case "requested":
+                    return newStatus == "approved";
+                case "approved":
+                    return newStatus == "completed" || newStatus == "rejected";
                 default:
                     return false;
             }

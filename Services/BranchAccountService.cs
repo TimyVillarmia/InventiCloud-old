@@ -51,7 +51,7 @@ namespace InventiCloud.Services
                 //assign role
                 await _userManager.AddToRoleAsync(user, "branch");
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 _logger.LogError(ex.Message);
                 throw;

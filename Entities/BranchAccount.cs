@@ -18,5 +18,6 @@ namespace InventiCloud.Entities
         // navigation properties
         public virtual ApplicationUser ApplicationUser { get; set; }
         public virtual Branch Branch { get; set; }
+        public virtual ICollection<StockTransfer> StockTransfers { get; set; }
     }
 }
