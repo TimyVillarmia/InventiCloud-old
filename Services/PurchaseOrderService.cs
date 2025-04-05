@@ -208,6 +208,7 @@ namespace InventiCloud.Services
                     {
                         inventory.OnHandquantity += item.Quantity; // Increase OnHandQuantity
                         inventory.IncomingQuantity -= item.Quantity; // Decrease Quantity
+                        inventory.AvailableQuantity = inventory.OnHandquantity - inventory.Allocated;
                         await inventoryService.UpdateInventoryAsync(inventory);
                     }
                     else
