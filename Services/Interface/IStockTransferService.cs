@@ -13,14 +13,10 @@ namespace InventiCloud.Services.Interface
         Task AddStockTransferAsync(StockTransfer stockTransfer, ICollection<StockTransferItem> stockTransferItems);
         Task<StockTransfer> GetStockTransferByReferenceNumberAsync(string referenceNumber);
         Task<StockTransfer> GetStockTransferByIdAsync(int? stockTransferId);
-        Task UpdateStockTransferAsync(string referenceNumber, StockTransfer newStockTransfer);
         Task DeleteStockTransferAsync(string referenceNumber);
-
-        Task UpdateStockTransferItemsAsync(string referenceNumber, ICollection<StockTransferItem> updatedStockTransferItems);
-
-        Task StockTransferToInTransitAsync(string referenceNumber);
-        Task StockTransferToCompleteAsync(string referenceNumber);
-        Task StockTransferCancelledAsync(string referenceNumber);
+        Task StockTransferToApprovedAsync(string referenceNumber);
+        Task StockTransferToCompletedAsync(string referenceNumber);
+        Task StockTransferToRejectedAsync(string referenceNumber);
         Task DisposeAsync();
     }
 }

@@ -1,17 +1,17 @@
 ﻿using InventiCloud.Entities;
 using InventiCloud.Services.Interface;
 using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 
 namespace InventiCloud.Services
 {
-    public class BranchService(ILogger<BranchAccountService> _logger, IDbContextFactory<InventiCloud.Data.ApplicationDbContext> DbFactory) : IBranchService
+    public class BranchService(ILogger<BranchService> _logger, IDbContextFactory<InventiCloud.Data.ApplicationDbContext> DbFactory) : IBranchService
     {
         public async Task AddBranch(Branch branch)
         {
             try
             {
                 using var context = DbFactory.CreateDbContext();
-                // Check for existing SKU
                 if (await context.Branches.AnyAsync(b => b.BranchName == branch.BranchName))
                 {
                     throw new InvalidOperationException($"'{branch.BranchName}' already exists.");
@@ -83,8 +83,83 @@ namespace InventiCloud.Services
             using var context = DbFactory.CreateDbContext();
             return await context.Branches
                 .Include(b => b.Inventories)
-                .Include(b => b.BranchAccounts)
+                .Include(b => b.ApplicationUser)
                 .ToListAsync();
         }
+
+        public async Task<Branch> GetBranchByNameAsync(string branchName)
+        {
+            if (string.IsNullOrWhiteSpace(branchName))
+            {
+                throw new ArgumentException("Branch name cannot be null or whitespace.", nameof(branchName));
+            }
+
+            try
+            {
+                using var context = DbFactory.CreateDbContext();
+                return await context.Branches
+                    .FirstOrDefaultAsync(b => b.BranchName == branchName);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving branch by name: {BranchName}", branchName);
+                throw;
+            }
+        }
+
+
+        public async Task UpdateBranch(Branch branch)
+        {
+            if (branch == null)
+            {
+                throw new ArgumentNullException(nameof(branch), "Branch object cannot be null.");
+            }
+
+            if (string.IsNullOrWhiteSpace(branch.BranchName))
+            {
+                throw new ValidationException("Branch name cannot be null or whitespace.");
+            }
+
+            try
+            {
+                using var context = DbFactory.CreateDbContext();
+
+                // Check for uniqueness of the branch name (excluding the current branch being updated)
+                var existingBranch = await context.Branches
+                    .Where(b => b.BranchName == branch.BranchName && b.BranchId != branch.BranchId)
+                    .FirstOrDefaultAsync();
+
+                if (existingBranch != null)
+                {
+                    throw new ValidationException($"A branch with the name '{branch.BranchName}' already exists.");
+                }
+
+                context.Branches.Update(branch);
+                await context.SaveChangesAsync();
+                _logger.LogInformation("Branch with ID {BranchId} updated successfully.", branch.BranchId);
+            }
+            catch (ValidationException ex)
+            {
+                _logger.LogError(ex, "Validation error updating branch with ID {BranchId}.", branch.BranchId);
+                throw;
+            }
+            catch (DbUpdateConcurrencyException ex)
+            {
+                _logger.LogError(ex, "Concurrency error updating branch with ID {BranchId}.", branch.BranchId);
+                throw;
+            }
+            catch (DbUpdateException ex)
+            {
+                _logger.LogError(ex, "Error updating branch with ID {BranchId}.", branch.BranchId);
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An unexpected error occurred while updating branch with ID {BranchId}.", branch.BranchId);
+                throw;
+            }
+        }
+
     }
+    
 }

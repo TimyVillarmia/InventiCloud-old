@@ -1,4 +1,5 @@
-﻿@page "/inventory/stock-transfers/"
+﻿@page "/inventory/stock-transfers/requested/"
+@page "/inventory/stock-transfers/approvals/"
 @using InventiCloud.Components.UI
 @using InventiCloud.Services
 @using InventiCloud.Services.Interface
@@ -61,7 +62,6 @@ else
                         <MudChip Color="@GetChipColor(context.Item.Status.StatusName)" Size="Size.Small">@context.Item.Status.StatusName</MudChip>
                     </CellTemplate>
                 </TemplateColumn>
-                <PropertyColumn Property="st => st.DateCreated" Title="Date Created" />
                 <TemplateColumn CellClass="d-flex justify-end">
                     <CellTemplate>
                         <MudMenu Icon="@Icons.Material.Filled.MoreVert" AriaLabel="Open user menu">

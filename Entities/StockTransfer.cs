@@ -20,14 +20,18 @@ namespace InventiCloud.Entities
 
         [ForeignKey("Status")]
         public int StatusId { get; set; }
-        public DateTime DateCreated { get; set; } = DateTime.Now;
+        public DateTime? RequestedDate { get; set; } = DateTime.Now;
         public DateTime? DateCompleted { get; set; }
-
+        public DateTime? DateApproved { get; set; } 
         [Required,
-         ForeignKey("CreatedBy")]
-        public string CreatedById { get; set; }
+         ForeignKey("RequestedBy")]
+        public string RequestedById { get; set; } 
+        
+        [ForeignKey("ApprovedBy")]
+        public string ApprovedById { get; set; }
 
-        public virtual ApplicationUser CreatedBy { get; set; }
+        public virtual ApplicationUser RequestedBy { get; set; }
+        public virtual ApplicationUser ApprovedBy { get; set; }
 
         [Required(ErrorMessage = "Source Branch is required.")]
         public virtual Branch SourceBranch { get; set; }

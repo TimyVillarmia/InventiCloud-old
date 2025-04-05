@@ -17,7 +17,7 @@
         <MudText Typo="Typo.h4">CREATE STOCK TRANSFER</MudText>
     </div>
 
-    <EditForm method="post" Model="@StockTransfer" Context="StockTransferForm" OnValidSubmit="@AddStockTransferToDraft" FormName="createStockTransfer" Enhance>
+    <EditForm method="post" Model="@StockTransfer" Context="StockTransferForm" OnValidSubmit="@AddStockTransferToRequested" FormName="createStockTransfer" Enhance>
         <DataAnnotationsValidator />
         <MudText Typo="Typo.h6">DETAILS</MudText>
         <MudGrid>
@@ -86,7 +86,7 @@
         </MudDataGrid>
         <div class="d-flex align-end mt-12">
             <MudButton Variant="Variant.Filled" Color="Color.Default" Href="/inventory/stock-transfers" Class="ml-auto">CANCEL</MudButton>
-            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-2">SAVE AS DRAFT</MudButton>
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-2">REQUEST TRANSFER</MudButton>
 
         </div>
 
@@ -157,7 +157,7 @@
         _branches = await BranchService.GetAllBranchAsync();
     }
 
-    private async Task AddStockTransferToDraft(EditContext context)
+    private async Task AddStockTransferToRequested(EditContext context)
     {
 
         if (context.Validate())
@@ -170,7 +170,7 @@
                     {
                         SourceBranchId = StockTransfer.SourceBranch.BranchId,
                         DestinationBranchId = StockTransfer.DestinationBranch.BranchId,
-                        CreatedById = "your-user-id-1", // Replace with actual user ID
+                        RequestedById = "your-user-id-1", // Replace with actual user ID
                     };
 
                 var sti_data = StockTransferItems.Select(vm => new StockTransferItem
@@ -180,7 +180,7 @@
                     }).ToList();
 
                 await StockTransferService.AddStockTransferAsync(st_data, sti_data);
-                Snackbar.Add("Stock Transfer added to Allocated.", Severity.Success);
+                Snackbar.Add("Stock Transfer added to Requested.", Severity.Success);
                 StockTransfer = new(); // Reset
             }
             catch (InvalidOperationException ex)

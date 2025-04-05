@@ -13,6 +13,12 @@ namespace InventiCloud.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.AddColumn<int>(
+                name: "BranchId",
+                table: "AspNetUsers",
+                type: "int",
+                nullable: true);
+
             migrationBuilder.CreateTable(
                 name: "AttributeSets",
                 columns: table => new
@@ -51,8 +57,7 @@ namespace InventiCloud.Migrations
                     PostalCode = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     City = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Region = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    PhoneNumber = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Email = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    PhoneNumber = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -198,32 +203,6 @@ namespace InventiCloud.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "BranchAccounts",
-                columns: table => new
-                {
-                    BranchAccountId = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    ApplicationUserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    BranchId = table.Column<int>(type: "int", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_BranchAccounts", x => x.BranchAccountId);
-                    table.ForeignKey(
-                        name: "FK_BranchAccounts_AspNetUsers_ApplicationUserId",
-                        column: x => x.ApplicationUserId,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_BranchAccounts_Branches_BranchId",
-                        column: x => x.BranchId,
-                        principalTable: "Branches",
-                        principalColumn: "BranchId",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Products",
                 columns: table => new
                 {
@@ -343,19 +322,27 @@ namespace InventiCloud.Migrations
                     SourceBranchId = table.Column<int>(type: "int", nullable: false),
                     DestinationBranchId = table.Column<int>(type: "int", nullable: false),
                     StatusId = table.Column<int>(type: "int", nullable: false),
-                    DateCreated = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    RequestedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
                     DateCompleted = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    CreatedById = table.Column<string>(type: "nvarchar(450)", nullable: false)
+                    DateApproved = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    RequestedById = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    ApprovedById = table.Column<string>(type: "nvarchar(450)", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_StockTransfers", x => x.StockTransferId);
                     table.ForeignKey(
-                        name: "FK_StockTransfers_AspNetUsers_CreatedById",
-                        column: x => x.CreatedById,
+                        name: "FK_StockTransfers_AspNetUsers_ApprovedById",
+                        column: x => x.ApprovedById,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_StockTransfers_AspNetUsers_RequestedById",
+                        column: x => x.RequestedById,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.NoAction);
                     table.ForeignKey(
                         name: "FK_StockTransfers_Branches_DestinationBranchId",
                         column: x => x.DestinationBranchId,
@@ -601,18 +588,13 @@ namespace InventiCloud.Migrations
                 });
 
             migrationBuilder.InsertData(
-                table: "AspNetUsers",
-                columns: new[] { "Id", "AccessFailedCount", "ConcurrencyStamp", "Email", "EmailConfirmed", "LockoutEnabled", "LockoutEnd", "NormalizedEmail", "NormalizedUserName", "PasswordHash", "PhoneNumber", "PhoneNumberConfirmed", "SecurityStamp", "TwoFactorEnabled", "UserName" },
-                values: new object[] { "your-user-id-1", 0, "76f265fe-8f54-4e0b-864c-c8dad039dcce", "admin@example.com", true, false, null, "ADMIN@EXAMPLE.COM", "ADMIN", "AQAAAAIAAYagAAAAEEundGMvNML6V5Z9QkRdnKEu2MpgUBVFn9RC5nSuMEt+uJnx/ozmotUKRh4SJSwcbA==", null, false, "a7f4347f-3409-498c-ba30-c2ee57caba4c", false, "admin" });
-
-            migrationBuilder.InsertData(
                 table: "Branches",
-                columns: new[] { "BranchId", "Address", "BranchName", "City", "Country", "Email", "PhoneNumber", "PostalCode", "Region" },
+                columns: new[] { "BranchId", "Address", "BranchName", "City", "Country", "PhoneNumber", "PostalCode", "Region" },
                 values: new object[,]
                 {
-                    { 1, "123 Main St", "Branch A", "Anytown", "USA", "warehouse@example.com", "555-123-4567", "12345", "State" },
-                    { 2, "456 Oak Ave", "Branch B", "Springfield", "Canada", "retailA@example.com", "123-456-7890", "A1B 2C3", "Province" },
-                    { 3, "789 Pine Ln", "Branch C", "London", "UK", "distribution@example.com", "+44 20 1234 5678", "SW1A 1AA", "England" }
+                    { 1, "123 Main St", "Branch A", "Anytown", "USA", "555-123-4567", "12345", "State" },
+                    { 2, "456 Oak Ave", "Branch B", "Springfield", "Canada", "123-456-7890", "A1B 2C3", "Province" },
+                    { 3, "789 Pine Ln", "Branch C", "London", "UK", "+44 20 1234 5678", "SW1A 1AA", "England" }
                 });
 
             migrationBuilder.InsertData(
@@ -711,19 +693,16 @@ namespace InventiCloud.Migrations
                 });
 
             migrationBuilder.CreateIndex(
+                name: "IX_AspNetUsers_BranchId",
+                table: "AspNetUsers",
+                column: "BranchId",
+                unique: true,
+                filter: "[BranchId] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Attributes_AttributeSetId",
                 table: "Attributes",
                 column: "AttributeSetId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_BranchAccounts_ApplicationUserId",
-                table: "BranchAccounts",
-                column: "ApplicationUserId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_BranchAccounts_BranchId",
-                table: "BranchAccounts",
-                column: "BranchId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Categories_CategoryName",
@@ -888,14 +867,19 @@ namespace InventiCloud.Migrations
                 column: "StockTransferId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_StockTransfers_CreatedById",
+                name: "IX_StockTransfers_ApprovedById",
                 table: "StockTransfers",
-                column: "CreatedById");
+                column: "ApprovedById");
 
             migrationBuilder.CreateIndex(
                 name: "IX_StockTransfers_DestinationBranchId",
                 table: "StockTransfers",
                 column: "DestinationBranchId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_StockTransfers_RequestedById",
+                table: "StockTransfers",
+                column: "RequestedById");
 
             migrationBuilder.CreateIndex(
                 name: "IX_StockTransfers_SourceBranchId",
@@ -912,13 +896,21 @@ namespace InventiCloud.Migrations
                 table: "Suppliers",
                 column: "SupplierCode",
                 unique: true);
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_AspNetUsers_Branches_BranchId",
+                table: "AspNetUsers",
+                column: "BranchId",
+                principalTable: "Branches",
+                principalColumn: "BranchId");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "BranchAccounts");
+            migrationBuilder.DropForeignKey(
+                name: "FK_AspNetUsers_Branches_BranchId",
+                table: "AspNetUsers");
 
             migrationBuilder.DropTable(
                 name: "Inventories");
@@ -989,10 +981,13 @@ namespace InventiCloud.Migrations
             migrationBuilder.DropTable(
                 name: "StockTransferStatuses");
 
-            migrationBuilder.DeleteData(
-                table: "AspNetUsers",
-                keyColumn: "Id",
-                keyValue: "your-user-id-1");
+            migrationBuilder.DropIndex(
+                name: "IX_AspNetUsers_BranchId",
+                table: "AspNetUsers");
+
+            migrationBuilder.DropColumn(
+                name: "BranchId",
+                table: "AspNetUsers");
         }
     }
 }
