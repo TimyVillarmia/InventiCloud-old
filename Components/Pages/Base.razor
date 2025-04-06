@@ -1,0 +1,22 @@
+﻿@page "/"
+@using MudBlazor
+@using MudBlazor.Utilities
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            NavigationManager.NavigateTo("/home", true); // Redirect authenticated users to /home
+        }
+        else
+        {
+            NavigationManager.NavigateTo("/Account/Login", true); // Redirect unauthenticated users to /account/login
+        }
+    }
+}

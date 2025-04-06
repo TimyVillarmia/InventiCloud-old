@@ -11,7 +11,8 @@
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
-
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Administrator")]
 
 
 <MudContainer Class="pt-5" MaxWidth="MaxWidth.Large">
@@ -67,7 +68,7 @@
         try
         {
             await BranchService.UpdateBranch(Branch);
-            Snackbar.Add($"{Branch.BranchName} Added", Severity.Success);
+            Snackbar.Add($"{Branch.BranchName} Updated", Severity.Success);
             NavigationManager.NavigateTo("/store/branches");
 
         }

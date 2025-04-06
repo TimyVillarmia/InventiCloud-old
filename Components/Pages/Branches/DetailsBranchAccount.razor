@@ -13,7 +13,8 @@
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
-
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Administrator")]
 
 
 <MudContainer Class="pt-5" MaxWidth="MaxWidth.Medium">

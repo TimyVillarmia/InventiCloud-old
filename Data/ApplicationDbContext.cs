@@ -1,5 +1,6 @@
 using InventiCloud.Entities;
 using InventiCloud.Utils;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -69,6 +70,28 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             new StockAdjustmentReason { StockAdjustmentReasonId = 6, Reason = "Initial Inventory Adjustment:" }
         );
 
+        // Create a new user
+        var adminUser = new ApplicationUser
+        {
+            Id = "your-admin-user-id-guid", // Replace with a unique GUID
+            UserName = "admin@example.com",
+            NormalizedUserName = "ADMIN@EXAMPLE.COM",
+            Email = "admin@example.com",
+            NormalizedEmail = "ADMIN@EXAMPLE.COM",
+            EmailConfirmed = true,
+            PhoneNumberConfirmed = false,
+            TwoFactorEnabled = false,
+            LockoutEnabled = true,
+            AccessFailedCount = 0,
+            // PasswordHash will be set later
+        };
+
+        // Hash the password
+        PasswordHasher<ApplicationUser> passwordHasher = new PasswordHasher<ApplicationUser>();
+        adminUser.PasswordHash = passwordHasher.HashPassword(adminUser, "YourSecureAdminPassword"); // Replace with a strong password
+
+        // Seed the user
+        modelBuilder.Entity<ApplicationUser>().HasData(adminUser);
 
 
         modelBuilder.Entity<Supplier>().HasData(

@@ -15,7 +15,8 @@
 @inject ISalesOrderService SalesOrderService
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
-
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
 <MudContainer Class="pt-5" MaxWidth="MaxWidth.Large">
 
     <div class="d-flex align-items-center mb-4">
@@ -59,6 +60,8 @@
                         <MudItem xs="12" sm="3">
                             <MudNumericField HideSpinButtons="true" T="decimal" Variant="Variant.Outlined" Label="Discount" For="@(() => SalesOrderItem.Discount)"
                                              @bind-Value="SalesOrderItem.Discount" />
+                        </MudItem>
+
 
                         <MudItem xs="12" sm="3">
                             <MudNumericField HideSpinButtons="true" T="int" Variant="Variant.Outlined" Label="Quantity" For="@(() => SalesOrderItem.Quantity)"

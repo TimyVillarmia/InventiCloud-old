@@ -9,7 +9,8 @@
 @inject IPurchaseOrderService PurchaseOrderService
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
-
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
 <PageTitle>Purchase Orders</PageTitle>
 
 <MudText Class="bold mb-2" Typo="Typo.h4">Purchase Orders</MudText>

@@ -9,7 +9,8 @@
 @inject IBranchService BranchService
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
-
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
 <PageTitle>Stock Adjustments</PageTitle>
 
 <MudText Class="bold mb-2" Typo="Typo.h4">Stock Adjustments</MudText>

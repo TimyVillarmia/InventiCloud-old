@@ -8,7 +8,8 @@
 @inject IBranchAccountService BranchAccountService
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
-
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Administrator")]
 
 <PageTitle>Branches</PageTitle>
 

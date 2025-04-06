@@ -32,8 +32,7 @@ namespace InventiCloud.Services
 
         public async Task AddBranchAccountAsync(string username, string email, string password, int branchId)
         {
-            email = email?.Trim();
-            username = username?.Trim();
+      
 
             if (string.IsNullOrWhiteSpace(username))
             {
@@ -74,7 +73,7 @@ namespace InventiCloud.Services
                 }
 
                 // Create the new ApplicationUser
-                var user = new ApplicationUser { UserName = username, Email = email, BranchId = branchId };
+                var user = new ApplicationUser { UserName = username, Email = email, BranchId = branchId, EmailConfirmed = true }; // Set EmailConfirmed to true
                 var result = await _userManager.CreateAsync(user, password);
 
                 if (!result.Succeeded)
@@ -83,8 +82,7 @@ namespace InventiCloud.Services
                     throw new Exception($"Failed to create user '{username}': {errors}");
                 }
 
-                // Ensure the "branch" role exists (consider doing this on application startup)
-                const string branchRoleName = "branch";
+                const string branchRoleName = "Branch";
                 if (!await _roleManager.RoleExistsAsync(branchRoleName))
                 {
                     await _roleManager.CreateAsync(new IdentityRole(branchRoleName));
@@ -93,7 +91,7 @@ namespace InventiCloud.Services
 
                 // Assign the "branch" role to the new user
                 await _userManager.AddToRoleAsync(user, branchRoleName);
-                _logger.LogInformation($"Branch account '{username}' (Email: {email}) created and assigned to Branch ID: {branchId} with role '{branchRoleName}'.");
+                _logger.LogInformation($"Branch account '{username}' (Email: {email}) created and assigned to Branch ID: {branchId} with role '{branchRoleName}'. Email Confirmed: True");
             }
             catch (Exception ex)
             {
@@ -101,6 +99,10 @@ namespace InventiCloud.Services
                 throw;
             }
         }
+
+
+
+
         public async Task DeleteBranchAccountAsync(string userId)
         {
             if (string.IsNullOrWhiteSpace(userId))

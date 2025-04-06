@@ -14,7 +14,8 @@
 @inject IInventoryService InventoryService
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
-
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
 <MudContainer Class="pt-5" MaxWidth="MaxWidth.Large">
 
     <div class="d-flex align-items-center mb-4">
