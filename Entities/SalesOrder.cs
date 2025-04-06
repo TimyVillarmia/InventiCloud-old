@@ -1,4 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using InventiCloud.Data;
+using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace InventiCloud.Entities
@@ -19,9 +21,23 @@ namespace InventiCloud.Entities
         [ForeignKey("SalesPerson")]
         public int SalesPersonId { get; set; }
 
-        public DateTime OrderedDate { get; set; } = DateTime.Now;
+        [Required,
+            ForeignKey("CreatedBy")]
+        public string CreatedById { get; set; }
+
+        [Required,
+     ForeignKey("DestinationBranch")]
+        public int DestinationBranchId { get; set; }
+
+        [Required,
+    Precision(19, 2)]
+        public decimal TotalAmount { get; set; }
+
+        public DateTime? OrderedDate { get; set; } = DateTime.Now;
 
         // navigation properties
+
+        public virtual ApplicationUser CreatedBy { get; set; }
         public virtual Branch OrderBranch { get; set; }
         public virtual Customer Customer { get; set; }
         public virtual SalesPerson SalesPerson { get; set; }

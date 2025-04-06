@@ -1,0 +1,277 @@
+﻿@page "/sales/orders/create"
+@using InventiCloud.Components.UI
+@using InventiCloud.Services
+@using InventiCloud.Services.Interface
+@using Microsoft.EntityFrameworkCore
+@using InventiCloud.Entities
+@using InventiCloud.Data
+@using System.ComponentModel.DataAnnotations
+@inject IDbContextFactory<InventiCloud.Data.ApplicationDbContext> DbFactory
+@inject IDialogService DialogService
+@inject IInventoryService InventoryService
+@inject IBranchService BranchService
+@inject ICustomerService CustomerService
+@inject IProductService ProductService
+@inject ISalesOrderService SalesOrderService
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+
+<MudContainer Class="pt-5" MaxWidth="MaxWidth.Large">
+
+    <div class="d-flex align-items-center mb-4">
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" aria-label="delete" Href="/sales/orders" />
+        <MudText Typo="Typo.h4">CREATE SALES ORDERS</MudText>
+    </div>
+
+    <EditForm method="post" Model="@SalesOrder" Context="SalesOrderForm" OnValidSubmit="@AddSalesOrder" FormName="createSalesOrder" Enhance>
+        <DataAnnotationsValidator/>
+        <MudText Typo="Typo.h6">DETAILS</MudText>
+        <MudGrid>
+
+            <MudItem xs="12" sm="6">
+                <MudAutocomplete T="string" Label="Customer" @bind-Value="SalesOrder.CustomerName" For="@(()=> SalesOrder.CustomerName)"
+                                 SearchFunc="@SearchCustomer" ToStringFunc="@(customer=> customer==null?null : $"{customer}")" Variant="Variant.Outlined" />
+                <MudAutocomplete T="string" Label="Branch" @bind-Value="SalesOrder.BranchName"
+                                 SearchFunc="@SearchBranch" ToStringFunc="@(branch=> branch==null?null : $"{branch}")" For="@(() => SalesOrder.BranchName)" Variant="Variant.Outlined" />
+            </MudItem>
+
+            <MudItem xs="12" sm="6">
+                <MudAutocomplete T="string" Label="Sales Person" @bind-Value="SalesOrder.SalesPerson"
+                                 SearchFunc="@SearchSalesPerson" ToStringFunc="@(salesperson=> salesperson==null?null : $"{salesperson}")" For="@(() => SalesOrder.SalesPerson)" Variant="Variant.Outlined" />
+                <MudDatePicker Label="Order Date" Editable="true" @bind-Date="SalesOrder.OrderedDate"
+                               Mask="@(new DateMask("MM/dd/yyyy"))" DateFormat="MM/dd/yyyy" Placeholder="Order Date" Variant="Variant.Outlined" />
+            </MudItem>
+
+
+        </MudGrid>
+
+        <EditForm method="post" Model="@SalesOrderItem" Context="PurchaseOrderItemForm" OnValidSubmit="@AddBatchSalesOrderItem" FormName="createSalesOrderItem" Enhance>
+            <DataAnnotationsValidator />
+            <MudText Typo="Typo.h6">PRODUCTS</MudText>
+            <MudGrid>
+                <MudItem sm="12">
+                    <MudGrid Class="d-flex align-center flex-wrap flex-grow-1">
+                        <MudItem xs="12" sm="5">
+                            <MudAutocomplete T="string" Label="Products" @bind-Value="SalesOrderItem.Product" For="@(() => SalesOrderItem.Product)"
+                                             SearchFunc="@SearchProduct" ToStringFunc="@(product=> product==null?null : $"{product}")" Variant="Variant.Outlined" />
+                        </MudItem>
+
+                        <MudItem xs="12" sm="3">
+                            <MudNumericField HideSpinButtons="true" T="decimal" Variant="Variant.Outlined" Label="Discount" For="@(() => SalesOrderItem.Discount)"
+                                             @bind-Value="SalesOrderItem.Discount" />
+
+                        <MudItem xs="12" sm="3">
+                            <MudNumericField HideSpinButtons="true" T="int" Variant="Variant.Outlined" Label="Quantity" For="@(() => SalesOrderItem.Quantity)"
+                                             @bind-Value="SalesOrderItem.Quantity" />
+                        </MudItem>
+
+                        <MudItem xs="12" sm="3">
+                            <MudNumericField HideSpinButtons="true" T="decimal" Variant="Variant.Outlined" Label="Price" For="@(() => SalesOrderItem.UnitPrice)"
+                                             @bind-Value="SalesOrderItem.UnitPrice" />
+                        </MudItem>
+
+
+                        <MudItem xs="6" sm="1">
+                            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary">Add</MudButton>
+                        </MudItem>
+                    </MudGrid>
+
+                </MudItem>
+            </MudGrid>
+
+        </EditForm>
+
+        <MudDataGrid Items="SalesOrderItems" Class="mt-4">
+            <Columns>
+                <PropertyColumn Property="soi => soi.Product" Title="Product" />
+                <PropertyColumn Property="soi => soi.Discount" Title="Discount " />
+                <PropertyColumn Property="soi => soi.Quantity" Title="Quantity" />
+                <PropertyColumn Property="soi => soi.UnitPrice" Title="Price" />
+                <PropertyColumn Property="soi => soi.SubTotal" Title="Subtotal" />
+                <TemplateColumn CellClass="d-flex justify-end">
+                    <CellTemplate>
+                        <MudStack Row>
+                            <MudIconButton Icon="@Icons.Material.Filled.Close" Color="Color.Error" aria-label="delete" OnClick="@(() => RemoveBatchProduct(context.Item))" />
+                        </MudStack>
+                    </CellTemplate>
+                </TemplateColumn>
+            </Columns>
+        </MudDataGrid>
+        <MudText Typo="Typo.h5">@SalesOrderItems.Sum(item => item.SubTotal)</MudText>
+
+
+        <div class="d-flex align-end mt-12">
+            <MudButton Variant="Variant.Filled" Color="Color.Default" Href="/purchase/orders" Class="ml-auto">CANCEL</MudButton>
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-2">SAVE AS DRAFT</MudButton>
+
+        </div>
+
+    </EditForm>
+
+</MudContainer>
+
+@code {
+    MudDataGrid<SalesOrderItem> dataGrid = new();
+
+    [SupplyParameterFromForm(FormName = "createSalesOrder")]
+    private SalesOrderViewModel SalesOrder { get; set; } = new();
+
+    [SupplyParameterFromForm(FormName = "createSalesOrderItem")]
+    private SalesOrderItemViewModel SalesOrderItem { get; set; } = new();
+
+
+    private List<SalesOrderItemViewModel> SalesOrderItems = new List<SalesOrderItemViewModel>();
+
+    private IEnumerable<Customer>? _customer;
+    private IEnumerable<Branch>? _branches;
+    private IEnumerable<SalesPerson>? _salesperson;
+    private IEnumerable<Product>? _products;
+
+    class SalesOrderViewModel
+    {
+        [Required(ErrorMessage = "Customer is required.")]
+        public string CustomerName { get; set; }
+
+        [Required(ErrorMessage = "Branch Name is required.")]
+        public string BranchName { get; set; }
+
+        [Required(ErrorMessage = "Sales Person is required.")]
+        public string SalesPerson { get; set; }
+
+        public DateTime? OrderedDate { get; set; }
+    }
+
+    class SalesOrderItemViewModel
+    {
+
+        [Required(ErrorMessage = "Product is required.")]
+        public string Product { get; set; }
+
+        [Required(ErrorMessage = "Quantity is required.")]
+        [Range(1, int.MaxValue, ErrorMessage = "Quantity must be greater than 0.")]
+        public int Quantity { get; set; }
+
+        [Range(0, 1, ErrorMessage = "Discount must be between 0 and 1.")]
+        [Precision(19, 4)]
+        public decimal Discount { get; set; }
+
+        [Required(ErrorMessage = "Unit Price is required.")]
+        [Precision(19, 2)]
+        [Range(0.01, double.MaxValue, ErrorMessage = "Unit Price must be greater than 0.")]
+        public decimal UnitPrice { get; set; }
+
+        [Required(ErrorMessage = "Subtotal is required.")]
+        [Precision(19, 2)]
+        public decimal SubTotal { get; set; }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _products = await ProductService.GetAllProductAsync();
+        _branches = await BranchService.GetAllBranchAsync();
+        _customer = await CustomerService.GetAllCustomerAsync();
+    }
+
+    private async Task AddSalesOrder()
+    {
+            try
+            {
+                var so_data = new SalesOrder
+                    {
+                        Customer = _customer.First(c => c.CustomerName == SalesOrder.CustomerName),
+                        SalesPerson = _salesperson.First(sp => sp.FullName == SalesOrder.SalesPerson),
+                        OrderBranch = _branches.First(b => b.BranchName == SalesOrder.BranchName),
+                        CreatedById = "your-user-id-1", // Replace with actual user ID
+                        TotalAmount = SalesOrderItems.Sum(item => item.SubTotal),
+                        OrderedDate = SalesOrder.OrderedDate,
+
+                    };
+
+                var soi_data = SalesOrderItems.Select(vm => new SalesOrderItem
+                    {
+                        ProductId = _products.First(p => p.ProductName == vm.Product).ProductId,
+                        Quantity = vm.Quantity,
+                        UnitPrice = vm.UnitPrice,
+                        SubTotal = vm.SubTotal,
+                    }).ToList();
+
+            await SalesOrderService.AddSalesOrderAsync(so_data, soi_data);
+                Snackbar.Add("Sales order added.", Severity.Success);
+                SalesOrder = new(); // Reset
+                await dataGrid.ReloadServerData(); // Reload grid if it exists
+            }
+            catch (InvalidOperationException ex)
+            {
+                Snackbar.Add(ex.Message, Severity.Error);
+            }
+    }
+
+
+    private Task AddBatchSalesOrderItem(EditContext context)
+    {
+
+        if (context.Validate())
+        {
+            SalesOrderItem.SubTotal = SalesOrderItem.Quantity * SalesOrderItem.UnitPrice;
+            SalesOrderItems.Add(SalesOrderItem);
+            SalesOrderItem = new SalesOrderItemViewModel(); // Reset
+        }
+
+        return dataGrid.ReloadServerData();
+    }
+
+    private async Task<IEnumerable<string>> SearchProduct(string value, CancellationToken token)
+    {
+
+        if (string.IsNullOrEmpty(value))
+        {
+            // Return all available products excluding already added ones.
+            return _products.Where(p => !SalesOrderItems.Any(poi => poi.Product == p.ProductName)).Select(product => product.ProductName);
+        }
+
+        // Filter products based on search value and exclude already added ones.
+        return _products
+            .Where(p => p.ProductName.Contains(value, StringComparison.InvariantCultureIgnoreCase) ||
+                        p.SKU.Contains(value, StringComparison.InvariantCultureIgnoreCase)) // Add other search properties if needed
+            .Where(p => !SalesOrderItems.Any(poi => poi.Product == p.ProductName)).Select(product => product.ProductName);
+    }
+
+    private async Task<IEnumerable<string>> SearchCustomer(string value, CancellationToken token)
+    {
+
+        if (string.IsNullOrEmpty(value))
+        {
+            return _customer.Select(c => c.CustomerName);
+        }
+
+        return _customer.Where(c => c.CustomerName.Contains(value, StringComparison.InvariantCultureIgnoreCase)).Select(c => c.CustomerName);
+    }
+
+    private async Task<IEnumerable<string>> SearchSalesPerson(string value, CancellationToken token)
+    {
+        if (string.IsNullOrEmpty(value))
+        {
+            return _salesperson.Select(sp => sp.FullName);
+        }
+
+        return _salesperson.Where(sp => sp.FullName.Contains(value, StringComparison.InvariantCultureIgnoreCase)).Select(sp => sp.FullName);
+    }
+
+    private async Task<IEnumerable<string>> SearchBranch(string value, CancellationToken token)
+    {
+        if (string.IsNullOrEmpty(value))
+        {
+            return _branches.Select(b => b.BranchName);
+        }
+
+        return _branches.Where(b => b.BranchName.Contains(value, StringComparison.InvariantCultureIgnoreCase)).Select(b => b.BranchName);
+    }
+
+    Task RemoveBatchProduct(SalesOrderItemViewModel item)
+    {
+        SalesOrderItems.Remove(item);
+        return dataGrid.ReloadServerData();
+
+    }
+
+}

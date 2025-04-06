@@ -1,0 +1,199 @@
+﻿@page "/sales/orders"
+@using InventiCloud.Components.UI
+@using InventiCloud.Services
+@using InventiCloud.Services.Interface
+@using Microsoft.EntityFrameworkCore
+@using InventiCloud.Entities
+@using InventiCloud.Data
+@inject IDialogService DialogService
+@inject IPurchaseOrderService PurchaseOrderService
+@inject ISalesOrderService SalesOrderService
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+
+
+<PageTitle>Sales Orders</PageTitle>
+
+<MudText Class="bold mb-2" Typo="Typo.h4">Sales Orders</MudText>
+@if (_salesorders == null)
+{
+    <MudContainer Class="d-flex justify-center align-items-center" Style="height: 100vh;">
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    </MudContainer>
+}
+else
+{
+    @if (!_salesorders.Any())
+    {
+
+        <MudPaper Height="500px" Class="justify-center align-content-center">
+            <MudText Class="bol" Typo="Typo.h6" Align="Align.Center">No Purchase Orders Found</MudText>
+            <MudText Typo="Typo.body1" Align="Align.Center">
+                Click the button below to create your first purchase order.
+            </MudText>
+            <MudContainer Class="d-flex justify-center mt-2">
+                <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Href="/sales/orders/create" Color="Color.Primary" Class="text-uppercase">
+                    Create Sales Order
+                </MudButton>
+            </MudContainer>
+        </MudPaper>
+    }
+    else
+    {
+
+        <MudGrid>
+            <MudItem sm="6">
+                <MudStack Row="true" AlignItems="AlignItems.Center">
+                    <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                                  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+                </MudStack>
+
+            </MudItem>
+
+            <MudItem sm="6">
+                <MudButton Variant="Variant.Filled" Href="/purchase/orders/create" Color="Color.Primary" Class="text-uppercase">
+                    Create Purchase Order
+                </MudButton>
+            </MudItem>
+
+        </MudGrid>
+
+        <MudDataGrid @ref="dataGrid" T="SalesOrder" ServerData="ServerReload" MultiSelection="true" RowClick="@RowClicked">
+            <Columns>
+                <PropertyColumn Property="so => so.Customer.CustomerName" Title="Customer" />
+                <PropertyColumn Property="so => so.SalesPerson.FullName" Title="Sales Person" />
+                <PropertyColumn Property="so => so.OrderBranch.BranchName" Title="Branch" />
+                <PropertyColumn Property="so => so.ReferenceNumber" Title="Reference Number" />
+                <PropertyColumn Property="so => so.OrderedDate" Title="Created By" />
+                <TemplateColumn CellClass="d-flex justify-end">
+                    <CellTemplate>
+                        <MudMenu Icon="@Icons.Material.Filled.MoreVert" AriaLabel="Open user menu">
+                            <MudMenuItem Label="Edit" href="@($"/sales/orders/{context.Item.ReferenceNumber}")" />
+                                <MudMenuItem Label="Delete" Class="red-text" OnClick="@(() => OpenDialogAsync(context.Item))" />
+                        </MudMenu>
+                    </CellTemplate>
+                </TemplateColumn>
+            </Columns>
+            <PagerContent>
+                <MudDataGridPager T="SalesOrder" />
+            </PagerContent>
+        </MudDataGrid>
+
+    }
+
+}
+
+@code {
+    string searchString = null;
+
+    private IEnumerable<SalesOrder>? _salesorders;
+    private IEnumerable<SalesOrder>? _filteredsalesorders = new List<SalesOrder>();
+
+    MudDataGrid<SalesOrder> dataGrid = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _salesorders = await SalesOrderService.GetAllSalesOrderAsync();
+    }
+
+    async Task OpenDialogAsync(SalesOrder salesorder)
+    {
+
+        var parameters = new DialogParameters<DialogComponent>
+        {
+            {x => x.ContentText, $"Are you sure you want to delete the Sales Order '{salesorder.ReferenceNumber}'? This action cannot be undone."},
+            { "Button1Text", "Delete" },
+            { "Button2Text", "Cancel" },
+            { "Color", Color.Error }
+        };
+
+        var dialog = await DialogService.ShowAsync<DialogComponent>("Delete Sales Order", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            try
+            {
+                await SalesOrderService.DeleteSalesOrderAsync(salesorder);
+                Snackbar.Add("Sales Order Deleted", Severity.Success);
+                await dataGrid.ReloadServerData();
+
+            }
+            catch (InvalidOperationException ex)
+            {
+                Snackbar.Add(ex.Message, Severity.Error);
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add("An error occurred while deleting the Purchase Order.", Severity.Error);
+            }
+        }
+
+    }
+
+    private async Task<GridData<SalesOrder>> ServerReload(GridState<SalesOrder> state)
+    {
+        _filteredsalesorders = _salesorders;
+
+        _filteredsalesorders = _filteredsalesorders.Where(so =>
+        {
+            if (string.IsNullOrWhiteSpace(searchString))
+                return true;
+            // if (so.Customer.CustomerName(searchString, StringComparison.OrdinalIgnoreCase))
+            //     return true;
+            if (so.SalesPerson.FullName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+                return true;
+            if (so.OrderBranch.BranchName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+                return true;
+            if (so.ReferenceNumber.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+                return true;
+            
+            
+            return false;
+        }).ToArray();
+        var totalItems = _filteredsalesorders.Count();
+
+        var sortDefinition = state.SortDefinitions.FirstOrDefault();
+        if (sortDefinition != null)
+        {
+            switch (sortDefinition.SortBy)
+            {
+                case nameof(SalesOrder.ReferenceNumber):
+                    _filteredsalesorders = _filteredsalesorders.OrderByDirection(
+                        sortDefinition.Descending ? SortDirection.Descending : SortDirection.Ascending,
+                        so => so.ReferenceNumber
+                    );
+                    break;
+
+            }
+        }
+
+        var pagedData = _filteredsalesorders.Skip(state.Page * state.PageSize).Take(state.PageSize).ToArray();
+        return new GridData<SalesOrder>
+            {
+                TotalItems = totalItems,
+                Items = pagedData
+            };
+    }
+
+    private Task OnSearch(string text)
+    {
+        searchString = text;
+        return dataGrid.ReloadServerData();
+    }
+
+    void RowClicked(DataGridRowClickEventArgs<SalesOrder> args)
+    {
+
+
+        if (args.Item == null)
+        {
+            return;
+        }
+
+        NavigationManager.NavigateTo($"/sales/orders/{args.Item.ReferenceNumber}");
+    }
+
+    public async ValueTask DisposeAsync() => await SalesOrderService.DisposeAsync();
+
+}
