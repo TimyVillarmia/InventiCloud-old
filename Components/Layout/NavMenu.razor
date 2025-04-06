@@ -1,4 +1,5 @@
 ﻿@implements IDisposable
+@using Microsoft.AspNetCore.Authorization
 
 @inject NavigationManager NavigationManager
 
@@ -8,7 +9,6 @@
     <MudNavGroup Title="Products" Expanded="true" Icon="@Icons.Material.Outlined.Inventory2">
         <MudNavLink Href="products" Match="NavLinkMatch.Prefix">Product List</MudNavLink>
         <MudNavLink Href="product-setup/categories" Match="NavLinkMatch.Prefix">Categories</MudNavLink>
-        <MudNavLink Href="product-setup/attributesets" Match="NavLinkMatch.Prefix">Attribute Sets</MudNavLink>
     </MudNavGroup>
 
     <MudNavGroup Title="Inventory" Expanded="true" Icon="@Icons.Material.Outlined.Warehouse">
@@ -30,17 +30,20 @@
         <MudNavLink Href="sales/orders" Match="NavLinkMatch.Prefix">Sales Orders</MudNavLink>
         <MudNavLink Href="sales/customers" Match="NavLinkMatch.Prefix">Customers</MudNavLink>
     </MudNavGroup>
-
-    <MudNavGroup Title="Store" Expanded="true" Icon="@Icons.Material.Outlined.Storefront">
-        <MudNavLink Href="store/branches" Match="NavLinkMatch.Prefix">Branches</MudNavLink>
-        <MudNavLink Href="store/sales-persons" Match="NavLinkMatch.Prefix">Sales Person</MudNavLink>
-    </MudNavGroup>
+    <AuthorizeView Roles="Administrator">
+        <MudNavGroup Title="Store" Expanded="true" Icon="@Icons.Material.Outlined.Storefront">
+            <MudNavLink Href="store/branches" Match="NavLinkMatch.Prefix">Branches</MudNavLink>
+            <MudNavLink Href="store/sales-persons" Match="NavLinkMatch.Prefix">Sales Person</MudNavLink>
+        </MudNavGroup>
+    </AuthorizeView>
+    
 
     <MudNavLink Href="/analytics" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.BarChart">Analytics</MudNavLink>
 
     <MudText Typo="Typo.body2" Class="px-4 mud-text-secondary">Settings</MudText>
     <MudNavLink Href="/account" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.AccountCircle">Account</MudNavLink>
-
+    <MudDivider Class="my-2" />
+    <MudNavLink Icon="@Icons.Material.Outlined.Logout" IconColor="Color.Error" Class="red-text" OnClick="Logout">Logout</MudNavLink>
 
 </MudNavMenu>
 
@@ -60,6 +63,13 @@
         currentUrl = NavigationManager.ToBaseRelativePath(e.Location);
         StateHasChanged();
     }
+
+    private async Task Logout()
+    {
+
+        NavigationManager.NavigateTo("/Account/Logout", true); // Assuming you have an Account/Logout endpoint
+    }
+  
 
     public void Dispose()
     {

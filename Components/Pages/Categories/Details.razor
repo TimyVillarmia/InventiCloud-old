@@ -6,7 +6,8 @@
 @inject NavigationManager NavigationManager
 @inject ICategoryService CategoryService
 <PageTitle>@CategoryName</PageTitle>
-
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
 
 
 <MudContainer Class="pt-5" MaxWidth="MaxWidth.Large">

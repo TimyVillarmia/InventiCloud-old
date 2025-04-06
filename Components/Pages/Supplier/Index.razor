@@ -10,7 +10,8 @@
 @inject ISupplierService SupplierService
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
-
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
 <PageTitle>Index</PageTitle>
 
 <MudText Class="bold mb-2" Typo="Typo.h4">Suppliers</MudText>

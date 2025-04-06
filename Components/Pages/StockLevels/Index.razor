@@ -6,7 +6,8 @@
 @implements IAsyncDisposable
 @inject IInventoryService InventoryService
 @inject IBranchService BranchService
-
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
 <PageTitle>Index</PageTitle>
 
 <MudText Class="bold mb-2" Typo="Typo.h4">Stock Levels</MudText>

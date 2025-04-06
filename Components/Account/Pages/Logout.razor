@@ -1,0 +1,23 @@
+﻿@page "/Account/Logout"
+@using InventiCloud.Data
+@using Microsoft.AspNetCore.Identity
+@inject NavigationManager NavManager
+@inject SignInManager<ApplicationUser> SignInManager
+
+<PageTitle>Logout</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="mt-16">
+    <MudPaper Elevation="3" Class="pa-8">
+        <MudText Typo="Typo.h4" Class="mb-4">Logging Out</MudText>
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" Class="mb-4" />
+        <MudText Typo="Typo.body2">Please wait while we log you out...</MudText>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await SignInManager.SignOutAsync();
+        NavManager.NavigateTo("/", true); // Redirect to the home page (or login page) after initiating logout
+    }
+}

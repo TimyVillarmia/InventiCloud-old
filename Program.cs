@@ -8,6 +8,7 @@ using InventiCloud.Data;
 using InventiCloud.Services.Interface;
 using InventiCloud.Services;
 using Microsoft.Extensions.DependencyInjection;
+using InventiCloud.Utils;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,6 +24,18 @@ builder.Services.AddScoped<IdentityUserAccessor>();
 builder.Services.AddScoped<IdentityRedirectManager>();
 builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
 
+builder.Services.Configure<DataProtectionTokenProviderOptions>(options =>
+    options.TokenLifespan = TimeSpan.FromHours(3));
+
+builder.Services.ConfigureApplicationCookie(options => {
+    options.ExpireTimeSpan = TimeSpan.FromDays(5);
+    options.SlidingExpiration = true;
+});
+
+builder.Services.Configure<CookiePolicyOptions>(options =>
+{
+    options.Secure = CookieSecurePolicy.Always;
+});
 
 builder.Services.AddAuthorization();
 builder.Services.AddAuthentication(options =>
@@ -45,6 +58,8 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.Requ
     .AddSignInManager()
     .AddDefaultTokenProviders();
 
+// Register the AdminInitializer as a hosted service
+builder.Services.AddHostedService<AdminInitializer>();
 
 
 
