@@ -467,7 +467,6 @@ namespace InventiCloud.Services
             try
             {
 
-
                 var purchaseOrder = await context.PurchaseOrders
                     .Include(po => po.CreatedBy)
                     .Include(po => po.Supplier)
