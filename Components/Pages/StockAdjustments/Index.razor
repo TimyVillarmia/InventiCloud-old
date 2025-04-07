@@ -1,6 +1,7 @@
 ﻿@page "/inventory/stock-adjustments"
 @using InventiCloud.Components.UI
 @using InventiCloud.Services.Interface
+@using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
 @using InventiCloud.Entities
 @using InventiCloud.Data
@@ -9,7 +10,10 @@
 @inject IBranchService BranchService
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<ApplicationUser> UserManager
 @using Microsoft.AspNetCore.Authorization
+
 @attribute [Authorize]
 <PageTitle>Stock Adjustments</PageTitle>
 
@@ -48,7 +52,7 @@ else
                 </MudStack>
             </MudItem>
             <MudItem sm="2">
-                <MudSelect @bind-Value="@selectedBranch" @bind-Value:after="OnSelect" Variant="Variant.Outlined">
+                <MudSelect @bind-Value="@selectedBranch" @bind-Value:after="OnSelect" Variant="Variant.Outlined" Disabled="@autoFill">
                     @foreach (Branch branch in _branches)
                     {
                         <MudSelectItem Value="@branch.BranchId">@branch.BranchName</MudSelectItem>
@@ -111,7 +115,8 @@ else
     private IEnumerable<Branch> _branches = new List<Branch>();
 
     MudDataGrid<StockAdjustment> dataGrid = new();
-
+    private ApplicationUser? CurrentUser { get; set; } // Replace ApplicationUser with your actual user class
+    private bool autoFill = false;
 
     private Color GetChipColor(string status)
     {
@@ -130,16 +135,41 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-
-        _stockAdjustments = await StockAdjustmentService.GetAllStockAdjustmentAsync();
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
         _branches = await BranchService.GetAllBranchAsync();
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            CurrentUser = await UserManager.GetUserAsync(user);
+
+            if (CurrentUser != null)
+            {
+                autoFill = CurrentUser.BranchId.HasValue;
+                _stockAdjustments = await StockAdjustmentService.GetAllStockAdjustmentAsync(CurrentUser.BranchId);
+
+
+                selectedBranch = _branches.First().BranchId;
+
+                if (_branches.Any() && CurrentUser.BranchId.HasValue)
+                {
+                    selectedBranch = (int)CurrentUser.BranchId;
+                    autoFill = true;
+
+
+                }
+
+            }
+
+        }
+
         selectedBranch = _branches.First().BranchId;
 
     }
 
     private async Task<GridData<StockAdjustment>> ServerReload(GridState<StockAdjustment> state)
     {
-        _stockAdjustments = await StockAdjustmentService.GetAllStockAdjustmentAsync();
+        _stockAdjustments = await StockAdjustmentService.GetAllStockAdjustmentAsync(CurrentUser.BranchId);
 
         _filteredstockAdjustments = _stockAdjustments.Where(b => b.SourceBranchId == selectedBranch);
 

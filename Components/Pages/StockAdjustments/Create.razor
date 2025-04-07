@@ -2,6 +2,7 @@
 @using InventiCloud.Components.UI
 @using InventiCloud.Services
 @using InventiCloud.Services.Interface
+@using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
 @using InventiCloud.Entities
 @using InventiCloud.Data
@@ -15,6 +16,8 @@
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
 @using Microsoft.AspNetCore.Authorization
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<ApplicationUser> UserManager
 @attribute [Authorize]
 <MudContainer Class="pt-5" MaxWidth="MaxWidth.Large">
 
@@ -30,7 +33,7 @@
 
             <MudItem xs="12" sm="6">
                 <MudAutocomplete T="Branch" Label="Source Branch" @bind-Value="StockAdjustment.SourceBranch" For="@(()=> StockAdjustment.SourceBranch)" @bind-Value:after="HandleChangeSourceBranch"
-                SearchFunc="@SearchBranch" ToStringFunc="@(branch=> branch==null?null : $"{branch.BranchName}")" Variant="Variant.Outlined" />
+                                 SearchFunc="@SearchBranch" ToStringFunc="@(branch=> branch==null?null : $"{branch.BranchName}")" Variant="Variant.Outlined" Disabled="@autoFill" />
                 <MudTextField T="string" Class="mb-4" Label="Stock Adjustment Number" ReadOnly="true" Disabled="true" Variant="Variant.Outlined" />
             </MudItem>
 
@@ -163,12 +166,39 @@
         }
     }
 
+    private ApplicationUser? CurrentUser { get; set; } // Replace ApplicationUser with your actual user class
+    private bool autoFill = false;
 
 
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
         _branches = await BranchService.GetAllBranchAsync();
         _reasons = await StockAdjustmentService.GetAllStockAdjustmentReasonAsync();
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            CurrentUser = await UserManager.GetUserAsync(user);
+
+            if (CurrentUser != null)
+            {
+                autoFill = CurrentUser.BranchId.HasValue;
+                if (_branches.Any() && CurrentUser.BranchId.HasValue)
+                {
+                    StockAdjustment.SourceBranch = _branches.FirstOrDefault(b => b.BranchId == CurrentUser.BranchId);
+                    if (StockAdjustment.SourceBranch == null)
+                    {
+                        // Handle the case where the user's BranchId doesn't match any existing branch
+                        Console.WriteLine($"Warning: User's BranchId '{CurrentUser.BranchId}' not found.");
+                        // Optionally, redirect the user or display an error.
+                        // NavigationManager.NavigateTo("/error", true);
+                    }
+                }
+            }
+
+        }
+     
     }
 
     private async Task AddStockAdjustmentToDraft(EditContext context)
@@ -186,7 +216,7 @@
                     {
                         SourceBranchId = StockAdjustment.SourceBranch.BranchId,
                         ReasonId = StockAdjustment.Reason.StockAdjustmentReasonId,
-                        AdjustedBy = "your-user-id-1", // Replace with actual user ID
+                        AdjustedBy = CurrentUser.Id, // Replace with actual user ID
 
                     };
 

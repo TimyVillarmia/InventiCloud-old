@@ -44,10 +44,10 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 
         // Seed StockTransferStatus data
         modelBuilder.Entity<StockTransferStatus>().HasData(
-            new StockTransferStatus { StockTransferStatusId = 1, StatusName = "Allocated" },
-            new StockTransferStatus { StockTransferStatusId = 2, StatusName = "In Transit" },
-            new StockTransferStatus { StockTransferStatusId = 3, StatusName = "Cancelled" },
-            new StockTransferStatus { StockTransferStatusId = 4, StatusName = "Completed" }
+            new StockTransferStatus { StockTransferStatusId = 1, StatusName = "Requested" },
+            new StockTransferStatus { StockTransferStatusId = 2, StatusName = "Approved" },
+            new StockTransferStatus { StockTransferStatusId = 3, StatusName = "Completed" },
+            new StockTransferStatus { StockTransferStatusId = 4, StatusName = "Rejected" }
         );
 
         // Seed StockAdjustmentStatus data
@@ -66,28 +66,6 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             new StockAdjustmentReason { StockAdjustmentReasonId = 6, Reason = "Initial Inventory Adjustment:" }
         );
 
-        // Create a new user
-        var adminUser = new ApplicationUser
-        {
-            Id = "your-admin-user-id-guid", // Replace with a unique GUID
-            UserName = "admin@example.com",
-            NormalizedUserName = "ADMIN@EXAMPLE.COM",
-            Email = "admin@example.com",
-            NormalizedEmail = "ADMIN@EXAMPLE.COM",
-            EmailConfirmed = true,
-            PhoneNumberConfirmed = false,
-            TwoFactorEnabled = false,
-            LockoutEnabled = true,
-            AccessFailedCount = 0,
-            // PasswordHash will be set later
-        };
-
-        // Hash the password
-        PasswordHasher<ApplicationUser> passwordHasher = new PasswordHasher<ApplicationUser>();
-        adminUser.PasswordHash = passwordHasher.HashPassword(adminUser, "YourSecureAdminPassword"); // Replace with a strong password
-
-        // Seed the user
-        modelBuilder.Entity<ApplicationUser>().HasData(adminUser);
 
 
         modelBuilder.Entity<Supplier>().HasData(

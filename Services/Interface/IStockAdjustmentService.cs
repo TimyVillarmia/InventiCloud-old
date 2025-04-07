@@ -5,7 +5,7 @@ namespace InventiCloud.Services.Interface
     public interface IStockAdjustmentService
     {
 
-        Task<IEnumerable<StockAdjustment>> GetAllStockAdjustmentAsync();
+        Task<IEnumerable<StockAdjustment>> GetAllStockAdjustmentAsync(int? userBranchId);
         Task<IEnumerable<StockAdjustmentReason>> GetAllStockAdjustmentReasonAsync();
         Task<IEnumerable<StockAdjustmentItem>> GetAllStockAdjustmentItemByIdAsync(int? stockAdjustmentId);
 

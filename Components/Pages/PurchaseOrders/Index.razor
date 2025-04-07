@@ -2,12 +2,16 @@
 @using InventiCloud.Components.UI
 @using InventiCloud.Services
 @using InventiCloud.Services.Interface
+@using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
 @using InventiCloud.Entities
 @using InventiCloud.Data
 @inject IDialogService DialogService
 @inject IPurchaseOrderService PurchaseOrderService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IBranchService BranchService
 @inject NavigationManager NavigationManager
+@inject UserManager<ApplicationUser> UserManager
 @inject ISnackbar Snackbar
 @using Microsoft.AspNetCore.Authorization
 @attribute [Authorize]
@@ -41,12 +45,17 @@ else
     {
 
         <MudGrid>
-            <MudItem sm="6">
-                <MudStack Row="true" AlignItems="AlignItems.Center">
-                    <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
-                    AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
-                </MudStack>
-
+            <MudItem sm="4">
+                <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                              AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+            </MudItem>
+            <MudItem sm="2">
+                <MudSelect @bind-Value="@selectedBranch" @bind-Value:after="OnSelect" Variant="Variant.Outlined" Disabled="@autoFill">
+                    @foreach (Branch branch in _branches)
+                    {
+                        <MudSelectItem Value="@branch.BranchId">@branch.BranchName</MudSelectItem>
+                    }
+                </MudSelect>
             </MudItem>
 
             <MudItem sm="6">
@@ -96,16 +105,48 @@ else
 
 @code {
     string searchString = null;
+    private int selectedBranch;
 
     private IEnumerable<PurchaseOrder>? _purchaseorders;
     private IEnumerable<PurchaseOrder>? _filteredpurchaseorders = new List<PurchaseOrder>();
+    private IEnumerable<Branch> _branches = new List<Branch>();
 
     MudDataGrid<PurchaseOrder> dataGrid = new();
+    private ApplicationUser? CurrentUser { get; set; } // Replace ApplicationUser with your actual user class
+    private bool autoFill = false;
+
 
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        _branches = await BranchService.GetAllBranchAsync();
 
-        _purchaseorders = await PurchaseOrderService.GetAllPurchaseOrderAsync();
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            CurrentUser = await UserManager.GetUserAsync(user);
+
+            if (CurrentUser != null)
+            {
+                autoFill = CurrentUser.BranchId.HasValue;
+                _purchaseorders = await PurchaseOrderService.GetAllPurchaseOrderAsync(CurrentUser.BranchId);
+
+       
+                selectedBranch = _branches.First().BranchId;
+
+                if (_branches.Any() && CurrentUser.BranchId.HasValue)
+                {
+                    selectedBranch = (int)CurrentUser.BranchId;
+                    autoFill = true;
+
+            
+                }
+
+            }
+
+        }
+
+        
 
 
     }
@@ -164,7 +205,8 @@ else
 
     private async Task<GridData<PurchaseOrder>> ServerReload(GridState<PurchaseOrder> state)
     {
-        _filteredpurchaseorders = _purchaseorders;
+        _purchaseorders = await PurchaseOrderService.GetAllPurchaseOrderAsync(CurrentUser.BranchId);
+        _filteredpurchaseorders = _purchaseorders.Where(b => b.DestinationBranchId == selectedBranch); ;
 
         _filteredpurchaseorders = _filteredpurchaseorders.Where(po =>
         {
@@ -206,6 +248,11 @@ else
     private Task OnSearch(string text)
     {
         searchString = text;
+        return dataGrid.ReloadServerData();
+    }
+
+    private Task OnSelect()
+    {
         return dataGrid.ReloadServerData();
     }
 

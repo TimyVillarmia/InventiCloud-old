@@ -1,6 +1,7 @@
 @page "/products"
 @using InventiCloud.Components.UI
 @using InventiCloud.Services.Interface
+@using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
 @using InventiCloud.Entities
 @using InventiCloud.Data
@@ -10,6 +11,8 @@
 @inject ICategoryService CategoryService
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<ApplicationUser> UserManager
 @using Microsoft.AspNetCore.Authorization
 @attribute [Authorize]
 
@@ -27,27 +30,40 @@ else
 {
     @if (!_products.Any())
     {
-        <MudPaper Height="500px" Class="justify-center align-content-center">
-            <MudText Class="bol" Typo="Typo.h6" Align="Align.Center">Add your products</MudText>
-            <MudText Typo="Typo.body1" Align="Align.Center">
-                Your product catalog is currently empty. Click the "Add Product"
-                button to get started.
+        <MudPaper Height="500px" Class="d-flex flex-column justify-center align-items-center">
+            <MudText Class="bold" Typo="Typo.h6" Align="Align.Center">Product Catalog</MudText>
+            <MudText Typo="Typo.body1" Align="Align.Center" Class="mt-2">
+                @if (IsAdminUser)
+                {
+                    <span>Your product catalog is currently empty. Click the "Add Product" button to get started.</span>
+                }
+                else
+                {
+                    <span>The product catalog is currently empty. The store owner hasn't added any products yet.</span>
+                }
             </MudText>
-            <MudContainer Class="d-flex justify-center mt-2">
-                <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Href="/products/create" Color="Color.Primary" Class="bold text-uppercase">
-                    Add Product
-                </MudButton>
+            <MudContainer Class="d-flex justify-center mt-4">
+                <AuthorizeView Roles="Administrator">
+
+                    <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Href="/products/create" Color="Color.Primary" Class="bold text-uppercase">
+
+                        Add Product
+
+                    </MudButton>
+
+                </AuthorizeView>
             </MudContainer>
         </MudPaper>
     }
     else
     {
+
         <MudGrid>
             <MudItem sm="6">
                 <MudStack Row="true" AlignItems="AlignItems.Center">
                     <div>
                         <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
-                                      AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+                        AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" Style="width: 150px;"></MudTextField>
                     </div>
                     <div>
                         <MudSelect Label="Category" @bind-Value="selectedCategory" @bind-Value:after="OnSelect" Variant="Variant.Outlined">
@@ -64,9 +80,11 @@ else
             </MudItem>
 
             <MudItem sm="6">
-                <MudButton Variant="Variant.Filled" Href="products/create" Color="Color.Primary" Class="text-uppercase">
-                    Add Product
-                </MudButton>
+                <AuthorizeView Roles="Administrator">
+                    <MudButton Variant="Variant.Filled" Href="products/create" Color="Color.Primary" Class="text-uppercase">
+                        Add Product
+                    </MudButton>
+                </AuthorizeView>
             </MudItem>
 
         </MudGrid>
@@ -79,15 +97,20 @@ else
                 <PropertyColumn Property="product => product.Brand" Title="Brand" />
                 <PropertyColumn Property="product => product.UnitPrice" Title="Price" />
                 <PropertyColumn Property="product => product.UnitCost" Title="Cost" />
-                <TemplateColumn CellClass="d-flex justify-end">
-                    <CellTemplate>
-                        <MudMenu Icon="@Icons.Material.Filled.MoreVert" AriaLabel="Open user menu">
-                            <MudMenuItem Label="Edit" href="@($"/products/{context.Item.SKU}")" />
-                            <MudMenuItem Label="Delete" Class="red-text" OnClick="@(() => OpenDialogAsync(context.Item))" />
+                @if (IsAdminUser)
+                {
+                    <TemplateColumn CellClass="d-flex justify-end">
+                        <CellTemplate>
+                            <MudMenu Icon="@Icons.Material.Filled.MoreVert" AriaLabel="Open user menu">
+                                <MudMenuItem Label="Edit" href="@($"/products/{context.Item.SKU}")" />
+                                <MudMenuItem Label="Delete" Class="red-text" OnClick="@(() => OpenDialogAsync(context.Item))" />
+                            </MudMenu>
+                        </CellTemplate>
+                    </TemplateColumn>
+                }
+                
+               
 
-                        </MudMenu>
-                    </CellTemplate>
-                </TemplateColumn>
             </Columns>
             <PagerContent>
                 <MudDataGridPager T="Product" />
@@ -108,14 +131,24 @@ else
     private IEnumerable<Product>? _products;
     private IEnumerable<Product> _filteredproducts = new List<Product>();
     private IEnumerable<Category>? _categories = new List<Category>();
+    private ApplicationUser? CurrentUser { get; set; } // Replace ApplicationUser with your actual user class
+    private bool IsAdminUser { get; set; }
 
     MudDataGrid<Product> dataGrid = new();
 
     protected override async Task OnInitializedAsync()
     {
-
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
         _products = await ProductService.GetAllProductAsync();
         _categories = await CategoryService.GetAllCategoryAsync();
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            CurrentUser = await UserManager.GetUserAsync(user);
+            IsAdminUser = user.IsInRole("Administrator"); // Check if the user has the "Administrator" role
+        }
+
 
 
 

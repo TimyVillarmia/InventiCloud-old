@@ -22,7 +22,8 @@ namespace InventiCloud.Entities
         public int StatusId { get; set; }
         public DateTime? RequestedDate { get; set; } = DateTime.Now;
         public DateTime? DateCompleted { get; set; }
-        public DateTime? DateApproved { get; set; } 
+        public DateTime? DateApproved { get; set; }
+        public DateTime? RejectedDate { get; set; } // Added RejectedDate
         [Required,
          ForeignKey("RequestedBy")]
         public string RequestedById { get; set; } 

@@ -1,0 +1,254 @@
+﻿@page "/inventory/stock-transfers/requests/{ReferenceNumber}"
+@using InventiCloud.Components.UI
+@using InventiCloud.Data
+@using InventiCloud.Services
+@using InventiCloud.Services.Interface
+@using InventiCloud.Entities
+@using System.ComponentModel.DataAnnotations
+@inject IBranchService BranchService
+@inject IStockTransferService StockTransferService
+@inject IProductService ProductService
+@inject IInventoryService InventoryService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<ApplicationUser> UserManager
+@inject NavigationManager NavigationManager
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+@attribute [Authorize]
+
+<MudContainer Class="pt-5" MaxWidth="MaxWidth.Large">
+
+    <div class="d-flex align-items-center mb-4">
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Href="/inventory/stock-transfers/requests" />
+        <MudText Typo="Typo.h4">@ReferenceNumber</MudText>
+        <MudChip T="string" Color="@SelectedColor">@Status</MudChip>
+    </div>
+
+    <MudText Typo="Typo.h6">DETAILS</MudText>
+    <MudGrid>
+
+        <MudItem xs="12" sm="6">
+            <MudTextField T="string" Label="Source Branch" @bind-Value="StockTransfer.SourceBranch.BranchName" ReadOnly="true"
+            Variant="Variant.Outlined" />
+            <MudTextField T="string" Class="mb-4" Label="Approver" @bind-Value="StockTransfer.ApprovedBy.UserName" ReadOnly="true" Variant="Variant.Outlined" />
+
+        </MudItem>
+
+        <MudItem xs="12" sm="6">
+            <MudTextField T="string" Label="Destination Branch" @bind-Value="StockTransfer.DestinationBranch.BranchName"
+            ReadOnly="true" Variant="Variant.Outlined" />
+            <MudDatePicker Label="Requested Date" Editable="true" @bind-Date="StockTransfer.RequestedDate" ReadOnly="true"
+            Mask="@(new DateMask("MM/dd/yyyy"))" DateFormat="MM/dd/yyyy" Placeholder="Requested Date" Variant="Variant.Outlined" />
+        </MudItem>
+        @if (!isRequested)
+        {
+            <MudItem xs="12" sm="6">
+                <MudDatePicker Label="Approved Date" Editable="true" @bind-Date="StockTransfer.DateApproved" ReadOnly="true"
+                Mask="@(new DateMask("MM/dd/yyyy"))" DateFormat="MM/dd/yyyy" Placeholder="Requested Date" Variant="Variant.Outlined" />
+                <MudDatePicker Label="Completed Date" Editable="true" @bind-Date="StockTransfer.DateCompleted" ReadOnly="true"
+                Mask="@(new DateMask("MM/dd/yyyy"))" DateFormat="MM/dd/yyyy" Placeholder="Requested Date" Variant="Variant.Outlined" />
+            </MudItem>
+        }
+
+
+
+    </MudGrid>
+
+    <MudText Typo="Typo.h6">PRODUCTS</MudText>
+    <MudDataGrid Items="StockTransferItems" Class="mt-4">
+        <Columns>
+            <PropertyColumn Property="sti => sti.Product.ProductName" Title="Product" />
+            <PropertyColumn Property="sti => sti.TransferQuantity" Title="Transfer Quantity" />
+        </Columns>
+    </MudDataGrid>
+    <div class="d-flex align-end mt-12">
+       @if(isRequested)
+       {
+            <MudButton Href="/inventory/stock-transfers/requests" Variant="Variant.Outlined" Color="Color.Default">CANCEL</MudButton>
+            <MudButton OnClick="DeleteStockTransfer" Variant="Variant.Outlined" Color="Color.Error">Delete</MudButton>
+       }
+    </div>
+
+</MudContainer>
+
+
+
+
+@code {
+    MudDataGrid<StockTransfer> dataGrid = new();
+
+
+    [Parameter]
+    public string ReferenceNumber { get; set; }
+
+
+    private StockTransfer StockTransfer { get; set; } = new();
+
+    private List<StockTransferItemViewModel> StockTransferItems = new List<StockTransferItemViewModel>();
+
+    private IEnumerable<Inventory>? _sourceBranchInventories;
+
+    // conditions
+    private string? Status = "Requested";
+    public Color SelectedColor;
+    public bool isRequested = true;
+
+
+
+
+
+
+    public class StockTransferItemViewModel : IValidatableObject
+    {
+        public int Id { get; set; }
+
+        [Required(ErrorMessage = "Product is required.")]
+        public Product Product { get; set; }
+
+        [Range(1, int.MaxValue, ErrorMessage = "Quantity must be greater than 0.")]
+        [Required(ErrorMessage = "Quantity is required.")]
+        public int TransferQuantity { get; set; }
+
+        public int AvailableQuantity { get; set; }
+
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            if (AvailableQuantity == 0 && TransferQuantity > 0)
+            {
+                yield return new ValidationResult("Available quantity is zero. Cannot transfer.", new[] { nameof(TransferQuantity) });
+            }
+
+            if (TransferQuantity > AvailableQuantity)
+            {
+                yield return new ValidationResult("Transfer quantity exceeds available quantity.", new[] { nameof(TransferQuantity) });
+            }
+        }
+    }
+
+    private ApplicationUser? CurrentUser { get; set; } // Replace ApplicationUser with your actual user class
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        var data = await StockTransferService.GetStockTransferByReferenceNumberAsync(ReferenceNumber);
+
+        CurrentUser = await UserManager.GetUserAsync(user);
+
+        if (data is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+            return; // Important to exit the method here
+        }
+
+        if (CurrentUser is null)
+        {
+            // Handle the case where the current user couldn't be retrieved.
+            // This might indicate an authentication issue.
+            NavigationManager.NavigateTo("notfound"); // Or another appropriate page
+            return;
+        }
+
+        if (data.RequestedById != CurrentUser.Id)
+        {
+            NavigationManager.NavigateTo("notfound");
+            return; // Important to exit the method here
+        }
+
+        StockTransfer = data;
+        Status = data.Status?.StatusName; // Null-conditional operator
+        if (data.SourceBranch != null)
+        {
+            _sourceBranchInventories = await InventoryService.GetAllInventoryByBranchAsync(data.SourceBranch.BranchId);
+        }
+        else
+        {
+            _sourceBranchInventories = new List<Inventory>(); // Initialize to an empty list to avoid null
+            // Optionally log a warning if SourceBranch is unexpectedly null
+            Console.WriteLine($"Warning: SourceBranch is null for StockTransfer with ReferenceNumber: {ReferenceNumber}");
+        }
+
+        if (data.StockTransferItems != null)
+        {
+            var items = data.StockTransferItems.ToList();
+            StockTransferItems = items.Select(vm => new StockTransferItemViewModel
+                {
+                    Id = vm.StockTransferItemlId,
+                    Product = vm.Product,
+                    TransferQuantity = vm.TransferQuantity,
+                }).ToList();
+        }
+        else
+        {
+            StockTransferItems = new List<StockTransferItemViewModel>(); // Initialize to an empty list
+            // Optionally log a warning if StockTransferItems is unexpectedly null
+            Console.WriteLine($"Warning: StockTransferItems is null for StockTransfer with ReferenceNumber: {ReferenceNumber}");
+        }
+      
+
+        switch (Status.ToLower()) // Use ToLower() for case-insensitive comparison
+        {
+            case "requested":
+                SelectedColor = Color.Default;
+                isRequested = true;
+                break;
+            case "approved":
+                SelectedColor = Color.Info;
+                isRequested = false;
+                break;
+            case "rejected":
+                SelectedColor = Color.Error;
+                isRequested = false;
+                break;
+            case "completed":
+                SelectedColor = Color.Success;
+                isRequested = false;
+                break;
+            default:
+                SelectedColor = Color.Default; // Or some other default color
+                break;
+        }
+
+    }
+
+
+    private async Task DeleteStockTransfer()
+    {
+        var parameters = new DialogParameters<DialogComponent>
+        {
+            { x => x.ContentText, $"Are you sure you want to delete the Stock Transfer '{StockTransfer.ReferenceNumber}'? This action cannot be undone." },
+            { "Button1Text", "Delete" },
+            { "Button2Text", "Cancel" },
+            { "Color", Color.Error }
+        };
+
+        var dialog = await DialogService.ShowAsync<DialogComponent>("Delete Stock Transfer", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            try
+            {
+                // delete from db
+                await StockTransferService.DeleteStockTransferAsync(ReferenceNumber);
+                NavigationManager.NavigateTo($"/inventory/stock-transfers/requests");
+                Snackbar.Add("Stock Transfer Deleted", Severity.Success);
+            }
+            catch (InvalidOperationException ex)
+            {
+                Snackbar.Add(ex.Message, Severity.Error);
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add("An error occurred while deleting the Stock Transfer.", Severity.Error);
+            }
+        }
+    }
+
+
+   
+}

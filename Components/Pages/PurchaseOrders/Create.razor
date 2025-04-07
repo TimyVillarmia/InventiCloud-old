@@ -1,10 +1,13 @@
 ﻿@page "/purchase/orders/create"
+@using InventiCloud.Components.Account
 @using InventiCloud.Components.UI
 @using InventiCloud.Services
 @using InventiCloud.Services.Interface
+@using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
 @using InventiCloud.Entities
 @using InventiCloud.Data
+@using System.Security.Claims
 @using System.ComponentModel.DataAnnotations
 @inject IDbContextFactory<InventiCloud.Data.ApplicationDbContext> DbFactory
 @inject IDialogService DialogService
@@ -14,8 +17,15 @@
 @inject IProductService ProductService
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<ApplicationUser> UserManager
+
 @using Microsoft.AspNetCore.Authorization
+
+
 @attribute [Authorize]
+
+
 <MudContainer Class="pt-5" MaxWidth="MaxWidth.Large">
 
     <div class="d-flex align-items-center mb-4">
@@ -35,8 +45,8 @@
             </MudItem>
 
             <MudItem xs="12" sm="6">
-                <MudAutocomplete T="string" Label="Destination Branch" @bind-Value="PurchaseOrder.DestinationBranch"
-                                 SearchFunc="@SearchBranch" ToStringFunc="@(branch=> branch==null?null : $"{branch}")" For="@(() => PurchaseOrder.DestinationBranch)" Variant="Variant.Outlined" />
+                <MudAutocomplete T="Branch" Label="Destination Branch" @bind-Value="PurchaseOrder.DestinationBranch" Disabled="@autoFill"
+                                 SearchFunc="@SearchBranch" ToStringFunc="@(branch=> branch==null?null : $"{branch.BranchName}")" For="@(() => PurchaseOrder.DestinationBranch)" Variant="Variant.Outlined" />
                 <MudDatePicker Label="Estimated Arrival" Editable="true" @bind-Date="PurchaseOrder.EstimatedArrival"
                                Mask="@(new DateMask("MM/dd/yyyy"))" DateFormat="MM/dd/yyyy" Placeholder="Estimated Arrival" Variant="Variant.Outlined" />
             </MudItem>
@@ -115,7 +125,7 @@
 
 
     private List<PurchaseOrderItemViewModel> PurchaseOrderItems = new List<PurchaseOrderItemViewModel>();
-    
+
     private IEnumerable<Supplier>? _suppliers;
     private IEnumerable<Branch>? _branches;
     private IEnumerable<Product>? _products;
@@ -128,7 +138,7 @@
         public string SuplierName { get; set; }
 
         [Required(ErrorMessage = "Destination Branch is required.")]
-        public string DestinationBranch { get; set; }
+        public Branch DestinationBranch { get; set; }
 
         public DateTime? EstimatedArrival { get; set; }
     }
@@ -152,13 +162,50 @@
         public decimal SubTotal { get; set; }
     }
 
+    private ApplicationUser? CurrentUser { get; set; } // Replace ApplicationUser with your actual user class
+    private bool autoFill = false;
 
 
     protected override async Task OnInitializedAsync()
     {
-        _products = await ProductService.GetAllProductAsync();
-        _branches = await BranchService.GetAllBranchAsync();
-        _suppliers = await SupplierService.GetAllSupplierAsync();
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            CurrentUser = await UserManager.GetUserAsync(user);
+
+            if (CurrentUser != null)
+            {
+                autoFill = CurrentUser.BranchId.HasValue;
+
+                _products = await ProductService.GetAllProductAsync();
+                _branches = await BranchService.GetAllBranchAsync();
+                _suppliers = await SupplierService.GetAllSupplierAsync();
+
+                if (_branches.Any() && CurrentUser.BranchId.HasValue)
+                {
+                    PurchaseOrder.DestinationBranch = _branches.FirstOrDefault(b => b.BranchId == CurrentUser.BranchId);
+                    if (PurchaseOrder.DestinationBranch == null)
+                    {
+                        // Handle the case where the user's BranchId doesn't match any existing branch
+                        Console.WriteLine($"Warning: User's BranchId '{CurrentUser.BranchId}' not found.");
+                        // Optionally, redirect the user or display an error.
+                        // NavigationManager.NavigateTo("/error", true);
+                    }
+                }
+                else if (!CurrentUser.BranchId.HasValue)
+                {
+                    // User is admin, no specific branch
+                    _products = await ProductService.GetAllProductAsync();
+                    _branches = await BranchService.GetAllBranchAsync();
+                    _suppliers = await SupplierService.GetAllSupplierAsync();
+                }
+            }
+
+        }
+
+
     }
 
     private async Task AddPurchaseOrderToDraft(EditContext context)
@@ -170,8 +217,8 @@
                 var po_data = new PurchaseOrder
                 {
                         SupplierCode = _suppliers.First(s => s.SupplierName == PurchaseOrder.SuplierName).SupplierCode,
-                        DestinationBranchId = _branches.First(b => b.BranchName == PurchaseOrder.DestinationBranch).BranchId,
-                        CreatedById = "your-user-id-1", // Replace with actual user ID
+                        DestinationBranchId = PurchaseOrder.DestinationBranch.BranchId,
+                        CreatedById = CurrentUser.Id, // Replace with actual user ID
                         TotalAmount = PurchaseOrderItems.Sum(item => item.SubTotal),
                         EstimatedArrival = PurchaseOrder.EstimatedArrival,
 
@@ -243,14 +290,14 @@
         return _suppliers.Where(s => s.SupplierName.Contains(value, StringComparison.InvariantCultureIgnoreCase)).Select(s => s.SupplierName);
     }
 
-    private async Task<IEnumerable<string>> SearchBranch(string value, CancellationToken token)
+    private async Task<IEnumerable<Branch>> SearchBranch(string value, CancellationToken token)
     {
         if (string.IsNullOrEmpty(value))
         {
-            return _branches.Select(b => b.BranchName);
+            return _branches;
         }
 
-        return _branches.Where(b => b.BranchName.Contains(value, StringComparison.InvariantCultureIgnoreCase)).Select(b => b.BranchName);
+        return _branches.Where(b => b.BranchName.Contains(value, StringComparison.InvariantCultureIgnoreCase));
     }
 
     // events

@@ -1,5 +1,6 @@
 ﻿@page "/inventory/stock-transfers/create"
 @using InventiCloud.Components.UI
+@using InventiCloud.Data
 @using InventiCloud.Services
 @using InventiCloud.Services.Interface
 @using InventiCloud.Entities
@@ -9,7 +10,10 @@
 @inject IProductService ProductService
 @inject IInventoryService InventoryService
 @inject ISnackbar Snackbar
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<ApplicationUser> UserManager
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
 @attribute [Authorize]
 <MudContainer Class="pt-5" MaxWidth="MaxWidth.Large">
 
@@ -30,7 +34,7 @@
             </MudItem>
 
             <MudItem xs="12" sm="6">
-                <MudAutocomplete T="Branch" Label="Destination Branch" @bind-Value="StockTransfer.DestinationBranch"
+                <MudAutocomplete T="Branch" Label="Destination Branch" @bind-Value="StockTransfer.DestinationBranch" Disabled="@autoFill"
                 SearchFunc="@SearchBranch" ToStringFunc="@(branch=> branch==null?null : $"{branch.BranchName}")" For="@(() => StockTransfer.DestinationBranch)" Variant="Variant.Outlined" />
                 <MudDatePicker Label="Date Created" Editable="true" @bind-Date="StockTransfer.DateCreated" ReadOnly="true"
                                Mask="@(new DateMask("MM/dd/yyyy"))" DateFormat="MM/dd/yyyy" Placeholder="Date Created" Variant="Variant.Outlined" />
@@ -153,9 +157,36 @@
         }
     }
 
+    private ApplicationUser? CurrentUser { get; set; } // Replace ApplicationUser with your actual user class
+    private bool autoFill = false;
+
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
         _branches = await BranchService.GetAllBranchAsync();
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            CurrentUser = await UserManager.GetUserAsync(user);
+
+            if (CurrentUser != null)
+            {
+                autoFill = CurrentUser.BranchId.HasValue;
+                if (_branches.Any() && CurrentUser.BranchId.HasValue)
+                {
+                    StockTransfer.DestinationBranch = _branches.FirstOrDefault(b => b.BranchId == CurrentUser.BranchId);
+                    if (StockTransfer.DestinationBranch == null)
+                    {
+                        // Handle the case where the user's BranchId doesn't match any existing branch
+                        Console.WriteLine($"Warning: User's BranchId '{CurrentUser.BranchId}' not found.");
+                        // Optionally, redirect the user or display an error.
+                        // NavigationManager.NavigateTo("/error", true);
+                    }
+                }
+            }
+
+        }
     }
 
     private async Task AddStockTransferToRequested(EditContext context)
@@ -171,7 +202,9 @@
                     {
                         SourceBranchId = StockTransfer.SourceBranch.BranchId,
                         DestinationBranchId = StockTransfer.DestinationBranch.BranchId,
-                        RequestedById = "your-user-id-1", // Replace with actual user ID
+                        RequestedById = CurrentUser.Id, // Replace with actual user ID
+                        ApprovedById = UserManager.Users
+                                .FirstOrDefault(u => u.BranchId == StockTransfer.SourceBranch.BranchId).Id
                     };
 
                 var sti_data = StockTransferItems.Select(vm => new StockTransferItem
