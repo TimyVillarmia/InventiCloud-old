@@ -5,7 +5,6 @@
 @using Microsoft.EntityFrameworkCore
 @using InventiCloud.Entities
 @inject ICategoryService CategoryService
-@inject IAttributeSetService AttributeSetService
 @inject IBranchService BranchService
 @inject IProductService ProductService
 @inject IDbContextFactory<InventiCloud.Data.ApplicationDbContext> DbFactory
@@ -63,34 +62,6 @@
                 <MudTextField id="Profit" Variant="Variant.Outlined" Label="Profit" @bind-Value="Profit" Immediate="true" ReadOnly="true"/>
                 <MudTextField id="Margin" Variant="Variant.Outlined" Label="Margin" @bind-Value="Margin" Immediate="true" ReadOnly="true"/>
             </MudItem>
-
-            <MudItem xs="6" sm="6">
-                <MudSelect Label="ATTRIBUTES" @bind-Value="AttributeSet.AttributeSetId" For="@(() => AttributeSet.AttributeSetId)"
-                           Variant="Variant.Outlined">
-                    <MudSelectItem T="int" Value="0" Disabled="true">Select Attribute Set</MudSelectItem>
-                    @foreach (AttributeSet attributeSet in _attributesets)
-                    {
-                        <MudSelectItem Value="@attributeSet.AttributeSetId">@attributeSet.AttributeSetName</MudSelectItem>
-                    }
-                </MudSelect>
-            </MudItem>
-
-            @* <MudItem xs="12" sm="6">
-                <MudSelect @bind-Value="ProductAttribute.AttributeSetId" Clearable="true" Variant="Variant.Outlined">
-                    @foreach (AttributeSet set in _attributesets)
-                    {
-                        <MudSelectItem Value="@set.AttributeSetId">@set.AttributeSetName</MudSelectItem>
-                    }
-                </MudSelect>
-            </MudItem>
-
-            <MudItem xs="12" sm="6">
-                @if(ProductAttribute.AttributeSetId != 0){
-                    <MudText Typo="Typo.h4">@ProductAttribute.AttributeSetId</MudText>
-                }
-            </MudItem> *@
-
-
         </MudGrid>
 
         <MudItem xs="12" Class="d-flex align-md-end mt-12">
@@ -118,13 +89,11 @@
 
     [SupplyParameterFromForm]
     private Product Product { get; set; } = new();
-    private AttributeSet AttributeSet { get; set; } = new();
 
 
     private ApplicationDbContext context = default!;
 
     private IEnumerable<Category> _categories = new List<Category>();
-    private IEnumerable<AttributeSet> _attributesets = new List<AttributeSet>();
     private IEnumerable<Inventory> _inventories;
     private IEnumerable<Branch> _branches;
 
@@ -132,7 +101,6 @@
     {
 
         _categories = await CategoryService.GetAllCategoryAsync();
-        _attributesets = await AttributeSetService.GetAllAttributeSetAsync();
         _branches = await BranchService.GetAllBranchAsync();
 
     }

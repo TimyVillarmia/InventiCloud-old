@@ -19,9 +19,6 @@ public class Product
     ForeignKey("Category")]
     public int CategoryId { get; set; }
 
-    [ForeignKey("AttributeSet")]
-    public int? AttributeSetId { get; set; }
-
     [Required]
     public string ProductName { get; set; }
     public string? ImageURL { get; set; }
@@ -47,9 +44,7 @@ public class Product
 
     // navigation properties
     public virtual Category Category { get; set; }
-    public virtual AttributeSet? AttributeSet { get; set; }
     public virtual ICollection<Inventory> Inventories { get; set; }
-    public virtual ICollection<ProductAttributeValue> ProductAttributeValues { get; set; } 
 
 
 }
