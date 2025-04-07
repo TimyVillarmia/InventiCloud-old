@@ -9,10 +9,6 @@ namespace InventiCloud.Data;
 public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : IdentityDbContext<ApplicationUser>(options)
 {
     public DbSet<Product> Products { get; set; }
-    public DbSet<AttributeSet> AttributeSets { get; set; }
-    public DbSet<Entities.Attribute> Attributes { get; set; }
-    public DbSet<AttributeValue> AttributeValues { get; set; }
-    public DbSet<ProductAttributeValue> ProductAttributeValues { get; set; }
     public DbSet<Customer> Customers { get; set; }
     public DbSet<Category> Categories { get; set; }
     public DbSet<Branch> Branches { get; set; }
