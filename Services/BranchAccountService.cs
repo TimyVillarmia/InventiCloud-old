@@ -323,5 +323,34 @@ namespace InventiCloud.Services
                 throw;
             }
         }
+
+        public async Task<bool> IsBranchAccountExist(string email)
+        {
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                return false; // Or throw ArgumentException if at least one should be provided
+            }
+
+            try
+            {
+                
+                // Check by email (case-insensitive)
+                if (!string.IsNullOrWhiteSpace(email))
+                {
+                    var userByEmail = await _userManager.FindByEmailAsync(email);
+                    if (userByEmail != null)
+                    {
+                        return true;
+                    }
+                }
+
+                return false; // No matching user found
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking if branch account exists. Email: {Email}", email);
+                throw; // Re-throw the exception for the calling code to handle
+            }
+        }
     }
 }

@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace InventiCloud.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250407160016_StockTransferUpdated")]
-    partial class StockTransferUpdated
+    [Migration("20250408031911_init")]
+    partial class init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -95,24 +95,6 @@ namespace InventiCloud.Migrations
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
                     b.ToTable("AspNetUsers", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = "your-admin-user-id-guid",
-                            AccessFailedCount = 0,
-                            ConcurrencyStamp = "8226caf9-4371-4084-8514-abfcbb78f5fb",
-                            Email = "admin@example.com",
-                            EmailConfirmed = true,
-                            LockoutEnabled = true,
-                            NormalizedEmail = "ADMIN@EXAMPLE.COM",
-                            NormalizedUserName = "ADMIN@EXAMPLE.COM",
-                            PasswordHash = "AQAAAAIAAYagAAAAEDJ7Yb2gcvzWuONi4ZFEF0GDY0fpDnB4QSGhUmJRNfJ2b9wHWD5iKKXd8wp7AwkutA==",
-                            PhoneNumberConfirmed = false,
-                            SecurityStamp = "863f2ecb-66dd-4e97-bbd3-a225ca8a272a",
-                            TwoFactorEnabled = false,
-                            UserName = "admin@example.com"
-                        });
                 });
 
             modelBuilder.Entity("InventiCloud.Entities.Branch", b =>
@@ -131,64 +113,13 @@ namespace InventiCloud.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("City")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Country")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("PhoneNumber")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PostalCode")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Region")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("BranchId");
 
                     b.ToTable("Branches");
-
-                    b.HasData(
-                        new
-                        {
-                            BranchId = 1,
-                            Address = "123 Main St",
-                            BranchName = "Branch A",
-                            City = "Anytown",
-                            Country = "USA",
-                            PhoneNumber = "555-123-4567",
-                            PostalCode = "12345",
-                            Region = "State"
-                        },
-                        new
-                        {
-                            BranchId = 2,
-                            Address = "456 Oak Ave",
-                            BranchName = "Branch B",
-                            City = "Springfield",
-                            Country = "Canada",
-                            PhoneNumber = "123-456-7890",
-                            PostalCode = "A1B 2C3",
-                            Region = "Province"
-                        },
-                        new
-                        {
-                            BranchId = 3,
-                            Address = "789 Pine Ln",
-                            BranchName = "Branch C",
-                            City = "London",
-                            Country = "UK",
-                            PhoneNumber = "+44 20 1234 5678",
-                            PostalCode = "SW1A 1AA",
-                            Region = "England"
-                        });
                 });
 
             modelBuilder.Entity("InventiCloud.Entities.Category", b =>
@@ -209,33 +140,6 @@ namespace InventiCloud.Migrations
                         .IsUnique();
 
                     b.ToTable("Categories");
-
-                    b.HasData(
-                        new
-                        {
-                            CategoryId = 1,
-                            CategoryName = "Eyeglasses"
-                        },
-                        new
-                        {
-                            CategoryId = 2,
-                            CategoryName = "Contact Lenses"
-                        },
-                        new
-                        {
-                            CategoryId = 3,
-                            CategoryName = "Reading Glasses"
-                        },
-                        new
-                        {
-                            CategoryId = 4,
-                            CategoryName = "Eye Care Products"
-                        },
-                        new
-                        {
-                            CategoryId = 5,
-                            CategoryName = "Sunglasses"
-                        });
                 });
 
             modelBuilder.Entity("InventiCloud.Entities.Customer", b =>
@@ -314,158 +218,6 @@ namespace InventiCloud.Migrations
                     b.HasIndex("ProductId");
 
                     b.ToTable("Inventories");
-
-                    b.HasData(
-                        new
-                        {
-                            InventoryId = 1,
-                            Allocated = 0,
-                            AvailableQuantity = 100,
-                            BranchId = 1,
-                            IncomingQuantity = 0,
-                            OnHandquantity = 100,
-                            ProductId = 1
-                        },
-                        new
-                        {
-                            InventoryId = 2,
-                            Allocated = 0,
-                            AvailableQuantity = 50,
-                            BranchId = 2,
-                            IncomingQuantity = 0,
-                            OnHandquantity = 50,
-                            ProductId = 1
-                        },
-                        new
-                        {
-                            InventoryId = 3,
-                            Allocated = 0,
-                            AvailableQuantity = 75,
-                            BranchId = 3,
-                            IncomingQuantity = 0,
-                            OnHandquantity = 75,
-                            ProductId = 1
-                        },
-                        new
-                        {
-                            InventoryId = 4,
-                            Allocated = 0,
-                            AvailableQuantity = 200,
-                            BranchId = 1,
-                            IncomingQuantity = 0,
-                            OnHandquantity = 200,
-                            ProductId = 2
-                        },
-                        new
-                        {
-                            InventoryId = 5,
-                            Allocated = 0,
-                            AvailableQuantity = 150,
-                            BranchId = 2,
-                            IncomingQuantity = 0,
-                            OnHandquantity = 150,
-                            ProductId = 2
-                        },
-                        new
-                        {
-                            InventoryId = 6,
-                            Allocated = 0,
-                            AvailableQuantity = 150,
-                            BranchId = 3,
-                            IncomingQuantity = 0,
-                            OnHandquantity = 150,
-                            ProductId = 2
-                        },
-                        new
-                        {
-                            InventoryId = 7,
-                            Allocated = 0,
-                            AvailableQuantity = 80,
-                            BranchId = 1,
-                            IncomingQuantity = 0,
-                            OnHandquantity = 80,
-                            ProductId = 3
-                        },
-                        new
-                        {
-                            InventoryId = 8,
-                            Allocated = 0,
-                            AvailableQuantity = 120,
-                            BranchId = 2,
-                            IncomingQuantity = 0,
-                            OnHandquantity = 120,
-                            ProductId = 3
-                        },
-                        new
-                        {
-                            InventoryId = 9,
-                            Allocated = 0,
-                            AvailableQuantity = 0,
-                            BranchId = 3,
-                            IncomingQuantity = 0,
-                            OnHandquantity = 90,
-                            ProductId = 3
-                        },
-                        new
-                        {
-                            InventoryId = 10,
-                            Allocated = 0,
-                            AvailableQuantity = 300,
-                            BranchId = 1,
-                            IncomingQuantity = 0,
-                            OnHandquantity = 300,
-                            ProductId = 4
-                        },
-                        new
-                        {
-                            InventoryId = 11,
-                            Allocated = 0,
-                            AvailableQuantity = 250,
-                            BranchId = 2,
-                            IncomingQuantity = 0,
-                            OnHandquantity = 250,
-                            ProductId = 4
-                        },
-                        new
-                        {
-                            InventoryId = 12,
-                            Allocated = 0,
-                            AvailableQuantity = 280,
-                            BranchId = 3,
-                            IncomingQuantity = 0,
-                            OnHandquantity = 280,
-                            ProductId = 4
-                        },
-                        new
-                        {
-                            InventoryId = 13,
-                            Allocated = 0,
-                            AvailableQuantity = 60,
-                            BranchId = 1,
-                            IncomingQuantity = 0,
-                            OnHandquantity = 60,
-                            ProductId = 5
-                        },
-                        new
-                        {
-                            InventoryId = 14,
-                            Allocated = 0,
-                            AvailableQuantity = 40,
-                            BranchId = 2,
-                            IncomingQuantity = 0,
-                            OnHandquantity = 40,
-                            ProductId = 5
-                        },
-                        new
-                        {
-                            InventoryId = 15,
-                            Allocated = 0,
-                            AvailableQuantity = 70,
-                            BranchId = 3,
-                            IncomingQuantity = 0,
-                            OnHandquantity = 70,
-                            ProductId = 5
-                        });
                 });
 
             modelBuilder.Entity("InventiCloud.Entities.Product", b =>
@@ -518,73 +270,6 @@ namespace InventiCloud.Migrations
                         .IsUnique();
 
                     b.ToTable("Products");
-
-                    b.HasData(
-                        new
-                        {
-                            ProductId = 1,
-                            Brand = "VisionGuard",
-                            CategoryId = 1,
-                            Description = "High-quality glasses to protect your eyes from harmful blue light.",
-                            ImageURL = "glasses_blue_light.jpg",
-                            ProductName = "Premium Blue Light Blocking Glasses",
-                            SKU = "VG-BL-001",
-                            UnitCost = 50.00m,
-                            UnitPrice = 120.00m,
-                            isActive = true
-                        },
-                        new
-                        {
-                            ProductId = 2,
-                            Brand = "AquaView",
-                            CategoryId = 2,
-                            Description = "Comfortable daily disposable contact lenses for clear vision.",
-                            ImageURL = "contact_lenses_daily.jpg",
-                            ProductName = "Daily Disposable Contact Lenses",
-                            SKU = "AV-CD-002",
-                            UnitCost = 15.00m,
-                            UnitPrice = 35.00m,
-                            isActive = true
-                        },
-                        new
-                        {
-                            ProductId = 3,
-                            Brand = "ReadWell",
-                            CategoryId = 3,
-                            Description = "Stylish reading glasses with anti-glare coating for reduced eye strain.",
-                            ImageURL = "reading_glasses_anti_glare.jpg",
-                            ProductName = "Anti-Glare Reading Glasses",
-                            SKU = "RW-RG-003",
-                            UnitCost = 25.00m,
-                            UnitPrice = 60.00m,
-                            isActive = true
-                        },
-                        new
-                        {
-                            ProductId = 4,
-                            Brand = "MoisturePlus",
-                            CategoryId = 4,
-                            Description = "Relief from dry, irritated eyes with these lubricating eye drops.",
-                            ImageURL = "eye_drops_dry_eyes.jpg",
-                            ProductName = "Eye Drops for Dry Eyes",
-                            SKU = "MP-ED-004",
-                            UnitCost = 8.00m,
-                            UnitPrice = 20.00m,
-                            isActive = true
-                        },
-                        new
-                        {
-                            ProductId = 5,
-                            Brand = "SunStyle",
-                            CategoryId = 1,
-                            Description = "Fashionable sunglasses with UV protection for sunny days.",
-                            ImageURL = "designer_sunglasses.jpg",
-                            ProductName = "Designer Sunglasses",
-                            SKU = "SS-SG-005",
-                            UnitCost = 80.00m,
-                            UnitPrice = 200.00m,
-                            isActive = true
-                        });
                 });
 
             modelBuilder.Entity("InventiCloud.Entities.PurchaseOrder", b =>
@@ -1141,21 +826,6 @@ namespace InventiCloud.Migrations
                         .IsUnique();
 
                     b.ToTable("Suppliers");
-
-                    b.HasData(
-                        new
-                        {
-                            SupplierCode = "SUP001",
-                            Address = "123 Main St",
-                            City = "New York",
-                            Company = "Global Tech Inc.",
-                            ContactPerson = "John Doe",
-                            Country = "USA",
-                            Email = "john.doe@globaltech.com",
-                            PhoneNumber = "+15551234567",
-                            PostalCode = "12345",
-                            SupplierName = "Global Electronics"
-                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>

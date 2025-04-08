@@ -31,9 +31,6 @@
             <MudTextField @bind-Value="Branch.BranchName" Label="Branch Name" For="@(() => Branch.BranchName)" Variant="Variant.Outlined" />
             <MudTextField @bind-Value="Branch.Address" Label="Address" For="@(() => Branch.Address)" Variant="Variant.Outlined" />
             <MudTextField @bind-Value="Branch.PhoneNumber" Label="Phone Number" For="@(() => Branch.PhoneNumber)" Variant="Variant.Outlined" />
-            <MudNumericField @bind-Value="Branch.Country" HideSpinButtons="true" Label="Country" For="@(() => Branch.Country)" Variant="Variant.Outlined" />
-            <MudNumericField @bind-Value="Branch.City" HideSpinButtons="true" Label="City" For="@(() => Branch.City)" Variant="Variant.Outlined" />
-            <MudNumericField @bind-Value="Branch.PostalCode" HideSpinButtons="true" Label="Postal Code" For="@(() => Branch.PostalCode)" Variant="Variant.Outlined" />
         </MudGrid>
         <div class="d-flex align-end mt-12">
             <MudButton OnClick="@(() => OpenDialogAsync())" Variant="Variant.Outlined" Color="Color.Error">DELETE</MudButton>

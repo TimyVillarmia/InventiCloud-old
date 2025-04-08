@@ -20,43 +20,13 @@ namespace InventiCloud.Migrations
                 nullable: true);
 
             migrationBuilder.CreateTable(
-                name: "AttributeSets",
-                columns: table => new
-                {
-                    AttributeSetId = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    AttributeSetName = table.Column<string>(type: "nvarchar(max)", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_AttributeSets", x => x.AttributeSetId);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "AttributeValues",
-                columns: table => new
-                {
-                    AttributeValueId = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Value = table.Column<int>(type: "int", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_AttributeValues", x => x.AttributeValueId);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Branches",
                 columns: table => new
                 {
                     BranchId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     BranchName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Country = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Address = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    PostalCode = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    City = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Region = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     PhoneNumber = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
@@ -182,34 +152,12 @@ namespace InventiCloud.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Attributes",
-                columns: table => new
-                {
-                    AttributeId = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    AttributeName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    AttributeSetId = table.Column<int>(type: "int", nullable: false),
-                    isRequired = table.Column<bool>(type: "bit", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Attributes", x => x.AttributeId);
-                    table.ForeignKey(
-                        name: "FK_Attributes_AttributeSets_AttributeSetId",
-                        column: x => x.AttributeSetId,
-                        principalTable: "AttributeSets",
-                        principalColumn: "AttributeSetId",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Products",
                 columns: table => new
                 {
                     ProductId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     CategoryId = table.Column<int>(type: "int", nullable: false),
-                    AttributeSetId = table.Column<int>(type: "int", nullable: true),
                     ProductName = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     ImageURL = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Brand = table.Column<string>(type: "nvarchar(max)", nullable: true),
@@ -222,11 +170,6 @@ namespace InventiCloud.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Products", x => x.ProductId);
-                    table.ForeignKey(
-                        name: "FK_Products_AttributeSets_AttributeSetId",
-                        column: x => x.AttributeSetId,
-                        principalTable: "AttributeSets",
-                        principalColumn: "AttributeSetId");
                     table.ForeignKey(
                         name: "FK_Products_Categories_CategoryId",
                         column: x => x.CategoryId,
@@ -245,11 +188,20 @@ namespace InventiCloud.Migrations
                     OrderBranchId = table.Column<int>(type: "int", nullable: false),
                     CustomerId = table.Column<int>(type: "int", nullable: false),
                     SalesPersonId = table.Column<int>(type: "int", nullable: false),
-                    OrderedDate = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    CreatedById = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    DestinationBranchId = table.Column<int>(type: "int", nullable: false),
+                    TotalAmount = table.Column<decimal>(type: "decimal(19,2)", precision: 19, scale: 2, nullable: false),
+                    OrderedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_SalesOrders", x => x.SalesOrderId);
+                    table.ForeignKey(
+                        name: "FK_SalesOrders_AspNetUsers_CreatedById",
+                        column: x => x.CreatedById,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_SalesOrders_Branches_OrderBranchId",
                         column: x => x.OrderBranchId,
@@ -325,6 +277,7 @@ namespace InventiCloud.Migrations
                     RequestedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
                     DateCompleted = table.Column<DateTime>(type: "datetime2", nullable: true),
                     DateApproved = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    RejectedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
                     RequestedById = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     ApprovedById = table.Column<string>(type: "nvarchar(450)", nullable: false)
                 },
@@ -342,7 +295,8 @@ namespace InventiCloud.Migrations
                         column: x => x.RequestedById,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.NoAction);
+                        onDelete: ReferentialAction.NoAction
+                        );
                     table.ForeignKey(
                         name: "FK_StockTransfers_Branches_DestinationBranchId",
                         column: x => x.DestinationBranchId,
@@ -440,39 +394,6 @@ namespace InventiCloud.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "ProductAttributeValues",
-                columns: table => new
-                {
-                    ProductAttributeValueId = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    ProductId = table.Column<int>(type: "int", nullable: false),
-                    AttributeId = table.Column<int>(type: "int", nullable: false),
-                    AttributeValueId = table.Column<int>(type: "int", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ProductAttributeValues", x => x.ProductAttributeValueId);
-                    table.ForeignKey(
-                        name: "FK_ProductAttributeValues_AttributeValues_AttributeValueId",
-                        column: x => x.AttributeValueId,
-                        principalTable: "AttributeValues",
-                        principalColumn: "AttributeValueId",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_ProductAttributeValues_Attributes_AttributeId",
-                        column: x => x.AttributeId,
-                        principalTable: "Attributes",
-                        principalColumn: "AttributeId",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_ProductAttributeValues_Products_ProductId",
-                        column: x => x.ProductId,
-                        principalTable: "Products",
-                        principalColumn: "ProductId",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "SalesOrderItems",
                 columns: table => new
                 {
@@ -539,7 +460,8 @@ namespace InventiCloud.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     StockTransferId = table.Column<int>(type: "int", nullable: false),
                     ProductId = table.Column<int>(type: "int", nullable: false),
-                    TransferQuantity = table.Column<int>(type: "int", nullable: false)
+                    TransferQuantity = table.Column<int>(type: "int", nullable: false),
+                    PreviousQuantity = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -588,28 +510,6 @@ namespace InventiCloud.Migrations
                 });
 
             migrationBuilder.InsertData(
-                table: "Branches",
-                columns: new[] { "BranchId", "Address", "BranchName", "City", "Country", "PhoneNumber", "PostalCode", "Region" },
-                values: new object[,]
-                {
-                    { 1, "123 Main St", "Branch A", "Anytown", "USA", "555-123-4567", "12345", "State" },
-                    { 2, "456 Oak Ave", "Branch B", "Springfield", "Canada", "123-456-7890", "A1B 2C3", "Province" },
-                    { 3, "789 Pine Ln", "Branch C", "London", "UK", "+44 20 1234 5678", "SW1A 1AA", "England" }
-                });
-
-            migrationBuilder.InsertData(
-                table: "Categories",
-                columns: new[] { "CategoryId", "CategoryName" },
-                values: new object[,]
-                {
-                    { 1, "Eyeglasses" },
-                    { 2, "Contact Lenses" },
-                    { 3, "Reading Glasses" },
-                    { 4, "Eye Care Products" },
-                    { 5, "Sunglasses" }
-                });
-
-            migrationBuilder.InsertData(
                 table: "PurchaseOrderStatuses",
                 columns: new[] { "PurchaseOrderStatusId", "StatusName" },
                 values: new object[,]
@@ -647,49 +547,10 @@ namespace InventiCloud.Migrations
                 columns: new[] { "StockTransferStatusId", "StatusName" },
                 values: new object[,]
                 {
-                    { 1, "Allocated" },
-                    { 2, "In Transit" },
-                    { 3, "Cancelled" },
-                    { 4, "Completed" }
-                });
-
-            migrationBuilder.InsertData(
-                table: "Suppliers",
-                columns: new[] { "SupplierCode", "Address", "City", "Company", "ContactPerson", "Country", "Email", "PhoneNumber", "PostalCode", "SupplierName" },
-                values: new object[] { "SUP001", "123 Main St", "New York", "Global Tech Inc.", "John Doe", "USA", "john.doe@globaltech.com", "+15551234567", "12345", "Global Electronics" });
-
-            migrationBuilder.InsertData(
-                table: "Products",
-                columns: new[] { "ProductId", "AttributeSetId", "Brand", "CategoryId", "Description", "ImageURL", "ProductName", "SKU", "UnitCost", "UnitPrice", "isActive" },
-                values: new object[,]
-                {
-                    { 1, null, "VisionGuard", 1, "High-quality glasses to protect your eyes from harmful blue light.", "glasses_blue_light.jpg", "Premium Blue Light Blocking Glasses", "VG-BL-001", 50.00m, 120.00m, true },
-                    { 2, null, "AquaView", 2, "Comfortable daily disposable contact lenses for clear vision.", "contact_lenses_daily.jpg", "Daily Disposable Contact Lenses", "AV-CD-002", 15.00m, 35.00m, true },
-                    { 3, null, "ReadWell", 3, "Stylish reading glasses with anti-glare coating for reduced eye strain.", "reading_glasses_anti_glare.jpg", "Anti-Glare Reading Glasses", "RW-RG-003", 25.00m, 60.00m, true },
-                    { 4, null, "MoisturePlus", 4, "Relief from dry, irritated eyes with these lubricating eye drops.", "eye_drops_dry_eyes.jpg", "Eye Drops for Dry Eyes", "MP-ED-004", 8.00m, 20.00m, true },
-                    { 5, null, "SunStyle", 1, "Fashionable sunglasses with UV protection for sunny days.", "designer_sunglasses.jpg", "Designer Sunglasses", "SS-SG-005", 80.00m, 200.00m, true }
-                });
-
-            migrationBuilder.InsertData(
-                table: "Inventories",
-                columns: new[] { "InventoryId", "Allocated", "AvailableQuantity", "BranchId", "IncomingQuantity", "OnHandquantity", "ProductId" },
-                values: new object[,]
-                {
-                    { 1, 0, 100, 1, 0, 100, 1 },
-                    { 2, 0, 50, 2, 0, 50, 1 },
-                    { 3, 0, 75, 3, 0, 75, 1 },
-                    { 4, 0, 200, 1, 0, 200, 2 },
-                    { 5, 0, 150, 2, 0, 150, 2 },
-                    { 6, 0, 150, 3, 0, 150, 2 },
-                    { 7, 0, 80, 1, 0, 80, 3 },
-                    { 8, 0, 120, 2, 0, 120, 3 },
-                    { 9, 0, 0, 3, 0, 90, 3 },
-                    { 10, 0, 300, 1, 0, 300, 4 },
-                    { 11, 0, 250, 2, 0, 250, 4 },
-                    { 12, 0, 280, 3, 0, 280, 4 },
-                    { 13, 0, 60, 1, 0, 60, 5 },
-                    { 14, 0, 40, 2, 0, 40, 5 },
-                    { 15, 0, 70, 3, 0, 70, 5 }
+                    { 1, "Requested" },
+                    { 2, "Approved" },
+                    { 3, "Completed" },
+                    { 4, "Rejected" }
                 });
 
             migrationBuilder.CreateIndex(
@@ -698,11 +559,6 @@ namespace InventiCloud.Migrations
                 column: "BranchId",
                 unique: true,
                 filter: "[BranchId] IS NOT NULL");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Attributes_AttributeSetId",
-                table: "Attributes",
-                column: "AttributeSetId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Categories_CategoryName",
@@ -733,26 +589,6 @@ namespace InventiCloud.Migrations
                 name: "IX_Inventories_ProductId",
                 table: "Inventories",
                 column: "ProductId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ProductAttributeValues_AttributeId",
-                table: "ProductAttributeValues",
-                column: "AttributeId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ProductAttributeValues_AttributeValueId",
-                table: "ProductAttributeValues",
-                column: "AttributeValueId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ProductAttributeValues_ProductId",
-                table: "ProductAttributeValues",
-                column: "ProductId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Products_AttributeSetId",
-                table: "Products",
-                column: "AttributeSetId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Products_CategoryId",
@@ -810,6 +646,11 @@ namespace InventiCloud.Migrations
                 name: "IX_SalesOrderItems_SalesOrderId",
                 table: "SalesOrderItems",
                 column: "SalesOrderId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SalesOrders_CreatedById",
+                table: "SalesOrders",
+                column: "CreatedById");
 
             migrationBuilder.CreateIndex(
                 name: "IX_SalesOrders_CustomerId",
@@ -916,9 +757,6 @@ namespace InventiCloud.Migrations
                 name: "Inventories");
 
             migrationBuilder.DropTable(
-                name: "ProductAttributeValues");
-
-            migrationBuilder.DropTable(
                 name: "PurchaseOrderItems");
 
             migrationBuilder.DropTable(
@@ -929,12 +767,6 @@ namespace InventiCloud.Migrations
 
             migrationBuilder.DropTable(
                 name: "StockTransferItems");
-
-            migrationBuilder.DropTable(
-                name: "AttributeValues");
-
-            migrationBuilder.DropTable(
-                name: "Attributes");
 
             migrationBuilder.DropTable(
                 name: "PurchaseOrders");
@@ -968,9 +800,6 @@ namespace InventiCloud.Migrations
 
             migrationBuilder.DropTable(
                 name: "StockAdjustmentStatuses");
-
-            migrationBuilder.DropTable(
-                name: "AttributeSets");
 
             migrationBuilder.DropTable(
                 name: "Categories");

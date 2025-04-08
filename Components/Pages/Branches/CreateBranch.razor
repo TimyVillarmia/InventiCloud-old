@@ -1,4 +1,4 @@
-﻿@page "/store/branches/create-branch"
+﻿@page "/store/branches/create"
 @using InventiCloud.Data
 @using InventiCloud.Utils
 @using Microsoft.EntityFrameworkCore
@@ -8,55 +8,209 @@
 @using InventiCloud.Services.Interface
 @inject IDbContextFactory<InventiCloud.Data.ApplicationDbContext> DbFactory
 @inject IBranchService BranchService
+@inject IBranchAccountService BranchAccountService
 @inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
 @using Microsoft.AspNetCore.Authorization
+@using System.ComponentModel.DataAnnotations
 @attribute [Authorize(Roles = "Administrator")]
 
 
-<MudContainer Class="pt-5" MaxWidth="MaxWidth.Large">
+<MudContainer Class="pt-5" MaxWidth="MaxWidth.Medium">
     <div class="d-flex gap-4 align-items-center mb-4">
-        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" aria-label="delete" Href="/branches" />
-        <MudText Typo="Typo.h4">CREATE BRANCH</MudText>
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" aria-label="back" Href="/branches" />
+        <MudText Typo="Typo.h4">CREATE BRANCH AND INITIAL USER</MudText>
     </div>
 
-    <EditForm method="post" Model="Branch" OnValidSubmit="AddBranch" FormName="create" Enhance>
+    <EditForm method="post" Model="@CombinedModel" OnValidSubmit="@CreateBranchAndUser" FormName="createCombined" Enhance>
         <DataAnnotationsValidator />
         <MudGrid>
             <MudItem xs="12">
                 <MudText Typo="Typo.h6">BRANCH DETAILS</MudText>
             </MudItem>
-            <MudTextField @bind-Value="Branch.BranchName" Label="Branch Name" For="@(() => Branch.BranchName)" Variant="Variant.Outlined" />
-            <MudTextField @bind-Value="Branch.Address" Label="Address" For="@(() => Branch.Address)" Variant="Variant.Outlined" />
-            <MudTextField @bind-Value="Branch.PhoneNumber" Label="Phone Number" For="@(() => Branch.PhoneNumber)" Variant="Variant.Outlined" />
-
             <MudItem xs="12" sm="6">
-                <MudNumericField @bind-Value="Branch.Country" HideSpinButtons="true" Label="Country" For="@(() => Branch.Country)" Variant="Variant.Outlined" />
-                <MudNumericField @bind-Value="Branch.City" HideSpinButtons="true" Label="City" For="@(() => Branch.City)" Variant="Variant.Outlined" />
-                <MudNumericField @bind-Value="Branch.PostalCode" HideSpinButtons="true" Label="Postal Code" For="@(() => Branch.PostalCode)" Variant="Variant.Outlined" />
+                <MudTextField @bind-Value="CombinedModel.Branch.BranchName" Mask="@maskOnlyLetters" Label="Branch Name" For="@(() => CombinedModel.Branch.BranchName)" Variant="Variant.Outlined" Required />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="CombinedModel.Branch.PhoneNumber" Mask="@(new PatternMask("0 000 000 0000"))" Label="Phone Number" For="@(() => CombinedModel.Branch.PhoneNumber)" Variant="Variant.Outlined" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField @bind-Value="CombinedModel.Branch.Address" Label="Address" For="@(() => CombinedModel.Branch.Address)" Variant="Variant.Outlined" Lines="2" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudDivider Class="my-6" />
+                <MudText Typo="Typo.h6">BRANCH ACCOUNT</MudText>
+            </MudItem>
+            <MudItem xs="12" sm="12">
+                <MudTextField @bind-Value="CombinedModel.Account.Email" Label="Email" For="@(() => CombinedModel.Account.Email)" Variant="Variant.Outlined" Required InputType="InputType.Email" />
+            </MudItem>
+            <MudItem xs="12" sm="12">
+                <MudTextField @bind-Value="CombinedModel.Account.Password" Label="Password" For="@(() => CombinedModel.Account.Password)" Variant="Variant.Outlined" InputType="InputType.Password" />
+            </MudItem>
+            <MudItem xs="12" sm="12">
+                <MudTextField @bind-Value="CombinedModel.Account.ConfirmPassword" Label="Confirm Password" For="@(() => CombinedModel.Account.ConfirmPassword)" Variant="Variant.Outlined" InputType="InputType.Password" />
+            </MudItem>
+
+            <MudItem xs="12" Class="d-flex align-end mt-12 gap-2">
+                <MudButton Href="/store/branches" Variant="Variant.Outlined">CANCEL</MudButton>
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary">CREATE BRANCH</MudButton>
             </MudItem>
         </MudGrid>
-        <MudItem xs="12" Class="d-flex align-end mt-12">
-            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">CREATE BRANCH</MudButton>
-        </MudItem>
     </EditForm>
 </MudContainer>
+
+
 
 
 @code {
     [SupplyParameterFromForm]
     private Branch Branch { get; set; } = new();
+    public IMask maskOnlyLetters = new RegexMask(@"^[a-zA-Z]+$");
+
+    private CombinedBranchAccountViewModel CombinedModel { get; set; } = new();
 
     private ApplicationDbContext context = default!;
 
 
-    private async Task AddBranch()
+    public class CombinedBranchAccountViewModel
     {
-        context = DbFactory.CreateDbContext();
-        context.Branches.Add(Branch);
-        await context.SaveChangesAsync();
+        public BranchInfo Branch { get; set; } = new BranchInfo();
+        public AccountInfo Account { get; set; } = new AccountInfo();
+    }
 
+    public class BranchInfo
+    {
+        [Required]
+        public string BranchName { get; set; }
 
-        NavigationManager.NavigateTo("/branches");
+        [Required]
+        public string Address { get; set; }
+        
+        [Required]
+        public string PhoneNumber { get; set; }
+    }
+
+    public class AccountInfo
+    {
+
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; }
+
+        [Required]
+        public string Password { get; set; }
+
+        [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
+        public string ConfirmPassword { get; set; }
+    }
+
+    private async Task CreateBranchAndUser()
+    {
+        // Validate Branch Information
+        if (string.IsNullOrWhiteSpace(CombinedModel.Branch.BranchName))
+        {
+            Snackbar.Add("Branch Name is required.", Severity.Error);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(CombinedModel.Branch.PhoneNumber))
+        {
+            Snackbar.Add("Phone Number is required.", Severity.Error);
+            return;
+        }
+
+        var newBranch = new Branch
+            {
+                BranchName = CombinedModel.Branch.BranchName,
+                Address = CombinedModel.Branch.Address,
+                PhoneNumber = CombinedModel.Branch.PhoneNumber,
+            // Add other branch properties as needed
+            };
+
+        // Validate Account Information if attempting to create a user
+        bool createUser = !string.IsNullOrWhiteSpace(CombinedModel.Account.Email) &&
+                          !string.IsNullOrWhiteSpace(CombinedModel.Account.Password);
+
+        if (createUser)
+        {
+            if (string.IsNullOrWhiteSpace(CombinedModel.Account.Email))
+            {
+                Snackbar.Add("Email is required for the account.", Severity.Error);
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(CombinedModel.Account.Password))
+            {
+                Snackbar.Add("Password is required for the account.", Severity.Error);
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(CombinedModel.Account.ConfirmPassword) ||
+                CombinedModel.Account.Password != CombinedModel.Account.ConfirmPassword)
+            {
+                Snackbar.Add("Password and Confirm Password do not match.", Severity.Error);
+                return;
+            }
+        }
+
+        try
+        {
+            // Check if branch already exists
+            if (await BranchService.IsBranchExist(newBranch.BranchName))
+            {
+                Snackbar.Add($"Branch with name '{newBranch.BranchName}' already exists.", Severity.Warning);
+                return;
+            }
+            if (await BranchService.IsBranchNumberExist(newBranch.PhoneNumber))
+            {
+                Snackbar.Add($"Branch with phone number '{newBranch.PhoneNumber}' already exists.", Severity.Warning);
+                return;
+            }
+
+            // Check if user account already exists (by email)
+            if (createUser && await BranchAccountService.IsBranchAccountExist(CombinedModel.Account.Email))
+            {
+                Snackbar.Add($"User with email '{CombinedModel.Account.Email}' already exists.", Severity.Warning);
+                return;
+            }
+
+            // If neither exists, proceed with creation
+            await BranchService.AddBranch(newBranch);
+            Snackbar.Add($"Branch '{newBranch.BranchName}' created successfully.", Severity.Success);
+
+            if (createUser)
+            {
+                var branch = await BranchService.GetBranchByNameAsync(newBranch.BranchName);
+                if (branch != null)
+                {
+                    await BranchAccountService.AddBranchAccountAsync(
+                        CombinedModel.Account.Email,
+                        CombinedModel.Account.Email,
+                        CombinedModel.Account.Password,
+                        branch.BranchId
+                    );
+                    Snackbar.Add($"Initial user '{CombinedModel.Account.Email}' created successfully for branch '{newBranch.BranchName}'.", Severity.Success);
+                    NavigationManager.NavigateTo("/store/branches"); // Adjust navigation as needed
+                }
+                else
+                {
+                    Snackbar.Add($"Error: Could not retrieve the created branch '{newBranch.BranchName}' to link the user.", Severity.Error);
+                    // Consider logic to rollback branch creation (without transaction, it's manual)
+                    // await BranchService.DeleteBranch(newBranch);
+                }
+            }
+            else
+            {
+                Snackbar.Add($"No initial user was created for branch '{newBranch.BranchName}'. You can create one later.", Severity.Info);
+                NavigationManager.NavigateTo("/branches"); // Adjust navigation as needed
+            }
+        }
+        catch (InvalidOperationException ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"An unexpected error occurred: {ex.Message}", Severity.Error);
+        }
     }
 
 }

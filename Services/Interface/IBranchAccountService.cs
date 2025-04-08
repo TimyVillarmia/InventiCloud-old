@@ -8,6 +8,8 @@ namespace InventiCloud.Services.Interface
     {
         Task AddBranchAccountAsync(string username, string email, string password, int branchId);
         Task DeleteBranchAccountAsync(string userId);
+        Task<bool> IsBranchAccountExist(string email);
+
         Task UpdateBranchAccountAsync(string userId, string? newUsername = null, string? newEmail = null, string? newPassword = null, int? newBranchId = null);
         Task<ApplicationUser> GetBranchAccountByUserName(string username);
         Task<IEnumerable<ApplicationUser>> GetAllBranchAccountsAsync();

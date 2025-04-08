@@ -28,6 +28,7 @@
                 <DataAnnotationsValidator />
                 <MudGrid>
                     <MudItem xs="10">
+                        <StatusMessage Message="@errorMessage" />
                         <MudStaticTextField For="@(() => Input.UserName)" @bind-Value="Input.UserName"
                                             Label="Username" Placeholder="username" Variant="Variant.Outlined"
                                             UserAttributes="@(new() { { "autocomplete", "true" }, { "aria-required", "true" } } )" />

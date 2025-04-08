@@ -7,6 +7,8 @@ namespace InventiCloud.Services.Interface
         Task AddBranch(Branch branch);
         Task DeleteBranch(Branch branch);
         Task UpdateBranch(Branch branch);
+        Task<bool> IsBranchExist(string branchName);
+        Task<bool> IsBranchNumberExist(string branchNumber);
         Task<Branch> GetBranchByNameAsync(string branchName);
 
         Task<IEnumerable<Branch>> GetAllBranchAsync();
