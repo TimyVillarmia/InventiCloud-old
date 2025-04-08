@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace InventiCloud.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250405074027_init")]
+    [Migration("20250408031911_init")]
     partial class init
     {
         /// <inheritdoc />
@@ -97,64 +97,6 @@ namespace InventiCloud.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
-            modelBuilder.Entity("InventiCloud.Entities.Attribute", b =>
-                {
-                    b.Property<int>("AttributeId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AttributeId"));
-
-                    b.Property<string>("AttributeName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("AttributeSetId")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("isRequired")
-                        .HasColumnType("bit");
-
-                    b.HasKey("AttributeId");
-
-                    b.HasIndex("AttributeSetId");
-
-                    b.ToTable("Attributes");
-                });
-
-            modelBuilder.Entity("InventiCloud.Entities.AttributeSet", b =>
-                {
-                    b.Property<int>("AttributeSetId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AttributeSetId"));
-
-                    b.Property<string>("AttributeSetName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("AttributeSetId");
-
-                    b.ToTable("AttributeSets");
-                });
-
-            modelBuilder.Entity("InventiCloud.Entities.AttributeValue", b =>
-                {
-                    b.Property<int>("AttributeValueId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AttributeValueId"));
-
-                    b.Property<int>("Value")
-                        .HasColumnType("int");
-
-                    b.HasKey("AttributeValueId");
-
-                    b.ToTable("AttributeValues");
-                });
-
             modelBuilder.Entity("InventiCloud.Entities.Branch", b =>
                 {
                     b.Property<int>("BranchId")
@@ -171,64 +113,13 @@ namespace InventiCloud.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("City")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Country")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("PhoneNumber")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PostalCode")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Region")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("BranchId");
 
                     b.ToTable("Branches");
-
-                    b.HasData(
-                        new
-                        {
-                            BranchId = 1,
-                            Address = "123 Main St",
-                            BranchName = "Branch A",
-                            City = "Anytown",
-                            Country = "USA",
-                            PhoneNumber = "555-123-4567",
-                            PostalCode = "12345",
-                            Region = "State"
-                        },
-                        new
-                        {
-                            BranchId = 2,
-                            Address = "456 Oak Ave",
-                            BranchName = "Branch B",
-                            City = "Springfield",
-                            Country = "Canada",
-                            PhoneNumber = "123-456-7890",
-                            PostalCode = "A1B 2C3",
-                            Region = "Province"
-                        },
-                        new
-                        {
-                            BranchId = 3,
-                            Address = "789 Pine Ln",
-                            BranchName = "Branch C",
-                            City = "London",
-                            Country = "UK",
-                            PhoneNumber = "+44 20 1234 5678",
-                            PostalCode = "SW1A 1AA",
-                            Region = "England"
-                        });
                 });
 
             modelBuilder.Entity("InventiCloud.Entities.Category", b =>
@@ -249,33 +140,6 @@ namespace InventiCloud.Migrations
                         .IsUnique();
 
                     b.ToTable("Categories");
-
-                    b.HasData(
-                        new
-                        {
-                            CategoryId = 1,
-                            CategoryName = "Eyeglasses"
-                        },
-                        new
-                        {
-                            CategoryId = 2,
-                            CategoryName = "Contact Lenses"
-                        },
-                        new
-                        {
-                            CategoryId = 3,
-                            CategoryName = "Reading Glasses"
-                        },
-                        new
-                        {
-                            CategoryId = 4,
-                            CategoryName = "Eye Care Products"
-                        },
-                        new
-                        {
-                            CategoryId = 5,
-                            CategoryName = "Sunglasses"
-                        });
                 });
 
             modelBuilder.Entity("InventiCloud.Entities.Customer", b =>
@@ -354,158 +218,6 @@ namespace InventiCloud.Migrations
                     b.HasIndex("ProductId");
 
                     b.ToTable("Inventories");
-
-                    b.HasData(
-                        new
-                        {
-                            InventoryId = 1,
-                            Allocated = 0,
-                            AvailableQuantity = 100,
-                            BranchId = 1,
-                            IncomingQuantity = 0,
-                            OnHandquantity = 100,
-                            ProductId = 1
-                        },
-                        new
-                        {
-                            InventoryId = 2,
-                            Allocated = 0,
-                            AvailableQuantity = 50,
-                            BranchId = 2,
-                            IncomingQuantity = 0,
-                            OnHandquantity = 50,
-                            ProductId = 1
-                        },
-                        new
-                        {
-                            InventoryId = 3,
-                            Allocated = 0,
-                            AvailableQuantity = 75,
-                            BranchId = 3,
-                            IncomingQuantity = 0,
-                            OnHandquantity = 75,
-                            ProductId = 1
-                        },
-                        new
-                        {
-                            InventoryId = 4,
-                            Allocated = 0,
-                            AvailableQuantity = 200,
-                            BranchId = 1,
-                            IncomingQuantity = 0,
-                            OnHandquantity = 200,
-                            ProductId = 2
-                        },
-                        new
-                        {
-                            InventoryId = 5,
-                            Allocated = 0,
-                            AvailableQuantity = 150,
-                            BranchId = 2,
-                            IncomingQuantity = 0,
-                            OnHandquantity = 150,
-                            ProductId = 2
-                        },
-                        new
-                        {
-                            InventoryId = 6,
-                            Allocated = 0,
-                            AvailableQuantity = 150,
-                            BranchId = 3,
-                            IncomingQuantity = 0,
-                            OnHandquantity = 150,
-                            ProductId = 2
-                        },
-                        new
-                        {
-                            InventoryId = 7,
-                            Allocated = 0,
-                            AvailableQuantity = 80,
-                            BranchId = 1,
-                            IncomingQuantity = 0,
-                            OnHandquantity = 80,
-                            ProductId = 3
-                        },
-                        new
-                        {
-                            InventoryId = 8,
-                            Allocated = 0,
-                            AvailableQuantity = 120,
-                            BranchId = 2,
-                            IncomingQuantity = 0,
-                            OnHandquantity = 120,
-                            ProductId = 3
-                        },
-                        new
-                        {
-                            InventoryId = 9,
-                            Allocated = 0,
-                            AvailableQuantity = 0,
-                            BranchId = 3,
-                            IncomingQuantity = 0,
-                            OnHandquantity = 90,
-                            ProductId = 3
-                        },
-                        new
-                        {
-                            InventoryId = 10,
-                            Allocated = 0,
-                            AvailableQuantity = 300,
-                            BranchId = 1,
-                            IncomingQuantity = 0,
-                            OnHandquantity = 300,
-                            ProductId = 4
-                        },
-                        new
-                        {
-                            InventoryId = 11,
-                            Allocated = 0,
-                            AvailableQuantity = 250,
-                            BranchId = 2,
-                            IncomingQuantity = 0,
-                            OnHandquantity = 250,
-                            ProductId = 4
-                        },
-                        new
-                        {
-                            InventoryId = 12,
-                            Allocated = 0,
-                            AvailableQuantity = 280,
-                            BranchId = 3,
-                            IncomingQuantity = 0,
-                            OnHandquantity = 280,
-                            ProductId = 4
-                        },
-                        new
-                        {
-                            InventoryId = 13,
-                            Allocated = 0,
-                            AvailableQuantity = 60,
-                            BranchId = 1,
-                            IncomingQuantity = 0,
-                            OnHandquantity = 60,
-                            ProductId = 5
-                        },
-                        new
-                        {
-                            InventoryId = 14,
-                            Allocated = 0,
-                            AvailableQuantity = 40,
-                            BranchId = 2,
-                            IncomingQuantity = 0,
-                            OnHandquantity = 40,
-                            ProductId = 5
-                        },
-                        new
-                        {
-                            InventoryId = 15,
-                            Allocated = 0,
-                            AvailableQuantity = 70,
-                            BranchId = 3,
-                            IncomingQuantity = 0,
-                            OnHandquantity = 70,
-                            ProductId = 5
-                        });
                 });
 
             modelBuilder.Entity("InventiCloud.Entities.Product", b =>
@@ -515,9 +227,6 @@ namespace InventiCloud.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ProductId"));
-
-                    b.Property<int?>("AttributeSetId")
-                        .HasColumnType("int");
 
                     b.Property<string>("Brand")
                         .HasColumnType("nvarchar(max)");
@@ -552,8 +261,6 @@ namespace InventiCloud.Migrations
 
                     b.HasKey("ProductId");
 
-                    b.HasIndex("AttributeSetId");
-
                     b.HasIndex("CategoryId");
 
                     b.HasIndex("ProductName")
@@ -563,101 +270,6 @@ namespace InventiCloud.Migrations
                         .IsUnique();
 
                     b.ToTable("Products");
-
-                    b.HasData(
-                        new
-                        {
-                            ProductId = 1,
-                            Brand = "VisionGuard",
-                            CategoryId = 1,
-                            Description = "High-quality glasses to protect your eyes from harmful blue light.",
-                            ImageURL = "glasses_blue_light.jpg",
-                            ProductName = "Premium Blue Light Blocking Glasses",
-                            SKU = "VG-BL-001",
-                            UnitCost = 50.00m,
-                            UnitPrice = 120.00m,
-                            isActive = true
-                        },
-                        new
-                        {
-                            ProductId = 2,
-                            Brand = "AquaView",
-                            CategoryId = 2,
-                            Description = "Comfortable daily disposable contact lenses for clear vision.",
-                            ImageURL = "contact_lenses_daily.jpg",
-                            ProductName = "Daily Disposable Contact Lenses",
-                            SKU = "AV-CD-002",
-                            UnitCost = 15.00m,
-                            UnitPrice = 35.00m,
-                            isActive = true
-                        },
-                        new
-                        {
-                            ProductId = 3,
-                            Brand = "ReadWell",
-                            CategoryId = 3,
-                            Description = "Stylish reading glasses with anti-glare coating for reduced eye strain.",
-                            ImageURL = "reading_glasses_anti_glare.jpg",
-                            ProductName = "Anti-Glare Reading Glasses",
-                            SKU = "RW-RG-003",
-                            UnitCost = 25.00m,
-                            UnitPrice = 60.00m,
-                            isActive = true
-                        },
-                        new
-                        {
-                            ProductId = 4,
-                            Brand = "MoisturePlus",
-                            CategoryId = 4,
-                            Description = "Relief from dry, irritated eyes with these lubricating eye drops.",
-                            ImageURL = "eye_drops_dry_eyes.jpg",
-                            ProductName = "Eye Drops for Dry Eyes",
-                            SKU = "MP-ED-004",
-                            UnitCost = 8.00m,
-                            UnitPrice = 20.00m,
-                            isActive = true
-                        },
-                        new
-                        {
-                            ProductId = 5,
-                            Brand = "SunStyle",
-                            CategoryId = 1,
-                            Description = "Fashionable sunglasses with UV protection for sunny days.",
-                            ImageURL = "designer_sunglasses.jpg",
-                            ProductName = "Designer Sunglasses",
-                            SKU = "SS-SG-005",
-                            UnitCost = 80.00m,
-                            UnitPrice = 200.00m,
-                            isActive = true
-                        });
-                });
-
-            modelBuilder.Entity("InventiCloud.Entities.ProductAttributeValue", b =>
-                {
-                    b.Property<int>("ProductAttributeValueId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ProductAttributeValueId"));
-
-                    b.Property<int>("AttributeId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("AttributeValueId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ProductId")
-                        .HasColumnType("int");
-
-                    b.HasKey("ProductAttributeValueId");
-
-                    b.HasIndex("AttributeId");
-
-                    b.HasIndex("AttributeValueId");
-
-                    b.HasIndex("ProductId");
-
-                    b.ToTable("ProductAttributeValues");
                 });
 
             modelBuilder.Entity("InventiCloud.Entities.PurchaseOrder", b =>
@@ -795,13 +407,20 @@ namespace InventiCloud.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SalesOrderId"));
 
+                    b.Property<string>("CreatedById")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<int>("CustomerId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("DestinationBranchId")
                         .HasColumnType("int");
 
                     b.Property<int>("OrderBranchId")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("OrderedDate")
+                    b.Property<DateTime?>("OrderedDate")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("ReferenceNumber")
@@ -810,7 +429,13 @@ namespace InventiCloud.Migrations
                     b.Property<int>("SalesPersonId")
                         .HasColumnType("int");
 
+                    b.Property<decimal>("TotalAmount")
+                        .HasPrecision(19, 2)
+                        .HasColumnType("decimal(19,2)");
+
                     b.HasKey("SalesOrderId");
+
+                    b.HasIndex("CreatedById");
 
                     b.HasIndex("CustomerId");
 
@@ -1055,6 +680,9 @@ namespace InventiCloud.Migrations
                     b.Property<string>("ReferenceNumber")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTime?>("RejectedDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("RequestedById")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
@@ -1090,6 +718,9 @@ namespace InventiCloud.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("StockTransferItemlId"));
+
+                    b.Property<int?>("PreviousQuantity")
+                        .HasColumnType("int");
 
                     b.Property<int>("ProductId")
                         .HasColumnType("int");
@@ -1129,22 +760,22 @@ namespace InventiCloud.Migrations
                         new
                         {
                             StockTransferStatusId = 1,
-                            StatusName = "Allocated"
+                            StatusName = "Requested"
                         },
                         new
                         {
                             StockTransferStatusId = 2,
-                            StatusName = "In Transit"
+                            StatusName = "Approved"
                         },
                         new
                         {
                             StockTransferStatusId = 3,
-                            StatusName = "Cancelled"
+                            StatusName = "Completed"
                         },
                         new
                         {
                             StockTransferStatusId = 4,
-                            StatusName = "Completed"
+                            StatusName = "Rejected"
                         });
                 });
 
@@ -1195,21 +826,6 @@ namespace InventiCloud.Migrations
                         .IsUnique();
 
                     b.ToTable("Suppliers");
-
-                    b.HasData(
-                        new
-                        {
-                            SupplierCode = "SUP001",
-                            Address = "123 Main St",
-                            City = "New York",
-                            Company = "Global Tech Inc.",
-                            ContactPerson = "John Doe",
-                            Country = "USA",
-                            Email = "john.doe@globaltech.com",
-                            PhoneNumber = "+15551234567",
-                            PostalCode = "12345",
-                            SupplierName = "Global Electronics"
-                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -1354,17 +970,6 @@ namespace InventiCloud.Migrations
                     b.Navigation("Branch");
                 });
 
-            modelBuilder.Entity("InventiCloud.Entities.Attribute", b =>
-                {
-                    b.HasOne("InventiCloud.Entities.AttributeSet", "AttributeSet")
-                        .WithMany("Attributes")
-                        .HasForeignKey("AttributeSetId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("AttributeSet");
-                });
-
             modelBuilder.Entity("InventiCloud.Entities.Inventory", b =>
                 {
                     b.HasOne("InventiCloud.Entities.Branch", "Branch")
@@ -1386,46 +991,13 @@ namespace InventiCloud.Migrations
 
             modelBuilder.Entity("InventiCloud.Entities.Product", b =>
                 {
-                    b.HasOne("InventiCloud.Entities.AttributeSet", "AttributeSet")
-                        .WithMany()
-                        .HasForeignKey("AttributeSetId");
-
                     b.HasOne("InventiCloud.Entities.Category", "Category")
                         .WithMany("Products")
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("AttributeSet");
-
                     b.Navigation("Category");
-                });
-
-            modelBuilder.Entity("InventiCloud.Entities.ProductAttributeValue", b =>
-                {
-                    b.HasOne("InventiCloud.Entities.Attribute", "Attribute")
-                        .WithMany()
-                        .HasForeignKey("AttributeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("InventiCloud.Entities.AttributeValue", "AttributeValue")
-                        .WithMany()
-                        .HasForeignKey("AttributeValueId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("InventiCloud.Entities.Product", "Product")
-                        .WithMany("ProductAttributeValues")
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Attribute");
-
-                    b.Navigation("AttributeValue");
-
-                    b.Navigation("Product");
                 });
 
             modelBuilder.Entity("InventiCloud.Entities.PurchaseOrder", b =>
@@ -1484,6 +1056,12 @@ namespace InventiCloud.Migrations
 
             modelBuilder.Entity("InventiCloud.Entities.SalesOrder", b =>
                 {
+                    b.HasOne("InventiCloud.Data.ApplicationUser", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("InventiCloud.Entities.Customer", "Customer")
                         .WithMany("SalesOrders")
                         .HasForeignKey("CustomerId")
@@ -1501,6 +1079,8 @@ namespace InventiCloud.Migrations
                         .HasForeignKey("SalesPersonId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("CreatedBy");
 
                     b.Navigation("Customer");
 
@@ -1700,11 +1280,6 @@ namespace InventiCloud.Migrations
                     b.Navigation("PurchaseOrders");
                 });
 
-            modelBuilder.Entity("InventiCloud.Entities.AttributeSet", b =>
-                {
-                    b.Navigation("Attributes");
-                });
-
             modelBuilder.Entity("InventiCloud.Entities.Branch", b =>
                 {
                     b.Navigation("ApplicationUser")
@@ -1726,8 +1301,6 @@ namespace InventiCloud.Migrations
             modelBuilder.Entity("InventiCloud.Entities.Product", b =>
                 {
                     b.Navigation("Inventories");
-
-                    b.Navigation("ProductAttributeValues");
                 });
 
             modelBuilder.Entity("InventiCloud.Entities.PurchaseOrder", b =>

@@ -39,26 +39,19 @@ else
 
         <MudGrid>
             <MudItem sm="6">
-                <MudStack Row="true" AlignItems="AlignItems.Center">
-                    <div>
-                        <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
-                        AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
-                    </div>
-                    <div>
-                        <MudSelect @bind-Value="@selectedBranch" @bind-Value:after="OnSelect" Variant="Variant.Outlined">
-                            @foreach (Branch branch in _branches)
-                            {
-                                <MudSelectItem Value="@branch.BranchId">@branch.BranchName</MudSelectItem>
-                            }
-                        </MudSelect>
-                       
-                    </div>
-                </MudStack>
-
+                <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                              AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
             </MudItem>
-
+            <MudItem sm="2" >
+                <MudSelect @bind-Value="@selectedBranch" @bind-Value:after="OnSelect" Variant="Variant.Outlined">
+                    @foreach (Branch branch in _branches)
+                    {
+                        <MudSelectItem Value="@branch.BranchId">@branch.BranchName</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
         </MudGrid>
-
+       
         <MudDataGrid @ref="dataGrid" T="Inventory" ServerData="ServerReload" MultiSelection="true" Filterable="false">
             <Columns>
                 <PropertyColumn Property="inventory => inventory.Product.SKU" />
@@ -104,6 +97,8 @@ else
 
     private async Task<GridData<Inventory>> ServerReload(GridState<Inventory> state)
     {
+        _inventories = await InventoryService.GetAllInventoryAsync();
+
         _filteredinventories = _inventories.Where(b => b.BranchId == selectedBranch);
 
         _filteredinventories = _filteredinventories.Where(inventory =>

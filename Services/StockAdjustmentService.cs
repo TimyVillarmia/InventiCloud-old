@@ -25,17 +25,24 @@ namespace InventiCloud.Services
             _dbFactory = dbFactory ?? throw new ArgumentNullException(nameof(dbFactory));
         }
 
-        public async Task<IEnumerable<StockAdjustment>> GetAllStockAdjustmentAsync()
+        public async Task<IEnumerable<StockAdjustment>> GetAllStockAdjustmentAsync(int? userBranchId)
         {
             using var context = _dbFactory.CreateDbContext();
-            return await context.StockAdjustments
+            IQueryable<StockAdjustment> query = context.StockAdjustments
                 .Include(sa => sa.StockAdjustmentStatus)
                 .Include(sa => sa.StockAdjustmentReason)
                 .Include(sa => sa.SourceBranch)
                 .Include(sa => sa.ApplicationUser)
                 .Include(sa => sa.StockAdjustmentItems)
-                .AsNoTracking()
-                .ToListAsync();
+                .AsNoTracking();
+
+            if (userBranchId.HasValue)
+            {
+                query = query.Where(po => po.SourceBranchId == userBranchId);
+            }
+
+            return await query.ToListAsync();
+
         }
 
         public async Task<IEnumerable<StockAdjustmentReason>> GetAllStockAdjustmentReasonAsync()

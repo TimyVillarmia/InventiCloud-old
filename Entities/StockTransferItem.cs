@@ -15,6 +15,7 @@ namespace InventiCloud.Entities
         public int ProductId { get; set; }
 
         public int TransferQuantity { get; set; }
+        public int? PreviousQuantity { get; set; }
 
 
         // navigation properties

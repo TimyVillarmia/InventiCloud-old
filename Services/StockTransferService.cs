@@ -45,6 +45,30 @@ namespace InventiCloud.Services
                 .ToListAsync();
         }
 
+        public async Task<IEnumerable<StockTransfer>> GetStockTransfersRequestedByUserAsync(string requestedByUserId)
+        {
+            using var context = _dbFactory.CreateDbContext();
+            return await context.StockTransfers
+                .Include(st => st.SourceBranch)
+                .Include(st => st.DestinationBranch)
+                .Include(st => st.Status)
+                .Where(st => st.RequestedById == requestedByUserId)
+                .AsNoTracking()
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<StockTransfer>> GetStockTransfersForApprovalAsync(string approvedByUserId)
+        {
+            using var context = _dbFactory.CreateDbContext();
+            return await context.StockTransfers
+                .Include(st => st.SourceBranch)
+                .Include(st => st.DestinationBranch)
+                .Include(st => st.Status)
+                .Where(st => st.ApprovedById == approvedByUserId)
+                .AsNoTracking()
+                .ToListAsync();
+        }
+
         public async Task<IEnumerable<StockTransferItem>> GetAllStockTransferItemByIdAsync(int? stockTransferId)
         {
             if (!stockTransferId.HasValue) throw new ArgumentNullException(nameof(stockTransferId), "Stock Transfer ID cannot be null.");
@@ -106,7 +130,7 @@ namespace InventiCloud.Services
                 await context.SaveChangesAsync();
 
 
-                _navigationManager.NavigateTo($"/inventory/stock-transfers/{stockTransfer.ReferenceNumber}");
+                _navigationManager.NavigateTo($"/inventory/stock-transfers/requests/{stockTransfer.ReferenceNumber}");
                 _logger.LogInformation("Stock Transfer {StockTransferId} added successfully.", stockTransfer.StockTransferId);
             }
             catch (Exception ex)
@@ -118,13 +142,17 @@ namespace InventiCloud.Services
 
         public async Task<StockTransfer> GetStockTransferByReferenceNumberAsync(string referenceNumber)
         {
-            if (string.IsNullOrEmpty(referenceNumber)) throw new ArgumentNullException(nameof(referenceNumber), "Reference Number cannot be null or empty.");
+            if (string.IsNullOrEmpty(referenceNumber))
+            {
+                _logger.LogError("GetStockTransferByReferenceNumberAsync called with null or empty referenceNumber.");
+                throw new ArgumentNullException(nameof(referenceNumber), "Reference Number cannot be null or empty.");
+            }
 
             using var context = _dbFactory.CreateDbContext();
 
             try
             {
-                return await context.StockTransfers
+                var stockTransfer = await context.StockTransfers
                     .Include(st => st.RequestedBy)
                     .Include(st => st.ApprovedBy)
                     .Include(st => st.SourceBranch)
@@ -132,11 +160,21 @@ namespace InventiCloud.Services
                     .Include(st => st.Status)
                     .Include(st => st.StockTransferItems)
                         .ThenInclude(st => st.Product)
-                    .FirstAsync(po => po.ReferenceNumber == referenceNumber);
+                    .FirstOrDefaultAsync(st => st.ReferenceNumber == referenceNumber);
+
+                if (stockTransfer == null)
+                {
+                    _logger.LogWarning("Stock Transfer with Reference Number '{ReferenceNumber}' not found.", referenceNumber);
+                    return null;
+
+                }
+
+                return stockTransfer;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving purchase order by reference number.");
+                _logger.LogError(ex, "Error retrieving Stock Transfer by Reference Number '{ReferenceNumber}'.", referenceNumber);
+                // Consider re-throwing a more specific exception or returning null based on your error handling strategy
                 return null;
             }
         }
@@ -346,13 +384,13 @@ namespace InventiCloud.Services
             }
         }
 
-        public async Task StockTransferToApprovedAsync(string referenceNumber) => await UpdateStockTransferStatusAndInventory(referenceNumber, "Approved");
+        public async Task StockTransferToApprovedAsync(string referenceNumber) => await UpdateStockTransferStatusAndDates(referenceNumber, "Approved", DateTime.Now, null, null);
 
-        public async Task StockTransferToCompletedAsync(string referenceNumber) => await UpdateStockTransferStatusAndInventory(referenceNumber, "Completed");
+        public async Task StockTransferToCompletedAsync(string referenceNumber) => await UpdateStockTransferStatusAndDates(referenceNumber, "Completed", null, DateTime.Now, null);
 
-        public async Task StockTransferToRejectedAsync(string referenceNumber) => await UpdateStockTransferStatusAndInventory(referenceNumber, "Rejected");
+        public async Task StockTransferToRejectedAsync(string referenceNumber) => await UpdateStockTransferStatusAndDates(referenceNumber, "Rejected", null, null, DateTime.Now);
 
-        private async Task UpdateStockTransferStatusAndInventory(string referenceNumber, string statusName)
+        private async Task UpdateStockTransferStatusAndDates(string referenceNumber, string statusName, DateTime? dateApproved, DateTime? dateCompleted, DateTime? rejectedDate)
         {
             if (string.IsNullOrEmpty(referenceNumber)) throw new ArgumentNullException(nameof(referenceNumber), "Reference number cannot be null or empty.");
 
@@ -384,13 +422,21 @@ namespace InventiCloud.Services
                 if (newStatus == null) throw new InvalidOperationException($"{statusName} status not found in the database.");
 
                 stockTransfer.StatusId = newStatus.StockTransferStatusId;
+
+                // Update dates based on the new status
+                stockTransfer.DateApproved = dateApproved ?? stockTransfer.DateApproved;
+                stockTransfer.DateCompleted = dateCompleted ?? stockTransfer.DateCompleted;
+                stockTransfer.RejectedDate = rejectedDate ?? stockTransfer.RejectedDate;
+
                 await context.SaveChangesAsync();
 
                 switch (statusName.ToLower())
                 {
                     case "approved": await UpdateInventoryForApproved(stockTransfer); break;
                     case "completed": await UpdateInventoryForComplete(stockTransfer); break;
-                    case "rejected": await UpdateStockTransferToRejected(stockTransfer); break;
+                    case "rejected": // No specific inventory update for rejection in this example
+                        _logger.LogInformation("Stock Transfer {ReferenceNumber} rejected.", referenceNumber);
+                        break;
                 }
 
                 _logger.LogInformation("Stock Transfer {ReferenceNumber} status changed to '{StatusName}'.", referenceNumber, statusName);
@@ -476,15 +522,6 @@ namespace InventiCloud.Services
             }
         }
 
-        private async Task UpdateStockTransferToRejected(StockTransfer stockTransfer)
-        {
-            // No inventory updates are needed when a "Requested" Stock Transfer is rejected.
-            // The inventory levels should remain as they were before the request was made.
-
-            // You might want to add logging here for auditing purposes.
-            _logger.LogInformation($"Stock Transfer '{stockTransfer.ReferenceNumber}' rejected. No inventory changes applied.");
-
-        }
 
         public async Task DisposeAsync()
         {

@@ -1,15 +1,18 @@
-﻿@page "/inventory/stock-transfers/requested/"
-@page "/inventory/stock-transfers/approvals/"
+﻿@page "/inventory/stock-transfers/requests/"
 @using InventiCloud.Components.UI
+@using InventiCloud.Data
 @using InventiCloud.Services
 @using InventiCloud.Services.Interface
 @using InventiCloud.Entities
 @inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<ApplicationUser> UserManager
 @inject IBranchService BranchService
 @inject IStockTransferService StockTransferService
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
 @attribute [Authorize]
 <PageTitle>Stock Transfers</PageTitle>
 
@@ -43,7 +46,7 @@ else
             <MudItem sm="6">
                 <MudStack Row="true" AlignItems="AlignItems.Center">
                     <MudTextField T="string" ValueChanged="@(s => OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
-                                  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+                    AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
                 </MudStack>
             </MudItem>
             <MudItem sm="6">
@@ -66,7 +69,7 @@ else
                 <TemplateColumn CellClass="d-flex justify-end">
                     <CellTemplate>
                         <MudMenu Icon="@Icons.Material.Filled.MoreVert" AriaLabel="Open user menu">
-                            <MudMenuItem Label="Edit" href="@($"/inventory/stock-transfers/{context.Item.ReferenceNumber}")" />
+                            <MudMenuItem Label="View" href="@($"/inventory/stock-transfers/requests/{context.Item.ReferenceNumber}")" />
                             @if (context.Item.Status.StatusName.ToLower() == "allocated")
                             {
                                 <MudMenuItem Label="Delete" Class="red-text" OnClick="@(() => OpenDialogAsync(context.Item))" />
@@ -89,7 +92,7 @@ else
     private IEnumerable<Branch>? _branches;
     private IEnumerable<StockTransfer>? _stocktransfers;
     private IEnumerable<StockTransfer>? _filteredstocktransfers;
-
+    private ApplicationUser? CurrentUser { get; set; } // Replace ApplicationUser with your actual user class
     protected override async Task OnInitializedAsync()
     {
         await LoadStockTransfers();
@@ -97,8 +100,20 @@ else
 
     private async Task LoadStockTransfers()
     {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
         _branches = await BranchService.GetAllBranchAsync();
-        _stocktransfers = await StockTransferService.GetAllStockTransferAsync();
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            CurrentUser = await UserManager.GetUserAsync(user);
+
+            if (CurrentUser != null)
+            {
+                _stocktransfers = await StockTransferService.GetStockTransfersRequestedByUserAsync(CurrentUser.Id);
+
+            }
+        }
+
     }
 
     private Color GetChipColor(string status)
@@ -120,6 +135,7 @@ else
 
     private async Task<GridData<StockTransfer>> ServerReload(GridState<StockTransfer> state)
     {
+        _stocktransfers = await StockTransferService.GetStockTransfersRequestedByUserAsync(CurrentUser.Id);
         _filteredstocktransfers = _stocktransfers;
 
         _filteredstocktransfers = _filteredstocktransfers.Where(st =>
@@ -167,7 +183,7 @@ else
             return;
         }
 
-        NavigationManager.NavigateTo($"/inventory/stock-transfers/{args.Item.ReferenceNumber}");
+        NavigationManager.NavigateTo($"/inventory/stock-transfers/requests/{args.Item.ReferenceNumber}");
     }
 
     async Task OpenDialogAsync(StockTransfer stockTransfer)

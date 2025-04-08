@@ -1,11 +1,14 @@
-﻿using InventiCloud.Entities;
+﻿using InventiCloud.Data;
+using InventiCloud.Entities;
 using InventiCloud.Services.Interface;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 
 namespace InventiCloud.Services
 {
-    public class BranchService(ILogger<BranchService> _logger, IDbContextFactory<InventiCloud.Data.ApplicationDbContext> DbFactory) : IBranchService
+    public class BranchService(ILogger<BranchService> _logger,
+        IDbContextFactory<InventiCloud.Data.ApplicationDbContext> DbFactory) : IBranchService
     {
         public async Task AddBranch(Branch branch)
         {
@@ -15,6 +18,10 @@ namespace InventiCloud.Services
                 if (await context.Branches.AnyAsync(b => b.BranchName == branch.BranchName))
                 {
                     throw new InvalidOperationException($"'{branch.BranchName}' already exists.");
+                }
+                if (await context.Branches.AnyAsync(b => b.PhoneNumber == branch.PhoneNumber))
+                {
+                    throw new InvalidOperationException($"A branch with the phone number '{branch.PhoneNumber}' already exists.");
                 }
 
                 context.Branches.Add(branch);
@@ -45,29 +52,33 @@ namespace InventiCloud.Services
             }
         }
 
+
         public async Task DeleteBranch(Branch branch)
         {
             try
             {
                 using var context = DbFactory.CreateDbContext();
+                var existingbranch = context.Branches
+                    .Include(b => b.Inventories)
+                    .FirstOrDefault(b => b.BranchName == branch.BranchName);
 
-                if (branch.Inventories.Any())
+                if (existingbranch.Inventories.Any())
                 {
                     throw new InvalidOperationException("Cannot delete branch. It has existing inventories.");
                 }
 
-                context.Branches.Remove(branch!);
+                context.Branches.Remove(existingbranch!);
                 await context.SaveChangesAsync();
 
             }
             catch (InvalidOperationException ex)
             {
-                _logger.LogError(ex, "An error occurred while deleting the branch.", branch);
+                _logger.LogError(ex.Message, "An error occurred while deleting the branch.", branch);
                 throw; // Re-throw the exception to be handled in the calling method
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "An error occurred while deleting the branch.", branch);
+                _logger.LogError(ex.Message, "An error occurred while deleting the branch.", branch);
                 throw; // Re-throw the exception to be handled in the calling method
             }
         }
@@ -104,6 +115,44 @@ namespace InventiCloud.Services
             {
                 _logger.LogError(ex, "Error retrieving branch by name: {BranchName}", branchName);
                 throw;
+            }
+        }
+
+        public async Task<bool> IsBranchExist(string branchName)
+        {
+            if (branchName == null)
+            {
+                return false; // Or throw ArgumentNullException if you consider null an error
+            }
+
+            try
+            {
+                using var context = DbFactory.CreateDbContext();
+                return await context.Branches.AnyAsync(b => b.BranchName == branchName);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking if branch exists: {BranchName}", branchName);
+                throw; // Re-throw the exception for the calling code to handle
+            }
+        }
+
+        public async Task<bool> IsBranchNumberExist(string branchNumber)
+        {
+            if (branchNumber == null)
+            {
+                return false; // Or throw ArgumentNullException if you consider null an error
+            }
+
+            try
+            {
+                using var context = DbFactory.CreateDbContext();
+                return await context.Branches.AnyAsync(b => b.PhoneNumber == branchNumber);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking if branch exists: {branchNumber}", branchNumber);
+                throw; // Re-throw the exception for the calling code to handle
             }
         }
 

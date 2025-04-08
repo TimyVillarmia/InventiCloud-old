@@ -7,6 +7,8 @@ namespace InventiCloud.Services.Interface
     public interface IStockTransferService
     {
         Task<IEnumerable<StockTransfer>> GetAllStockTransferAsync();
+        Task<IEnumerable<StockTransfer>> GetStockTransfersRequestedByUserAsync(string requestedByUserId);
+        Task<IEnumerable<StockTransfer>> GetStockTransfersForApprovalAsync(string approvedByUserId);
         Task<IEnumerable<StockTransferItem>> GetAllStockTransferItemByIdAsync(int? stockTransferId);
 
 

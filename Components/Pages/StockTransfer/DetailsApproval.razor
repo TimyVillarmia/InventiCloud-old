@@ -1,25 +1,28 @@
-﻿@page "/inventory/stock-transfers/requested/{ReferenceNumber}"
-@page "/inventory/stock-transfers/approvals/{ReferenceNumber}"
+﻿@page "/inventory/stock-transfers/approvals/{ReferenceNumber}"
 @using InventiCloud.Components.UI
+@using InventiCloud.Data
 @using InventiCloud.Services
 @using InventiCloud.Services.Interface
 @using InventiCloud.Entities
 @using System.ComponentModel.DataAnnotations
 @inject IBranchService BranchService
 @inject IStockTransferService StockTransferService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<ApplicationUser> UserManager
 @inject IProductService ProductService
 @inject IInventoryService InventoryService
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 @inject NavigationManager NavigationManager
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
 @attribute [Authorize]
 <MudContainer Class="pt-5" MaxWidth="MaxWidth.Large">
 
     <div class="d-flex align-items-center mb-4">
         <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Href="/inventory/stock-transfers/approvals" />
         <MudText Typo="Typo.h4">@ReferenceNumber</MudText>
-        <MudChip T="string" Color="@SelectedColor">@(Status == "requested" ? "Awaiting for approval" : Status)</MudChip>
+        <MudChip T="string" Color="@SelectedColor">@Status</MudChip>
     </div>
 
     <MudText Typo="Typo.h6">DETAILS</MudText>
@@ -27,16 +30,16 @@
 
         <MudItem xs="12" sm="6">
             <MudTextField T="string" Label="Source Branch" @bind-Value="StockTransfer.SourceBranch.BranchName" ReadOnly="true"
-            Variant="Variant.Outlined" />
-            <MudTextField T="string" Class="mb-4" Label="Approved By" @bind-Value="StockTransfer.ApprovedBy.UserName" ReadOnly="true" Variant="Variant.Outlined" />
+                          Variant="Variant.Outlined" />
+            <MudTextField T="string" Class="mb-4" Label="Approver" @bind-Value="StockTransfer.ApprovedBy.UserName" ReadOnly="true" Variant="Variant.Outlined" />
 
         </MudItem>
 
         <MudItem xs="12" sm="6">
             <MudTextField T="string" Label="Destination Branch" @bind-Value="StockTransfer.DestinationBranch.BranchName"
-            ReadOnly="true" Variant="Variant.Outlined" />
+                          ReadOnly="true" Variant="Variant.Outlined" />
             <MudDatePicker Label="Requested Date" Editable="true" @bind-Date="StockTransfer.RequestedDate" ReadOnly="true"
-            Mask="@(new DateMask("MM/dd/yyyy"))" DateFormat="MM/dd/yyyy" Placeholder="Requested Date" Variant="Variant.Outlined" />
+                           Mask="@(new DateMask("MM/dd/yyyy"))" DateFormat="MM/dd/yyyy" Placeholder="Requested Date" Variant="Variant.Outlined" />
         </MudItem>
         @if (!isRequested)
         {
@@ -58,17 +61,13 @@
             <PropertyColumn Property="sti => sti.Product.ProductName" Title="Product" />
             @if (isRequested)
             {
-                <PropertyColumn Property="sti => sti.AvailableQuantity" Title="Available Quantity" />
+               <PropertyColumn Property="sti => sti.AvailableQuantity" Title="Available Quantity" />
 
             }
             <PropertyColumn Property="sti => sti.TransferQuantity" Title="Transfer Quantity" />
         </Columns>
     </MudDataGrid>
     <div class="d-flex align-end mt-12">
-        @if (IsRequestedDetailsPage)
-        {
-            <MudButton OnClick="DeleteStockTransfer" Variant="Variant.Outlined" Color="Color.Error">Delete</MudButton>
-        }
         @if (Status.ToLower() == "requested")
         {
             <MudButton OnClick="RejectStockTransfer" Variant="Variant.Outlined" Color="Color.Error">Reject</MudButton>
@@ -101,10 +100,9 @@
     private IEnumerable<Inventory>? _sourceBranchInventories;
 
     // conditions
-    private string? Status = "Draft";
+    private string? Status = "Requested";
     public Color SelectedColor;
     public bool isRequested = true;
-    private bool IsRequestedDetailsPage = false; // Flag to track the current page
 
 
 
@@ -122,7 +120,7 @@
         [Required(ErrorMessage = "Quantity is required.")]
         public int TransferQuantity { get; set; }
 
-        public int AvailableQuantity { get; set; }
+        public int? AvailableQuantity { get; set; }
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
@@ -138,23 +136,29 @@
         }
     }
 
+    private ApplicationUser? CurrentUser { get; set; } // Replace ApplicationUser with your actual user class
+
+
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
         _branches = await BranchService.GetAllBranchAsync();
 
         var data = await StockTransferService.GetStockTransferByReferenceNumberAsync(ReferenceNumber);
 
+        CurrentUser = await UserManager.GetUserAsync(user);
 
         if (data is null)
         {
             NavigationManager.NavigateTo("notfound");
         }
+        if (data.ApprovedById != CurrentUser.Id)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
 
         StockTransfer = data;
-
-        // Determine if it's the /requested details page
-        IsRequestedDetailsPage = NavigationManager.Uri.ToLowerInvariant().StartsWith($"{NavigationManager.BaseUri}inventory/stock-transfers/requested/{ReferenceNumber?.ToLowerInvariant()}");
-
 
         Status = data.Status.StatusName;
         _sourceBranchInventories = await InventoryService.GetAllInventoryByBranchAsync(data.SourceBranch.BranchId);
@@ -163,15 +167,31 @@
 
         var items = data.StockTransferItems.ToList();
 
+        if (isRequested)
+        {
+            StockTransferItems = items.Select(vm => new StockTransferItemViewModel
+                {
+                    Id = vm.StockTransferItemlId,
+                    Product = vm.Product,
+                    AvailableQuantity = _sourceBranchInventories
+                            .FirstOrDefault(i => i.Product.ProductId == vm.Product.ProductId)?.AvailableQuantity ?? 0,
+                    TransferQuantity = vm.TransferQuantity,
+                }).ToList();
+        }
+        else
+        {
+            StockTransferItems = items.Select(vm => new StockTransferItemViewModel
+                {
+                    Id = vm.StockTransferItemlId,
+                    Product = vm.Product,
+                    AvailableQuantity = vm.PreviousQuantity,
+                    TransferQuantity = vm.TransferQuantity,
+                }).ToList();
+        }
 
-        StockTransferItems = items.Select(vm => new StockTransferItemViewModel
-            {
-                Id = vm.StockTransferItemlId,
-                Product = vm.Product,
-                TransferQuantity = vm.TransferQuantity,
-                AvailableQuantity = _sourceBranchInventories
-                                               .FirstOrDefault(i => i.Product.ProductId == vm.Product.ProductId)?.AvailableQuantity ?? 0 // Use vm.Product.ProductId and handle null
-            }).ToList();
+      
+
+
 
         switch (Status.ToLower()) // Use ToLower() for case-insensitive comparison
         {
@@ -198,43 +218,6 @@
 
     }
 
-
-
-
-
-
-    private async Task DeleteStockTransfer()
-    {
-        var parameters = new DialogParameters<DialogComponent>
-        {
-            { x => x.ContentText, $"Are you sure you want to delete the Stock Transfer '{StockTransfer.ReferenceNumber}'? This action cannot be undone." },
-            { "Button1Text", "Delete" },
-            { "Button2Text", "Cancel" },
-            { "Color", Color.Error }
-        };
-
-        var dialog = await DialogService.ShowAsync<DialogComponent>("Delete Stock Transfer", parameters);
-        var result = await dialog.Result;
-
-        if (!result.Canceled)
-        {
-            try
-            {
-                // delete from db
-                await StockTransferService.DeleteStockTransferAsync(ReferenceNumber);
-                NavigationManager.NavigateTo($"/inventory/stock-transfers");
-                Snackbar.Add("Stock Transfer Deleted", Severity.Success);
-            }
-            catch (InvalidOperationException ex)
-            {
-                Snackbar.Add(ex.Message, Severity.Error);
-            }
-            catch (Exception ex)
-            {
-                Snackbar.Add("An error occurred while deleting the Stock Transfer.", Severity.Error);
-            }
-        }
-    }
 
 
     private async Task ApproveStockTransfer()

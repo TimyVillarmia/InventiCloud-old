@@ -116,8 +116,8 @@ else
             try
             {
                 await SupplierService.DeleteSupplierAsync(supplier);
-                await dataGrid.ReloadServerData();
                 Snackbar.Add("Supplier Deleted", Severity.Success);
+                await dataGrid.ReloadServerData();
 
             }
             catch (InvalidOperationException ex)

@@ -14,6 +14,7 @@ namespace InventiCloud.Services
         NavigationManager NavigationManager,
         IDbContextFactory<InventiCloud.Data.ApplicationDbContext> DbFactory) : IPurchaseOrderService
     {
+
         public async Task AddPurchaseOrderAsync(PurchaseOrder purchaseOrder, ICollection<PurchaseOrderItem> purchaseOrderItems)
         {
             if (purchaseOrder == null)
@@ -129,15 +130,22 @@ namespace InventiCloud.Services
             await context.DisposeAsync();
         }
 
-        public async Task<IEnumerable<PurchaseOrder>> GetAllPurchaseOrderAsync()
+        public async Task<IEnumerable<PurchaseOrder>> GetAllPurchaseOrderAsync(int? userBranchId)
         {
             using var context = DbFactory.CreateDbContext();
-            return await context.PurchaseOrders
+            IQueryable<PurchaseOrder> query = context.PurchaseOrders
                 .Include(po => po.CreatedBy)
                 .Include(po => po.Supplier)
                 .Include(po => po.DestinationBranch)
                 .Include(po => po.PurchaseOrderStatus)
-                .ToListAsync();
+                .AsNoTracking();
+
+            if (userBranchId.HasValue)
+            {
+                query = query.Where(po => po.DestinationBranchId == userBranchId);
+            }
+
+            return await query.ToListAsync();
         }
 
         public async Task PurchaseOrderToCancelAsync(PurchaseOrder purchaseOrder)
