@@ -1,4 +1,4 @@
-﻿@page "/store/branches/branch/{BranchName}"
+﻿@page "/store/branches/{BranchName}"
 @using InventiCloud.Data
 @using InventiCloud.Utils
 @using Microsoft.EntityFrameworkCore
@@ -11,6 +11,7 @@
 @inject IBranchAccountService BranchAccountService
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
+@inject IDialogService DialogService
 @using Microsoft.AspNetCore.Authorization
 @using System.ComponentModel.DataAnnotations
 @attribute [Authorize(Roles = "Administrator")]
@@ -28,29 +29,25 @@
             <MudItem xs="12">
                 <MudText Typo="Typo.h6">BRANCH DETAILS</MudText>
             </MudItem>
-            <MudItem xs="12" sm="6">
-                <MudTextField @bind-Value="BranchViewModel.Branch.BranchName" Mask="@maskOnlyLetters" Label="Branch Name" For="@(() => BranchViewModel.Branch.BranchName)" Variant="Variant.Outlined" Required />
-            </MudItem>
-            <MudItem xs="12" sm="6">
-                <MudTextField @bind-Value="BranchViewModel.Branch.PhoneNumber" Mask="@(new PatternMask("0 000 000 0000"))" Label="Phone Number" For="@(() => BranchViewModel.Branch.PhoneNumber)" Variant="Variant.Outlined" />
-            </MudItem>
             <MudItem xs="12">
+                <MudTextField @bind-Value="BranchViewModel.Branch.BranchName" Mask="@maskOnlyLetters" Label="Branch Name" For="@(() => BranchViewModel.Branch.BranchName)" Variant="Variant.Outlined" Required />
+                <MudTextField @bind-Value="BranchViewModel.Branch.PhoneNumber" Mask="@(new PatternMask("00000000000"))" Label="Phone Number" For="@(() => BranchViewModel.Branch.PhoneNumber)" Variant="Variant.Outlined" />
                 <MudTextField @bind-Value="BranchViewModel.Branch.Address" Label="Address" For="@(() => BranchViewModel.Branch.Address)" Variant="Variant.Outlined" Lines="2" />
-            </MudItem>
+             </MudItem>  
             <MudItem xs="12">
                 <MudDivider Class="my-6" />
                 <MudText Typo="Typo.h6">BRANCH ACCOUNT</MudText>
             </MudItem>
             <MudItem xs="12" sm="12">
-                <MudTextField @bind-Value="BranchViewModel.Account.Email" Label="Email" For="@(() => BranchViewModel.Account.Email)" Variant="Variant.Outlined" Required InputType="InputType.Email" />
-            </MudItem>
-            <MudItem xs="12" sm="12">
-                <MudTextField @bind-Value="BranchViewModel.Account.Password" Label="Password" For="@(() => BranchViewModel.Account.Password)" Variant="Variant.Outlined" InputType="InputType.Password" />
+                <MudTextField @bind-Value="BranchViewModel.Account.Email" ReadOnly="true" Label="Email" For="@(() => BranchViewModel.Account.Email)" Variant="Variant.Outlined" Required InputType="InputType.Email" />
+                <MudTextField @bind-Value="BranchViewModel.Account.Password" Label="Change Password" For="@(() => BranchViewModel.Account.Password)" Variant="Variant.Outlined" InputType="InputType.Password" />
+                <MudTextField @bind-Value="BranchViewModel.Account.ConfirmPassword" Label="Confirm Password" For="@(() => BranchViewModel.Account.ConfirmPassword)" Variant="Variant.Outlined" InputType="InputType.Password" />
+
             </MudItem>
 
 
             <MudItem xs="12" Class="d-flex align-end mt-12 gap-2">
-                <MudButton Href="/store/branches" Variant="Variant.Outlined">CANCEL</MudButton>
+                <MudButton OnClick="OpenDialogAsync" Variant="Variant.Outlined" Color="Color.Error">DELETE</MudButton>
                 <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary">SAVE CHANGES</MudButton>
             </MudItem>
         </MudGrid>
@@ -68,36 +65,34 @@
 
     private CombinedBranchAccountViewModel BranchViewModel { get; set; } = new();
 
+
     public class CombinedBranchAccountViewModel
     {
-        public BranchInfo Branch { get; set; } = new BranchInfo();
+        public Branch Branch { get; set; } = new();
         public AccountInfo Account { get; set; } = new AccountInfo();
     }
 
-    public class BranchInfo
-    {
-        [Required]
-        public string BranchName { get; set; }
-
-        [Required]
-        public string Address { get; set; }
-
-        [Required]
-        public string PhoneNumber { get; set; }
-    }
 
     public class AccountInfo
     {
+        public string Id { get; set; }
 
         [Required]
         [EmailAddress]
         public string Email { get; set; }
 
-        [Required]
-        public string Password { get; set; }
+        [Required(ErrorMessage = "Password is required.")]
+        [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
+        [RegularExpression("^(?=.*[0-9])(?=.*[A-Z]).+$", ErrorMessage = "Passwords must have at least one digit and one uppercase letter.")]
+        [DataType(DataType.Password)]
+        public string Password { get; set; } = "";
 
+        [DataType(DataType.Password)]
+        [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
+        public string ConfirmPassword { get; set; } = "";
+
+       
     }
-
 
     protected override async Task OnInitializedAsync()
     {
@@ -108,19 +103,71 @@
             NavigationManager.NavigateTo("notfound");
         }
 
-        BranchViewModel.Branch.BranchName = data.BranchName;
-        BranchViewModel.Branch.Address = data.Address;
-        BranchViewModel.Branch.PhoneNumber = data.PhoneNumber;
+        BranchViewModel.Branch = data;
 
 
+        BranchViewModel.Account.Id = data.ApplicationUser.Id;
         BranchViewModel.Account.Email = data.ApplicationUser.Email;
 
     }
 
-    private async Task UpdateBranchAndUser()
+    private async Task UpdateBranchAndUser(EditContext context)
     {
-        
+        try
+        {
+            var branch = await BranchService.UpdateBranch(BranchViewModel.Branch);
+            await BranchAccountService.UpdateBranchAccountAsync(
+                           BranchViewModel.Account.Id,
+                           BranchViewModel.Account.Email,
+                           BranchViewModel.Account.Password,
+                           branch.BranchId
+            );
+
+            Snackbar.Add($"{BranchViewModel.Branch.BranchName} Updated", Severity.Success);
+            NavigationManager.NavigateTo("/store/branches");
+
+        }
+        catch (InvalidOperationException ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
     }
+
+    async Task OpenDialogAsync()
+    {
+        var parameters = new DialogParameters<DialogComponent>
+      {
+          {x => x.ContentText, $"Are you sure you want to delete the branch'{BranchViewModel.Branch.BranchName}'? This action cannot be undone."},
+          { "Button1Text", "Delete" },
+          { "Button2Text", "Cancel" },
+          { "Color", Color.Error }
+      };
+
+        var dialog = await DialogService.ShowAsync<DialogComponent>("Delete Branch Account", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            try
+            {
+                await BranchService.DeleteBranch(BranchViewModel.Branch);
+                Snackbar.Add($"Branch '{BranchViewModel.Branch.BranchName}' deleted successfully.", Severity.Success);
+            }
+            catch (InvalidOperationException ex)
+            {
+                Snackbar.Add(ex.Message, Severity.Error);
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"An error occurred while deleting the branch '{BranchViewModel.Branch.BranchName}'.", Severity.Error);
+            }
+        }
+    }
+
 
     
 }

@@ -59,7 +59,7 @@ else
                 <TemplateColumn CellClass="d-flex justify-end">
                     <CellTemplate>
                         <MudMenu Icon="@Icons.Material.Filled.MoreVert" AriaLabel="Open user menu">
-                            <MudMenuItem Label="Edit" href="@($"/store/branches/branch/{context.Item.BranchName}")" />
+                            <MudMenuItem Label="Edit" href="@($"/store/branches/{context.Item.BranchName}")" />
                             <MudMenuItem Label="Delete" Class="red-text" OnClick="@(() => OpenDialogBranchAsync(context.Item))" />
 
                         </MudMenu>

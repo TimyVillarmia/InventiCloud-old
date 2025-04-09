@@ -32,7 +32,7 @@
                 <MudTextField @bind-Value="CombinedModel.Branch.BranchName" Mask="@maskOnlyLetters" Label="Branch Name" For="@(() => CombinedModel.Branch.BranchName)" Variant="Variant.Outlined" Required />
             </MudItem>
             <MudItem xs="12" sm="6">
-                <MudTextField @bind-Value="CombinedModel.Branch.PhoneNumber" Mask="@(new PatternMask("0 000 000 0000"))" Label="Phone Number" For="@(() => CombinedModel.Branch.PhoneNumber)" Variant="Variant.Outlined" />
+                <MudTextField @bind-Value="CombinedModel.Branch.PhoneNumber" Mask="@(new PatternMask("00000000000"))" Label="Phone Number" For="@(() => CombinedModel.Branch.PhoneNumber)" Variant="Variant.Outlined" />
             </MudItem>
             <MudItem xs="12">
                 <MudTextField @bind-Value="CombinedModel.Branch.Address" Label="Address" For="@(() => CombinedModel.Branch.Address)" Variant="Variant.Outlined" Lines="2" />

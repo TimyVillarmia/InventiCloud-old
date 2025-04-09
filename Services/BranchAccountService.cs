@@ -8,6 +8,7 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.ComponentModel.DataAnnotations;
+using System.Text.RegularExpressions;
 
 namespace InventiCloud.Services
 {
@@ -199,7 +200,7 @@ namespace InventiCloud.Services
             await context.DisposeAsync();
         }
 
-        public async Task UpdateBranchAccountAsync(string userId, string? newUsername = null, string? newEmail = null, string? newPassword = null, int? newBranchId = null)
+       public async Task UpdateBranchAccountAsync(string userId, string? newEmail = null, string? newPassword = null, int? newBranchId = null)
         {
             if (string.IsNullOrWhiteSpace(userId))
             {
@@ -219,14 +220,14 @@ namespace InventiCloud.Services
                 bool hasChanges = false;
 
                 // Update Username
-                if (!string.IsNullOrWhiteSpace(newUsername) && user.UserName != newUsername)
+                if (!string.IsNullOrWhiteSpace(newEmail) && user.UserName != newEmail)
                 {
-                    var existingUserWithUsername = await _userManager.FindByNameAsync(newUsername);
+                    var existingUserWithUsername = await _userManager.FindByNameAsync(newEmail);
                     if (existingUserWithUsername != null && existingUserWithUsername.Id != userId)
                     {
-                        throw new ValidationException($"Username '{newUsername}' is already taken.");
+                        throw new ValidationException($"Email '{newEmail}' is already taken.");
                     }
-                    user.UserName = newUsername;
+                    user.UserName = newEmail;
                     hasChanges = true;
                 }
 
@@ -243,30 +244,26 @@ namespace InventiCloud.Services
                     hasChanges = true;
                 }
 
+               
+
                 // Update Password
                 if (!string.IsNullOrWhiteSpace(newPassword))
                 {
+                    // Check password against regex
+                    const string PasswordRegex = "^(?=.*[0-9])(?=.*[A-Z]).+$"; // Consider making this a configurable constant
+                    const string PasswordErrorMessage = "Passwords must have at least one digit and one uppercase letter."; // Consider making this a configurable constant
+                    if (!Regex.IsMatch(newPassword, PasswordRegex))
+                    {
+                        throw new ValidationException(PasswordErrorMessage);
+                    }
+
                     var token = await _userManager.GeneratePasswordResetTokenAsync(user);
                     var result = await _userManager.ResetPasswordAsync(user, token, newPassword);
                     if (!result.Succeeded)
                     {
                         string errors = string.Join(", ", result.Errors.Select(e => e.Description));
-                        throw new Exception($"Failed to update password for user '{userId}': {errors}");
+                        throw new InvalidOperationException($"{errors}");
                     }
-                    hasChanges = true;
-                }
-
-                // Update BranchId
-                if (newBranchId.HasValue && user.BranchId != newBranchId.Value)
-                {
-                    // Check if another user is already assigned to the new branch
-                    var existingUserInNewBranch = await context.Users
-                        .FirstOrDefaultAsync(u => u.BranchId == newBranchId.Value && u.Id != userId);
-                    if (existingUserInNewBranch != null)
-                    {
-                        throw new InvalidOperationException($"A user account is already associated with Branch ID: {newBranchId.Value}.");
-                    }
-                    user.BranchId = newBranchId;
                     hasChanges = true;
                 }
 
@@ -276,7 +273,7 @@ namespace InventiCloud.Services
                     if (!updateResult.Succeeded)
                     {
                         string errors = string.Join(", ", updateResult.Errors.Select(e => e.Description));
-                        throw new Exception($"Failed to update user '{userId}': {errors}");
+                        throw new Exception($"{errors}");
                     }
                     _logger.LogInformation($"Branch account with ID '{userId}' updated successfully.");
                 }
