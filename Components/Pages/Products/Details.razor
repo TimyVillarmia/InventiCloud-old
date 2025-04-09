@@ -1,20 +1,24 @@
 @page "/products/{SKU}"
 @using InventiCloud.Components.UI
+@using InventiCloud.Data
 @using InventiCloud.Services.Interface
+@using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
 @using InventiCloud.Entities
 @inject IDbContextFactory<InventiCloud.Data.ApplicationDbContext> DbFactory
 @inject NavigationManager NavigationManager
 @inject IProductService ProductService
 @inject IDialogService DialogService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<ApplicationUser> UserManager
 @inject ISnackbar Snackbar
 @using Microsoft.AspNetCore.Authorization
-@attribute [Authorize(Roles = "Administrator")]
-<PageTitle>Details</PageTitle>
+@attribute [Authorize]
+<PageTitle>Product Details</PageTitle>
 
 <MudContainer Class="pt-5" MaxWidth="MaxWidth.Large">
     <div class="d-flex gap-4 align-items-center mb-4">
-        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" aria-label="delete" Href="/products" />
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" aria-label="back" Href="/products" />
         <MudText Typo="Typo.h4">@Product.ProductName</MudText>
     </div>
     <EditForm method="post" Model="Product" OnValidSubmit="UpdateProduct" FormName="create" Enhance>
@@ -24,11 +28,10 @@
                 <MudText Typo="Typo.h6">PRODUCT DETAILS</MudText>
             </MudItem>
             <MudItem xs="12" sm="8">
-                <MudTextField @bind-Value="Product.ProductName" Label="Name" For="@(() => Product.ProductName)" Variant="Variant.Outlined" />
-                <MudTextField @bind-Value="Product.Brand" Label="Brand" For="@(() => Product.Brand)" Variant="Variant.Outlined" />
-                <MudTextField @bind-Value="Product.SKU" Label="SKU" For="@(() => Product.SKU)" Variant="Variant.Outlined" />
-                <MudSelect Label="Category" @bind-Value="Product.CategoryId" For="@(() => Product.CategoryId)"
-                           Variant="Variant.Outlined">
+                <MudTextField @bind-Value="Product.ProductName" Label="Name" For="@(() => Product.ProductName)" Variant="Variant.Outlined" ReadOnly="@(!IsAdminUser)" />
+                <MudTextField @bind-Value="Product.Brand" Label="Brand" For="@(() => Product.Brand)" Variant="Variant.Outlined" ReadOnly="@(!IsAdminUser)"/>
+                <MudTextField @bind-Value="Product.SKU" Label="SKU" For="@(() => Product.SKU)" Variant="Variant.Outlined" ReadOnly="@(!IsAdminUser)" />
+                <MudSelect Label="Category" @bind-Value="Product.CategoryId" For="@(() => Product.CategoryId)" ReadOnly="@(!IsAdminUser)" Variant="Variant.Outlined">
                     <MudSelectItem T="int" Value="0" Disabled="true">Select Category</MudSelectItem>
                     @foreach (var category in _categories)
                     {
@@ -42,7 +45,7 @@
             </MudItem>
 
             <MudItem xs="12">
-                <MudTextField @bind-Value="Product.Description" Label="Description" For="@(() => Product.Description)" Variant="Variant.Outlined" Lines="5" />
+                <MudTextField @bind-Value="Product.Description" Label="Description" For="@(() => Product.Description)" Variant="Variant.Outlined" Lines="5" ReadOnly="@(!IsAdminUser)" />
             </MudItem>
 
             <MudItem xs="12">
@@ -50,48 +53,25 @@
             </MudItem>
 
             <MudItem xs="12" sm="6">
-                <MudNumericField @bind-Value="Product.UnitCost" HideSpinButtons="true" Label="Cost" For="@(() => Product.UnitCost)" Variant="Variant.Outlined" @bind-Value:after="After" />
-                <MudNumericField @bind-Value="Product.UnitPrice" HideSpinButtons="true" Label="Price" For="@(() => Product.UnitPrice)" Variant="Variant.Outlined" @bind-Value:after="After" />
+                <MudNumericField @bind-Value="Product.UnitCost" HideSpinButtons="true" Label="Cost" For="@(() => Product.UnitCost)" Variant="Variant.Outlined" @bind-Value:after="After" ReadOnly="@(!IsAdminUser)"/>
+                <MudNumericField @bind-Value="Product.UnitPrice" HideSpinButtons="true" Label="Price" For="@(() => Product.UnitPrice)" Variant="Variant.Outlined" @bind-Value:after="After" ReadOnly="@(!IsAdminUser)" />
             </MudItem>
             <MudItem xs="12" sm="6">
                 <MudTextField id="Profit" Variant="Variant.Outlined" Label="Profit" @bind-Value="Profit" Immediate="true" ReadOnly="true" />
                 <MudTextField id="Margin" Variant="Variant.Outlined" Label="Margin" @bind-Value="Margin" Immediate="true" ReadOnly="true" />
             </MudItem>
 
-            <MudItem xs="12">
-                <MudText Typo="Typo.h6">INVENTORY</MudText>
-            </MudItem>
+            <MudItem xs="12" Class="d-flex align-md-end">
+                @if (IsAdminUser)
+                {
+                    <MudButton ButtonType="ButtonType.Button" Variant="Variant.Filled" Color="Color.Error" Class="ml-auto" OnClick="@(() => OpenDialogAsync())">DELETE</MudButton>
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-4">SAVE CHANGES</MudButton>
+                }
 
-            <MudItem xs="12">
-                <MudSimpleTable Style="overflow-x: auto;">
-                    <thead>
-                        <tr>
-                            @foreach (var h in headings)
-                            {
-                                <th>@h</th>
-                            }
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var row in rows)
-                        {
-                            <tr>
-                                @foreach (var x in row.Split())
-                                {
-                                    <td>@x</td>
-                                }
-                            </tr>
-                        }
-                    </tbody>
-                </MudSimpleTable>
             </MudItem>
         </MudGrid>
 
-        <MudItem xs="12" Class="justify-center">
-            <MudButton ButtonType="ButtonType.Button" Variant="Variant.Filled" Color="Color.Error" Class="ml-auto" OnClick="@(() => OpenDialogAsync())">DELETE</MudButton>
-
-            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">SAVE CHANGES</MudButton>
-        </MudItem>
+    
 
     </EditForm>
 
@@ -109,12 +89,6 @@
 
     string? _searchBrand;
     private List<string?> _brands = new();
-    private string[] Units = {
-        "kg",
-        "lbs",
-        "oz",
-        "g"
-     };
 
     string[] headings = { "Branch", "Location", "Onhand", "Incoming", "Unavailable" };
     string[] rows = { };
@@ -131,6 +105,8 @@
 
     [Parameter]
     public string SKU { get; set; }
+    private bool IsAdminUser { get; set; }
+
 
     protected override async Task OnInitializedAsync()
     {
@@ -139,6 +115,14 @@
         if (Product is null)
         {
             NavigationManager.NavigateTo("notfound");
+        }
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            IsAdminUser = user.IsInRole("Administrator"); // Check if the user has the "Administrator" role
         }
     }
 

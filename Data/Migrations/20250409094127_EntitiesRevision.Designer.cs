@@ -4,6 +4,7 @@ using InventiCloud.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace InventiCloud.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250409094127_EntitiesRevision")]
+    partial class EntitiesRevision
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -668,10 +671,6 @@ namespace InventiCloud.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("CreatedById")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
                     b.Property<DateTime?>("DateApproved")
                         .HasColumnType("datetime2");
 
@@ -703,8 +702,6 @@ namespace InventiCloud.Migrations
                     b.HasKey("StockTransferId");
 
                     b.HasIndex("ApprovedById");
-
-                    b.HasIndex("CreatedById");
 
                     b.HasIndex("DestinationBranchId");
 
@@ -1164,12 +1161,6 @@ namespace InventiCloud.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("InventiCloud.Data.ApplicationUser", "CreatedBy")
-                        .WithMany()
-                        .HasForeignKey("CreatedById")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("InventiCloud.Entities.Branch", "DestinationBranch")
                         .WithMany()
                         .HasForeignKey("DestinationBranchId")
@@ -1195,8 +1186,6 @@ namespace InventiCloud.Migrations
                         .IsRequired();
 
                     b.Navigation("ApprovedBy");
-
-                    b.Navigation("CreatedBy");
 
                     b.Navigation("DestinationBranch");
 

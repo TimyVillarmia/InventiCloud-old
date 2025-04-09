@@ -120,6 +120,7 @@ namespace InventiCloud.Services
             using var context = DbFactory.CreateDbContext();
             return await context.Products
                 .Include(p => p.Category)
+                .AsNoTracking()
                 .ToListAsync();
         }
 

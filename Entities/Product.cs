@@ -20,6 +20,7 @@ public class Product
     public int CategoryId { get; set; }
 
     [Required]
+    [Display(Name = "Product Name")]
     public string ProductName { get; set; }
     public string? ImageURL { get; set; }
 
@@ -28,18 +29,19 @@ public class Product
 
     [Required,
     Precision(19, 2)]
+    [Display(Name = "Cost")]
     public decimal UnitCost { get; set; }
 
     [Required,
     SellingPriceCostValidation(nameof(UnitCost), nameof(UnitPrice)),
     Precision(19, 2)]
+    [Display(Name = "Price")]
     public decimal UnitPrice { get; set; }
 
     [Required]
     public string SKU { get; set; }
 
     [Column(TypeName = "bit")]
-    public bool isActive { get; set; } = true;
 
 
     // navigation properties

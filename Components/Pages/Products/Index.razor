@@ -9,6 +9,7 @@
 @inject IProductService ProductService
 @inject IInventoryService InventoryService
 @inject ICategoryService CategoryService
+@inject IBranchService BranchService
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
 @inject AuthenticationStateProvider AuthenticationStateProvider
@@ -16,108 +17,111 @@
 @using Microsoft.AspNetCore.Authorization
 @attribute [Authorize]
 
-<PageTitle>Index</PageTitle>
+<PageTitle>Products</PageTitle>
 
 <MudText Class="bold mb-2" Typo="Typo.h4">Products</MudText>
 
-@if (_products == null)
+
+@if (_branches == null)
 {
     <MudContainer Class="d-flex justify-center align-items-center" Style="height: 100vh;">
         <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
     </MudContainer>
 }
+else if (!_branches.Any())
+{
+    <MudPaper Height="500px" Class="justify-center align-content-center">
+        <MudText Typo="Typo.h6" Align="Align.Center" Class="mb-2">No Branches Exist</MudText>
+        <MudText Typo="Typo.body1" Align="Align.Center" Class="mb-3">
+            To manage products effectively, you need at least one branches set up in your system.
+        </MudText>
+        <MudContainer Class="d-flex justify-center mt-2">
+            <MudButton Variant="Variant.Filled" Href="/store/branches/create" Color="Color.Primary" Class="text-uppercase">
+                Create New Branch
+            </MudButton>
+        </MudContainer>
+
+    </MudPaper>
+}
+else if (_products == null)
+{
+    <MudContainer Class="d-flex justify-center align-items-center" Style="height: 100vh;">
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    </MudContainer>
+}
+else if (!_products.Any())
+{
+    <MudPaper Height="500px" Class="d-flex flex-column justify-center align-items-center">
+        <MudText Class="bold" Typo="Typo.h6" Align="Align.Center">Product Catalog</MudText>
+        <MudText Typo="Typo.body1" Align="Align.Center" Class="mt-2">
+            @if (IsAdminUser)
+            {
+                <span>Your product catalog is currently empty. Click the "Add Product" button to get started.</span>
+            }
+            else
+            {
+                <span>The product catalog is currently empty. The store owner hasn't added any products yet.</span>
+            }
+        </MudText>
+        <MudContainer Class="d-flex justify-center mt-4">
+            <AuthorizeView Roles="Administrator">
+
+                <MudButton Variant="Variant.Filled"  Href="/products/create" Color="Color.Primary" Class="bold text-uppercase">
+
+                    Add Product
+
+                </MudButton>
+
+            </AuthorizeView>
+        </MudContainer>
+    </MudPaper>
+}
 else
 {
-    @if (!_products.Any())
-    {
-        <MudPaper Height="500px" Class="d-flex flex-column justify-center align-items-center">
-            <MudText Class="bold" Typo="Typo.h6" Align="Align.Center">Product Catalog</MudText>
-            <MudText Typo="Typo.body1" Align="Align.Center" Class="mt-2">
-                @if (IsAdminUser)
-                {
-                    <span>Your product catalog is currently empty. Click the "Add Product" button to get started.</span>
-                }
-                else
-                {
-                    <span>The product catalog is currently empty. The store owner hasn't added any products yet.</span>
-                }
-            </MudText>
-            <MudContainer Class="d-flex justify-center mt-4">
-                <AuthorizeView Roles="Administrator">
 
-                    <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Href="/products/create" Color="Color.Primary" Class="bold text-uppercase">
+    <MudGrid>
+        <MudItem sm="6">
+            <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search by Name, SKU, Brand, or Category" Adornment="Adornment.Start" Immediate="true"
+                          AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+        </MudItem>
+        <MudItem sm="6" Class="d-flex justify-end">
+            <AuthorizeView Roles="Administrator">
+                <MudButton Variant="Variant.Filled" Href="products/create" Color="Color.Primary" Class="text-uppercase">
+                    Add Product
+                </MudButton>
+            </AuthorizeView>
+        </MudItem>
 
-                        Add Product
+    </MudGrid>
 
-                    </MudButton>
+    <MudDataGrid @ref="dataGrid" T="Product" ServerData="ServerReload" MultiSelection="true">
+        <Columns>
+            <PropertyColumn Property="product => product.SKU" />
+            <PropertyColumn Property="product => product.ProductName" Title="Product Name" />
+            <PropertyColumn Property="product => product.Category.CategoryName" Title="Category" />
+            <PropertyColumn Property="product => product.Brand" Title="Brand" />
+            <PropertyColumn Property="product => product.UnitPrice" Title="Price" />
+            <PropertyColumn Property="product => product.UnitCost" Title="Cost" />
+            @if (IsAdminUser)
+            {
+                <TemplateColumn CellClass="d-flex justify-end">
+                    <CellTemplate>
+                        <MudMenu Icon="@Icons.Material.Filled.MoreVert" AriaLabel="Open user menu">
+                            <MudMenuItem Label="Edit" href="@($"/products/{context.Item.SKU}")" />
+                            <MudMenuItem Label="Delete" Class="red-text" OnClick="@(() => OpenDialogAsync(context.Item))" />
+                        </MudMenu>
+                    </CellTemplate>
+                </TemplateColumn>
+            }
 
-                </AuthorizeView>
-            </MudContainer>
-        </MudPaper>
-    }
-    else
-    {
 
-        <MudGrid>
-            <MudItem sm="6">
-                <MudStack Row="true" AlignItems="AlignItems.Center">
-                    <div>
-                        <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
-                        AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" Style="width: 150px;"></MudTextField>
-                    </div>
-                    <div>
-                        <MudSelect Label="Category" @bind-Value="selectedCategory" @bind-Value:after="OnSelect" Variant="Variant.Outlined">
-                            <MudSelectItem T="int" Value="0">All</MudSelectItem>
-                            @foreach (Category category in _categories)
-                            {
-                                <MudSelectItem Value="@category.CategoryId">@category.CategoryName</MudSelectItem>
-                            }
-                        </MudSelect>
 
-                    </div>
-                </MudStack>
+        </Columns>
+        <PagerContent>
+            <MudDataGridPager T="Product" />
+        </PagerContent>
+    </MudDataGrid>
 
-            </MudItem>
-
-            <MudItem sm="6">
-                <AuthorizeView Roles="Administrator">
-                    <MudButton Variant="Variant.Filled" Href="products/create" Color="Color.Primary" Class="text-uppercase">
-                        Add Product
-                    </MudButton>
-                </AuthorizeView>
-            </MudItem>
-
-        </MudGrid>
-
-        <MudDataGrid @ref="dataGrid" T="Product" ServerData="ServerReload" MultiSelection="true">
-            <Columns>
-                <PropertyColumn Property="product => product.SKU" />
-                <PropertyColumn Property="product => product.ProductName" Title="Product Name" />
-                <PropertyColumn Property="product => product.Category.CategoryName" Title="Category" />
-                <PropertyColumn Property="product => product.Brand" Title="Brand" />
-                <PropertyColumn Property="product => product.UnitPrice" Title="Price" />
-                <PropertyColumn Property="product => product.UnitCost" Title="Cost" />
-                @if (IsAdminUser)
-                {
-                    <TemplateColumn CellClass="d-flex justify-end">
-                        <CellTemplate>
-                            <MudMenu Icon="@Icons.Material.Filled.MoreVert" AriaLabel="Open user menu">
-                                <MudMenuItem Label="Edit" href="@($"/products/{context.Item.SKU}")" />
-                                <MudMenuItem Label="Delete" Class="red-text" OnClick="@(() => OpenDialogAsync(context.Item))" />
-                            </MudMenu>
-                        </CellTemplate>
-                    </TemplateColumn>
-                }
-                
-               
-
-            </Columns>
-            <PagerContent>
-                <MudDataGridPager T="Product" />
-            </PagerContent>
-        </MudDataGrid>
-
-    }
 }
 
 
@@ -127,7 +131,7 @@ else
     string searchString = null;
     private int selectedCategory = 0;
 
-
+    private IEnumerable<Branch>? _branches;
     private IEnumerable<Product>? _products;
     private IEnumerable<Product> _filteredproducts = new List<Product>();
     private IEnumerable<Category>? _categories = new List<Category>();
@@ -140,6 +144,8 @@ else
     {
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
+
+        _branches = await BranchService.GetAllBranchAsync();
         _products = await ProductService.GetAllProductAsync();
         _categories = await CategoryService.GetAllCategoryAsync();
 
@@ -172,6 +178,8 @@ else
             if (product.ProductName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
                 return true;
             if (product.Brand.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+                return true;
+            if (product.Category.CategoryName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
                 return true;
             return false;
         }).ToArray();

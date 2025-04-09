@@ -8,6 +8,7 @@ using System.ComponentModel.DataAnnotations;
 namespace InventiCloud.Services
 {
     public class BranchService(ILogger<BranchService> _logger,
+        IInventoryService inventoryService,
         IDbContextFactory<InventiCloud.Data.ApplicationDbContext> DbFactory) : IBranchService
     {
         public async Task AddBranch(Branch branch)
@@ -27,8 +28,8 @@ namespace InventiCloud.Services
                 context.Branches.Add(branch);
                 await context.SaveChangesAsync();
 
-
-
+                // Call the InventoryService to populate inventory for the new branch
+                await inventoryService.PopulateNewBranchInventoryAsync(branch);
             }
             catch (DbUpdateException ex)
             {

@@ -11,14 +11,17 @@ public class Customer
     [Key]
     public int CustomerId { get; set; }
 
-    [Required] 
+    [Required]
+    [Display(Name = "Customer Name")]
     public string CustomerName { get; set; }
     public string Address { get; set; }
 
-    [MaxLength(20)] 
+    [MaxLength(20)]
+    [Display(Name = "Phone Number")]
     public string? PhoneNumber { get; set; }
 
-    [MaxLength(255)] 
+    [MaxLength(255)]
+    [EmailAddress]
     public string? Email { get; set; }
 
     public DateTime? BirthDate { get; set; }

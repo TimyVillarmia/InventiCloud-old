@@ -84,35 +84,45 @@
             }
 
         </EditForm>
+       
+        <MudGrid>
 
-        <MudDataGrid Items="StockAdjustmentItems" Class="mt-4">
-            <Columns>
-                <PropertyColumn Property="poi => poi.Product.ProductName" Title="Product" />
-                <PropertyColumn Property="poi => poi.PreviousQuantity" Title="Available Quantity" />
-                <PropertyColumn Property="poi => poi.NewQuantity" Title="New Quantity" />
-                <PropertyColumn Property="poi => poi.AdjustedQuantity" Title="Adjusted Quantity" />
-                @if (isDraft)
+            <MudItem xs="12">
+                <MudDataGrid Items="StockAdjustmentItems" Class="mt-4">
+                    <Columns>
+                        <PropertyColumn Property="poi => poi.Product.ProductName" Title="Product" />
+                        <PropertyColumn Property="poi => poi.PreviousQuantity" Title="Available Quantity" />
+                        <PropertyColumn Property="poi => poi.NewQuantity" Title="New Quantity" />
+                        <PropertyColumn Property="poi => poi.AdjustedQuantity" Title="Adjusted Quantity" />
+                        @if (isDraft)
+                        {
+                            <TemplateColumn CellClass="d-flex justify-end">
+                                <CellTemplate>
+                                    <MudStack Row>
+                                        <MudIconButton Icon="@Icons.Material.Filled.Close" Color="Color.Error" aria-label="delete" OnClick="@(() => RemoveBatchProduct(context.Item))" />
+                                    </MudStack>
+                                </CellTemplate>
+                            </TemplateColumn>
+                        }
+
+                    </Columns>
+                </MudDataGrid>
+            </MudItem>
+            
+
+            <MudItem xs="12" Class="d-flex align-md-end">
+                @if (Status.ToLower() == "draft")
                 {
-                    <TemplateColumn CellClass="d-flex justify-end">
-                        <CellTemplate>
-                            <MudStack Row>
-                                <MudIconButton Icon="@Icons.Material.Filled.Close" Color="Color.Error" aria-label="delete" OnClick="@(() => RemoveBatchProduct(context.Item))" />
-                            </MudStack>
-                        </CellTemplate>
-                    </TemplateColumn>
+                    <MudButton OnClick="DeleteStockAdjustment" Variant="Variant.Outlined" Color="Color.Error" Class="ml-auto">DELETE</MudButton>
+                    <MudButton OnClick="CompleteStockAdjustment" Variant="Variant.Outlined" Color="Color.Info" Class="ml-4">MARK COMPLETE</MudButton>
+                    <MudButton OnClick="SaveChanges" Variant="Variant.Filled" Color="Color.Primary" Class="ml-4">SAVE CHANGES </MudButton>
                 }
+            </MudItem>
+        </MudGrid>
 
-            </Columns>
-        </MudDataGrid>
+       
 
-        <div class="d-flex align-end mt-12">
-            @if (Status.ToLower() == "draft")
-            {
-                <MudButton OnClick="DeleteStockAdjustment" Variant="Variant.Outlined" Color="Color.Error">DELETE</MudButton>
-                <MudButton OnClick="CompleteStockAdjustment" Variant="Variant.Outlined" Color="Color.Info">MARK COMPLETE</MudButton>
-                <MudButton OnClick="SaveChanges" Variant="Variant.Filled" Color="Color.Primary">SAVE CHANGES</MudButton>
-            }
-        </div>
+      
 
     </EditForm>
 

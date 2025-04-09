@@ -10,11 +10,14 @@
 @inject IProductService ProductService
 @inject IInventoryService InventoryService
 @inject ISnackbar Snackbar
+@inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject UserManager<ApplicationUser> UserManager
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Identity
 @attribute [Authorize]
+
+
 <MudContainer Class="pt-5" MaxWidth="MaxWidth.Large">
 
     <div class="d-flex align-items-center mb-4">
@@ -51,16 +54,16 @@
                     <MudGrid Class="d-flex align-center flex-wrap flex-grow-1">
                         <MudItem xs="12" sm="5">
                             <MudAutocomplete T="Product" Label="Products" @bind-Value="StockTransferItem.Product" For="@(() => StockTransferItem.Product)"
-                            SearchFunc="@SearchProduct" ToStringFunc="@(product=> product==null?null : $"{product.ProductName}")" Variant="Variant.Outlined" @bind-Value:after="After" />
+                                             SearchFunc="@SearchProduct" ToStringFunc="@(product=> product==null?null : $"{product.ProductName}")" Margin="Margin.Dense" Variant="Variant.Outlined" @bind-Value:after="After" />
                         </MudItem>
 
                         <MudItem xs="12" sm="3">
-                            <MudNumericField HideSpinButtons="true" T="int" Variant="Variant.Outlined" ReadOnly="true" Label="Available Quantity" For="@(() => StockTransferItem.AvailableQuantity)"
+                            <MudNumericField HideSpinButtons="true" T="int" Variant="Variant.Outlined" ReadOnly="true" Label="Available Quantity" Margin="Margin.Dense" For="@(() => StockTransferItem.AvailableQuantity)"
                             @bind-Value="StockTransferItem.AvailableQuantity" />
                         </MudItem>
 
                         <MudItem xs="12" sm="3">
-                            <MudNumericField HideSpinButtons="true" T="int" Variant="Variant.Outlined" Label="Transfer Quantity" For="@(() => StockTransferItem.TransferQuantity)"
+                            <MudNumericField HideSpinButtons="true" T="int" Variant="Variant.Outlined" Label="Transfer Quantity" Margin="Margin.Dense"  For="@(() => StockTransferItem.TransferQuantity)"
                             @bind-Value="StockTransferItem.TransferQuantity" />
                         </MudItem>
 
@@ -162,9 +165,17 @@
 
     protected override async Task OnInitializedAsync()
     {
+        _branches = await BranchService.GetAllBranchAsync();
+
+        if(!_branches.Any())
+        {
+            NavigationManager.NavigateTo("/inventory/stock-transfers/requests/", true);
+
+        }
+
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
-        _branches = await BranchService.GetAllBranchAsync();
+        
 
         if (user.Identity?.IsAuthenticated == true)
         {
@@ -202,9 +213,11 @@
                     {
                         SourceBranchId = StockTransfer.SourceBranch.BranchId,
                         DestinationBranchId = StockTransfer.DestinationBranch.BranchId,
-                        RequestedById = CurrentUser.Id, // Replace with actual user ID
+                        RequestedById = UserManager.Users
+                                    .FirstOrDefault(u => u.BranchId == StockTransfer.DestinationBranch.BranchId).Id, 
                         ApprovedById = UserManager.Users
-                                .FirstOrDefault(u => u.BranchId == StockTransfer.SourceBranch.BranchId).Id
+                                .FirstOrDefault(u => u.BranchId == StockTransfer.SourceBranch.BranchId).Id,
+                        CreatedById = CurrentUser.Id
                     };
 
                 var sti_data = StockTransferItems.Select(vm => new StockTransferItem

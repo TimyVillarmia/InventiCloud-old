@@ -13,10 +13,12 @@ public class PurchaseOrder
 
     [Required,
      ForeignKey("Supplier")]
+    [Display(Name = "Supplier")]
     public string SupplierCode { get; set; }
 
     [Required,
      ForeignKey("DestinationBranch")]
+    [Display(Name = "Destination Branch")]
     public int DestinationBranchId { get; set; }
 
     [Required,
@@ -29,9 +31,13 @@ public class PurchaseOrder
 
     [Required,
     Precision(19, 2)]
+    [Display(Name = "Total amount")]
     public decimal TotalAmount { get; set; }
 
+    [Display(Name = "Reference Number")]
     public string? ReferenceNumber { get; set; }
+
+    [Display(Name = "Estimated Arrival")]
     public DateTime? EstimatedArrival { get; set; }
     public DateTime DateCreated { get; set; } = DateTime.UtcNow;
     public DateTime? PurchasedDate { get; set; } 

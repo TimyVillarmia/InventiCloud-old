@@ -41,19 +41,18 @@
         }
         else
         {
-            <MudDataGrid T="Product" Items="@category.Products" QuickFilter="@_quickFilter">
+            <MudDataGrid T="Product" Items="@category.Products" QuickFilter="@_quickFilter"  Filterable="true">
                 <ToolBarContent>
                     <MudText Typo="Typo.h6">Products</MudText>
                     <MudSpacer />
-                    <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                    <MudTextField @bind-Value="_searchString" Placeholder="Search" Variant="Variant.Outlined" Adornment="Adornment.Start" Immediate="true"
                                   AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
-                    <MudSpacer />
                 </ToolBarContent>
                 <Columns>
                     <PropertyColumn Property="product => product.SKU" />
-                    <PropertyColumn Property="product => product.ProductName" />
-                    <PropertyColumn Property="product => product.UnitCost" />
-                    <PropertyColumn Property="product => product.UnitPrice" />
+                    <PropertyColumn Property="product => product.ProductName" Title="Product Name"/>
+                    <PropertyColumn Property="product => product.UnitCost" Title="Cost"/>
+                    <PropertyColumn Property="product => product.UnitPrice" Title="Price"/>
                 </Columns>
                 <PagerContent>
                     <MudDataGridPager T="Product" />

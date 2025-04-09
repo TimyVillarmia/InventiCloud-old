@@ -1,4 +1,4 @@
-﻿@page "/inventory/stock-transfers/requests/{ReferenceNumber}"
+﻿@page "/inventory/stock-transfers/all/{ReferenceNumber}"
 @using InventiCloud.Components.UI
 @using InventiCloud.Data
 @using InventiCloud.Services
@@ -31,24 +31,24 @@
 
         <MudItem xs="12" sm="6">
             <MudTextField T="string" Label="Source Branch" @bind-Value="StockTransfer.SourceBranch.BranchName" ReadOnly="true"
-            Variant="Variant.Outlined" />
+                          Variant="Variant.Outlined" />
             <MudTextField T="string" Class="mb-4" Label="Approver" @bind-Value="StockTransfer.ApprovedBy.UserName" ReadOnly="true" Variant="Variant.Outlined" />
 
         </MudItem>
 
         <MudItem xs="12" sm="6">
             <MudTextField T="string" Label="Destination Branch" @bind-Value="StockTransfer.DestinationBranch.BranchName"
-            ReadOnly="true" Variant="Variant.Outlined" />
+                          ReadOnly="true" Variant="Variant.Outlined" />
             <MudDatePicker Label="Requested Date" Editable="true" @bind-Date="StockTransfer.RequestedDate" ReadOnly="true"
-            Mask="@(new DateMask("MM/dd/yyyy"))" DateFormat="MM/dd/yyyy" Placeholder="Requested Date" Variant="Variant.Outlined" />
+                           Mask="@(new DateMask("MM/dd/yyyy"))" DateFormat="MM/dd/yyyy" Placeholder="Requested Date" Variant="Variant.Outlined" />
         </MudItem>
         @if (!isRequested)
         {
             <MudItem xs="12" sm="6">
                 <MudDatePicker Label="Approved Date" Editable="true" @bind-Date="StockTransfer.DateApproved" ReadOnly="true"
-                Mask="@(new DateMask("MM/dd/yyyy"))" DateFormat="MM/dd/yyyy" Placeholder="Requested Date" Variant="Variant.Outlined" />
+                               Mask="@(new DateMask("MM/dd/yyyy"))" DateFormat="MM/dd/yyyy" Placeholder="Requested Date" Variant="Variant.Outlined" />
                 <MudDatePicker Label="Completed Date" Editable="true" @bind-Date="StockTransfer.DateCompleted" ReadOnly="true"
-                Mask="@(new DateMask("MM/dd/yyyy"))" DateFormat="MM/dd/yyyy" Placeholder="Requested Date" Variant="Variant.Outlined" />
+                               Mask="@(new DateMask("MM/dd/yyyy"))" DateFormat="MM/dd/yyyy" Placeholder="Requested Date" Variant="Variant.Outlined" />
             </MudItem>
         }
 
@@ -64,7 +64,7 @@
         </Columns>
     </MudDataGrid>
     <div class="d-flex align-end mt-12">
-        @if(isRequested)
+        @if (isRequested)
         {
             <MudButton Href="/inventory/stock-transfers/requests" Variant="Variant.Outlined" Color="Color.Default">CANCEL</MudButton>
             <MudButton OnClick="DeleteStockTransfer" Variant="Variant.Outlined" Color="Color.Error">Delete</MudButton>
@@ -105,7 +105,7 @@
         public int Id { get; set; }
 
         [Required(ErrorMessage = "Product is required.")]
-        public Product Product { get; set; } = new();
+        public Product Product { get; set; }
 
         [Range(1, int.MaxValue, ErrorMessage = "Quantity must be greater than 0.")]
         [Required(ErrorMessage = "Quantity is required.")]
@@ -132,33 +132,38 @@
 
     protected override async Task OnInitializedAsync()
     {
-     
-
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
 
+        var data = await StockTransferService.GetStockTransferByReferenceNumberAsync(ReferenceNumber);
 
         CurrentUser = await UserManager.GetUserAsync(user);
+
+        if (data is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+            return; // Important to exit the method here
+        }
 
         if (CurrentUser is null)
         {
             // Handle the case where the current user couldn't be retrieved.
             // This might indicate an authentication issue.
             NavigationManager.NavigateTo("notfound"); // Or another appropriate page
+            return;
         }
 
-        StockTransfer = await StockTransferService.GetStockTransferByReferenceNumberAsync(ReferenceNumber);
-
-
-        if (StockTransfer is null)
+        if (data.RequestedById != CurrentUser.Id)
         {
             NavigationManager.NavigateTo("notfound");
+            return; // Important to exit the method here
         }
 
-        Status = StockTransfer.Status?.StatusName; // Null-conditional operator
-        if (StockTransfer.SourceBranch != null)
+        StockTransfer = data;
+        Status = data.Status?.StatusName; // Null-conditional operator
+        if (data.SourceBranch != null)
         {
-            _sourceBranchInventories = await InventoryService.GetAllInventoryByBranchAsync(StockTransfer.SourceBranch.BranchId);
+            _sourceBranchInventories = await InventoryService.GetAllInventoryByBranchAsync(data.SourceBranch.BranchId);
         }
         else
         {
@@ -167,9 +172,9 @@
             Console.WriteLine($"Warning: SourceBranch is null for StockTransfer with ReferenceNumber: {ReferenceNumber}");
         }
 
-        if (StockTransfer.StockTransferItems != null)
+        if (data.StockTransferItems != null)
         {
-            var items = StockTransfer.StockTransferItems.ToList();
+            var items = data.StockTransferItems.ToList();
             StockTransferItems = items.Select(vm => new StockTransferItemViewModel
                 {
                     Id = vm.StockTransferItemlId,
@@ -183,7 +188,7 @@
             // Optionally log a warning if StockTransferItems is unexpectedly null
             Console.WriteLine($"Warning: StockTransferItems is null for StockTransfer with ReferenceNumber: {ReferenceNumber}");
         }
-      
+
 
         switch (Status.ToLower()) // Use ToLower() for case-insensitive comparison
         {
@@ -245,5 +250,5 @@
     }
 
 
-   
+
 }

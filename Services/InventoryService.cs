@@ -117,5 +117,40 @@ namespace InventiCloud.Services
             context.Inventories.Update(inventory);
             await context.SaveChangesAsync();
         }
+
+        public async Task PopulateNewBranchInventoryAsync(Branch branch)
+        {
+            try
+            {
+                using var context = DbFactory.CreateDbContext();
+                var existingProducts = await context.Products.ToListAsync();
+
+                if (existingProducts.Any())
+                {
+                    var newInventories = existingProducts.Select(product => new Inventory
+                    {
+                        ProductId = product.ProductId,
+                        BranchId = branch.BranchId,
+                        OnHandquantity = 0,
+                        IncomingQuantity = 0,
+                        AvailableQuantity = 0,
+                        Allocated = 0
+                    }).ToList();
+
+                    context.Inventories.AddRange(newInventories);
+                    await context.SaveChangesAsync();
+                    _logger.LogInformation($"Populated inventory for new branch '{branch.BranchName}' with {newInventories.Count} products.");
+                }
+                else
+                {
+                    _logger.LogInformation($"No products found. Inventory not populated for new branch '{branch.BranchName}'.");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error populating inventory for new branch '{branch.BranchName}'.", branch);
+                throw;
+            }
+        }
     }
 }

@@ -57,9 +57,12 @@ namespace InventiCloud.Services
                 .ToListAsync();
         }
 
+
         public async Task<IEnumerable<StockTransfer>> GetStockTransfersForApprovalAsync(string approvedByUserId)
         {
             using var context = _dbFactory.CreateDbContext();
+
+
             return await context.StockTransfers
                 .Include(st => st.SourceBranch)
                 .Include(st => st.DestinationBranch)
@@ -142,10 +145,10 @@ namespace InventiCloud.Services
 
         public async Task<StockTransfer> GetStockTransferByReferenceNumberAsync(string referenceNumber)
         {
+
             if (string.IsNullOrEmpty(referenceNumber))
             {
-                _logger.LogError("GetStockTransferByReferenceNumberAsync called with null or empty referenceNumber.");
-                throw new ArgumentNullException(nameof(referenceNumber), "Reference Number cannot be null or empty.");
+                return null;
             }
 
             using var context = _dbFactory.CreateDbContext();
@@ -160,14 +163,7 @@ namespace InventiCloud.Services
                     .Include(st => st.Status)
                     .Include(st => st.StockTransferItems)
                         .ThenInclude(st => st.Product)
-                    .FirstOrDefaultAsync(st => st.ReferenceNumber == referenceNumber);
-
-                if (stockTransfer == null)
-                {
-                    _logger.LogWarning("Stock Transfer with Reference Number '{ReferenceNumber}' not found.", referenceNumber);
-                    return null;
-
-                }
+                    .FirstAsync(st => st.ReferenceNumber == referenceNumber);
 
                 return stockTransfer;
             }

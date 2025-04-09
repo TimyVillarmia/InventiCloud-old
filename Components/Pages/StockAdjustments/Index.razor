@@ -18,6 +18,8 @@
 <PageTitle>Stock Adjustments</PageTitle>
 
 <MudText Class="bold mb-2" Typo="Typo.h4">Stock Adjustments</MudText>
+
+
 @if (_stockAdjustments == null)
 {
     <MudContainer Class="d-flex justify-center align-items-center" Style="height: 100vh;">
@@ -35,7 +37,7 @@ else
                Click the button below to create a new stock adjustment to record changes in your inventory.
             </MudText>
             <MudContainer Class="d-flex justify-center mt-2">
-                <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Href="inventory/stock-adjustments/create" Color="Color.Primary" Class="text-uppercase">
+                <MudButton Variant="Variant.Filled" Href="inventory/stock-adjustments/create" Color="Color.Primary" Class="text-uppercase">
                     New Stock Adjustment
                 </MudButton>
             </MudContainer>
@@ -59,7 +61,7 @@ else
                     }
                 </MudSelect>
             </MudItem>
-            <MudItem sm="5">
+            <MudItem sm="5" Class="d-flex justify-end">
                 <MudButton Variant="Variant.Filled" Href="/inventory/stock-adjustments/create" Color="Color.Primary" Class="text-uppercase">
                     Create Stock Adjustment
                 </MudButton>
@@ -180,6 +182,8 @@ else
             if (stockadjustment.ReferenceNumber.Contains(searchString, StringComparison.OrdinalIgnoreCase))
                 return true;
             if (stockadjustment.StockAdjustmentReason.Reason.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+                return true;
+            if (stockadjustment.StockAdjustmentStatus.StatusName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
                 return true;
             return false;
         }).ToArray();

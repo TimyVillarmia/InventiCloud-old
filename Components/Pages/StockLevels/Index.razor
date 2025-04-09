@@ -1,77 +1,106 @@
 @page "/inventory/stock-levels"
 @using InventiCloud.Services.Interface
+@using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
 @using InventiCloud.Entities
 @using InventiCloud.Data
 @implements IAsyncDisposable
 @inject IInventoryService InventoryService
 @inject IBranchService BranchService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<ApplicationUser> UserManager
 @using Microsoft.AspNetCore.Authorization
 @attribute [Authorize]
 <PageTitle>Index</PageTitle>
 
 <MudText Class="bold mb-2" Typo="Typo.h4">Stock Levels</MudText>
-@if (_inventories == null)
+@if (_branches == null)
 {
     <MudContainer Class="d-flex justify-center align-items-center" Style="height: 100vh;">
         <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
     </MudContainer>
 }
-else
+else if (!_branches.Any())
 {
-    @if (!_inventories.Any())
-    {
+    <MudPaper Height="500px" Class="justify-center align-content-center">
+        <MudText Typo="Typo.h6" Align="Align.Center" Class="mb-2">No Branches Exist</MudText>
+        <MudText Typo="Typo.body1" Align="Align.Center" Class="mb-3">
+            To view stock levels, you need to have at least one branch set up in your system.
+        </MudText>
+        <MudContainer Class="d-flex justify-center mt-2">
+            <MudButton Variant="Variant.Filled" Href="/store/branches/create" Color="Color.Primary" Class="text-uppercase">
+                Create New Branch
+            </MudButton>
+        </MudContainer>
+    </MudPaper>
+}
+else if (_inventories == null)
+{
+    <MudContainer Class="d-flex justify-center align-items-center" Style="height: 100vh;">
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    </MudContainer>
+}
+else if (!_inventories.Any())
+{
 
-        <MudPaper Height="500px" Class="justify-center align-content-center">
-            <MudText Class="bol" Typo="Typo.h6" Align="Align.Center">No Products in Stock</MudText>
-            <MudText Typo="Typo.body1" Align="Align.Center">
-                "Add products to your inventory to start tracking stock levels.
-            </MudText> 
-            <MudContainer Class="d-flex justify-center mt-2">
-                <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Href="products/create" Color="Color.Primary" Class="text-uppercase">
+    <MudPaper Height="500px" Class="justify-center align-content-center">
+        <MudText Class="bol" Typo="Typo.h6" Align="Align.Center">No Products in Stock</MudText>
+        <MudText Typo="Typo.body1" Align="Align.Center">
+            There are currently no stock levels recorded.
+            @if (IsAdminUser)
+            {
+                <span>Add products to your inventory to start tracking stock levels.</span>
+            }
+            else
+            {
+                <span>Stock levels for all branches will appear here once products are added to the inventory.</span>
+            }
+        </MudText>
+        <MudContainer Class="d-flex justify-center mt-2">
+            @if (IsAdminUser)
+            {
+                <MudButton Variant="Variant.Filled" Href="products/create" Color="Color.Primary" Class="text-uppercase">
                     Add Product
                 </MudButton>
-            </MudContainer>
-        </MudPaper>
-    }
-    else
-    {
+            }
+        </MudContainer>
+    </MudPaper>
+}
+else
+{
 
-        <MudGrid>
-            <MudItem sm="6">
-                <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
-                              AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
-            </MudItem>
-            <MudItem sm="2" >
-                <MudSelect @bind-Value="@selectedBranch" @bind-Value:after="OnSelect" Variant="Variant.Outlined">
-                    @foreach (Branch branch in _branches)
-                    {
-                        <MudSelectItem Value="@branch.BranchId">@branch.BranchName</MudSelectItem>
-                    }
-                </MudSelect>
-            </MudItem>
-        </MudGrid>
-       
-        <MudDataGrid @ref="dataGrid" T="Inventory" ServerData="ServerReload" MultiSelection="true" Filterable="false">
-            <Columns>
-                <PropertyColumn Property="inventory => inventory.Product.SKU" />
-                <PropertyColumn Property="inventory => inventory.Product.ProductName" Title="Product Name"/>
-                <PropertyColumn Property="inventory => inventory.OnHandquantity" Title="On hand" />
-                <PropertyColumn Property="inventory => inventory.AvailableQuantity" Title="Available" />
-                <PropertyColumn Property="inventory => inventory.IncomingQuantity" Title="Incoming" />
-                <PropertyColumn Property="inventory => inventory.Allocated" Title="Allocated" />
-            </Columns>
-            <PagerContent>
-                <MudDataGridPager T="Inventory" />
-            </PagerContent>
-        </MudDataGrid>
+    <MudGrid>
+        <MudItem sm="6">
+            <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                          AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" ></MudTextField>
+        </MudItem>
+        <MudItem sm="2">
+            <MudSelect @bind-Value="@selectedBranch" @bind-Value:after="OnSelect" Variant="Variant.Outlined">
+                @foreach (Branch branch in _branches)
+                {
+                    <MudSelectItem Value="@branch.BranchId">@branch.BranchName</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+    </MudGrid>
+
+    <MudDataGrid @ref="dataGrid" T="Inventory" ServerData="ServerReload" MultiSelection="true" Filterable="false">
+        <Columns>
+            <PropertyColumn Property="inventory => inventory.Product.SKU" />
+            <PropertyColumn Property="inventory => inventory.Product.ProductName" Title="Product Name" />
+            <PropertyColumn Property="inventory => inventory.OnHandquantity" Title="On hand" />
+            <PropertyColumn Property="inventory => inventory.AvailableQuantity" Title="Available" />
+            <PropertyColumn Property="inventory => inventory.IncomingQuantity" Title="Incoming" />
+            <PropertyColumn Property="inventory => inventory.Allocated" Title="Allocated" />
+        </Columns>
+        <PagerContent>
+            <MudDataGridPager T="Inventory" />
+        </PagerContent>
+    </MudDataGrid>
 
 
-
-    }
 
 }
-
 
 
 @code {
@@ -86,12 +115,29 @@ else
 
     MudDataGrid<Inventory> dataGrid = new();
 
+    private ApplicationUser? CurrentUser { get; set; } // Replace ApplicationUser with your actual user class
+    private bool IsAdminUser { get; set; }
+
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
 
-        _inventories = await InventoryService.GetAllInventoryAsync();
-        _branches = await BranchService.GetAllBranchAsync();
-        selectedBranch = _branches.First().BranchId;
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            CurrentUser = await UserManager.GetUserAsync(user);
+            IsAdminUser = user.IsInRole("Administrator"); // Check if the user has the "Administrator" role
+
+            _inventories = await InventoryService.GetAllInventoryAsync();
+            _branches = await BranchService.GetAllBranchAsync();
+            if (_branches.Any())
+            {
+                selectedBranch = _branches.First().BranchId;
+
+            }
+        }
+
+     
 
     }
 

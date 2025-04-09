@@ -15,7 +15,7 @@
 @attribute [Authorize(Roles = "Administrator")]
 
 
-<PageTitle>Create</PageTitle>
+<PageTitle>Create Product</PageTitle>
 
 <MudContainer Class="pt-5" MaxWidth="MaxWidth.Large">
     <div class="d-flex gap-4 align-items-center mb-4">
@@ -102,6 +102,12 @@
 
         _categories = await CategoryService.GetAllCategoryAsync();
         _branches = await BranchService.GetAllBranchAsync();
+
+        if(!_branches.Any())
+        {
+            NavigationManager.NavigateTo("/products", true);
+
+        }
 
     }
 

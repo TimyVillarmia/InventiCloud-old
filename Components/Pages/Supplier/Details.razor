@@ -3,21 +3,24 @@
 @using InventiCloud.Data
 @using InventiCloud.Services.Interface
 @using InventiCloud.Utils
+@using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
 @using InventiCloud.Entities
 @inject ISupplierService SupplierService
 @inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<ApplicationUser> UserManager
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
 @using Microsoft.AspNetCore.Authorization
 @attribute [Authorize]
 
-<PageTitle>Create</PageTitle>
+<PageTitle>Create Supplier</PageTitle>
 
 <MudContainer Class="pt-5" MaxWidth="MaxWidth.Medium">
     <div class="d-flex gap-4 align-items-center mb-4">
-        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" aria-label="delete" Href="/catalog/products" />
-        <MudText Typo="Typo.h4">CREATE SUPPLIER</MudText>
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" aria-label="back" Href="/purchase/suppliers" />
+        <MudText Typo="Typo.h4">@Supplier.SupplierName</MudText>
     </div>
 
     <EditForm method="post" Model="Supplier" OnValidSubmit="SaveChanges" FormName="update" Enhance>
@@ -25,35 +28,26 @@
         <MudGrid>
             <MudItem xs="12">
                 <MudText Typo="Typo.h6">SUPPLIER DETAILS</MudText>
-                <MudTextField @bind-Value="Supplier.SupplierName" Label="Supplier Name" For="@(() => Supplier.SupplierName)" Variant="Variant.Outlined" />
-                <MudTextField @bind-Value="Supplier.SupplierCode" Label="Supplier Code" For="@(() => Supplier.SupplierCode)" Variant="Variant.Outlined" />
-                <MudTextField @bind-Value="Supplier.Company" Label="Company Name" For="@(() => Supplier.Company)" Variant="Variant.Outlined" />
-                <MudTextField @bind-Value="Supplier.Address" Label="Address" For="@(() => Supplier.Address)" Variant="Variant.Outlined" />
             </MudItem>
-
-
-            <MudItem xs="12" sm="4">
-                <MudTextField @bind-Value="Supplier.City" Label="City" For="@(() => Supplier.City)" Variant="Variant.Outlined" />
-            </MudItem>
-
-            <MudItem xs="12" sm="4">
-                <MudTextField @bind-Value="Supplier.Country" Label="Country" For="@(() => Supplier.Country)" Variant="Variant.Outlined" />
-            </MudItem>
-            <MudItem xs="12" sm="4">
-                <MudNumericField @bind-Value="Supplier.PostalCode" HideSpinButtons="true" Label="Postal Code" For="@(() => Supplier.PostalCode)" Variant="Variant.Outlined" />
-            </MudItem>
-
             <MudItem xs="12">
-                <MudTextField @bind-Value="Supplier.ContactPerson   " Label="Contact Person" For="@(() => Supplier.ContactPerson)" Variant="Variant.Outlined" />
-                <MudTextField @bind-Value="Supplier.Email" Label="Email Address" For="@(() => Supplier.Email)" Variant="Variant.Outlined" />
-                <MudTextField @bind-Value="Supplier.PhoneNumber" Label="Phone Number" For="@(() => Supplier.PhoneNumber)" Variant="Variant.Outlined" />
+                <MudTextField @bind-Value="Supplier.SupplierName" Label="Supplier Name" For="@(() => Supplier.SupplierName)" Variant="Variant.Outlined" ReadOnly="@(!IsAdminUser)" />
+                <MudTextField @bind-Value="Supplier.SupplierCode" Label="Supplier Code" For="@(() => Supplier.SupplierCode)" Variant="Variant.Outlined" ReadOnly="@(!IsAdminUser)" />
+                <MudTextField @bind-Value="Supplier.Company" Label="Company Name" For="@(() => Supplier.Company)" Variant="Variant.Outlined" ReadOnly="@(!IsAdminUser)" />
+                <MudTextField @bind-Value="Supplier.Address" Label="Address" For="@(() => Supplier.Address)" Variant="Variant.Outlined" ReadOnly="@(!IsAdminUser)" />
+                <MudTextField @bind-Value="Supplier.ContactPerson" Label="Contact Person" For="@(() => Supplier.ContactPerson)" Variant="Variant.Outlined" ReadOnly="@(!IsAdminUser)" />
+                <MudTextField @bind-Value="Supplier.Email" Label="Email Address" For="@(() => Supplier.Email)" Variant="Variant.Outlined" ReadOnly="@(!IsAdminUser)" />
+                <MudTextField @bind-Value="Supplier.PhoneNumber" Label="Phone Number" For="@(() => Supplier.PhoneNumber)" Variant="Variant.Outlined" ReadOnly="@(!IsAdminUser)" />
             </MudItem>
+            <MudItem xs="12" Class="d-flex align-md-end">
+                @if (IsAdminUser)
+                {
+                    <MudButton OnClick="() => OpenDialogAsync()" Variant="Variant.Outlined" Color="Color.Error" Class="ml-auto">DELETE</MudButton>
+                    <MudButton ButtonType="ButtonType.Submit" OnClick="SaveChanges" Variant="Variant.Filled" Color="Color.Primary" Class="ml-4">SAVE CHANGES</MudButton>
+                }
 
+            </MudItem>
         </MudGrid>
-        <MudItem xs="12" Class="justify-center">
-            <MudButton  OnClick="() => OpenDialogAsync()" Variant="Variant.Outlined" Color="Color.Error" Class="ml-auto">DELETE</MudButton>
-            <MudButton ButtonType="ButtonType.Submit" OnClick="SaveChanges" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">SAVE CHANGES</MudButton>
-        </MudItem>
+        
     </EditForm>
 </MudContainer>
 
@@ -64,6 +58,8 @@
 
     [Parameter]
     public string SupplierCode { get; set; }
+    private bool IsAdminUser { get; set; }
+
 
     protected override async Task OnInitializedAsync()
     {
@@ -74,6 +70,15 @@
             NavigationManager.NavigateTo("notfound");
         }
 
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            IsAdminUser = user.IsInRole("Administrator"); // Check if the user has the "Administrator" role
+        }
+
+
     }
 
     private async Task SaveChanges()
@@ -83,7 +88,7 @@
         try
         {
             await SupplierService.UpdateSupplierAsync(Supplier);
-            Snackbar.Add($"{Supplier.SupplierName} Updated", Severity.Success);
+            Snackbar.Add($"Supplier {Supplier.SupplierName} Updated", Severity.Success);
             NavigationManager.NavigateTo("/purchase/suppliers");
 
         }
