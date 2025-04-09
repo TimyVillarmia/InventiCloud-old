@@ -109,6 +109,7 @@ namespace InventiCloud.Services
             {
                 using var context = DbFactory.CreateDbContext();
                 return await context.Branches
+                    .Include(b => b.ApplicationUser)
                     .FirstOrDefaultAsync(b => b.BranchName == branchName);
             }
             catch (Exception ex)
