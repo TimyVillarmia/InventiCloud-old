@@ -109,6 +109,7 @@ namespace InventiCloud.Services
             {
                 using var context = DbFactory.CreateDbContext();
                 return await context.Branches
+                    .Include(b => b.ApplicationUser)
                     .FirstOrDefaultAsync(b => b.BranchName == branchName);
             }
             catch (Exception ex)
@@ -157,7 +158,7 @@ namespace InventiCloud.Services
         }
 
 
-        public async Task UpdateBranch(Branch branch)
+        public async Task<Branch> UpdateBranch(Branch branch)
         {
             if (branch == null)
             {
@@ -169,38 +170,63 @@ namespace InventiCloud.Services
                 throw new ValidationException("Branch name cannot be null or whitespace.");
             }
 
+            if (string.IsNullOrWhiteSpace(branch.PhoneNumber))
+            {
+                throw new ValidationException("Phone number cannot be null or whitespace.");
+            }
+
             try
             {
                 using var context = DbFactory.CreateDbContext();
 
-                // Check for uniqueness of the branch name (excluding the current branch being updated)
-                var existingBranch = await context.Branches
-                    .Where(b => b.BranchName == branch.BranchName && b.BranchId != branch.BranchId)
-                    .FirstOrDefaultAsync();
+                // Check if a branch with the given ID exists and is being tracked
+                var existingBranch = await context.Branches.FindAsync(branch.BranchId);
+                if (existingBranch == null)
+                {
+                    throw new ValidationException($"Branch with ID '{branch.BranchId}' not found.");
+                }
 
-                if (existingBranch != null)
+                // Check for uniqueness of BranchName (excluding the current branch)
+                if (await context.Branches.AnyAsync(b => b.BranchName == branch.BranchName && b.BranchId != branch.BranchId))
                 {
                     throw new ValidationException($"A branch with the name '{branch.BranchName}' already exists.");
                 }
 
-                context.Branches.Update(branch);
+                // Check for uniqueness of PhoneNumber (excluding the current branch)
+                if (await context.Branches.AnyAsync(b => b.PhoneNumber == branch.PhoneNumber && b.BranchId != branch.BranchId))
+                {
+                    throw new ValidationException($"A branch with the phone number '{branch.PhoneNumber}' already exists.");
+                }
+
+                // Update the existing branch with the new values
+                context.Entry(existingBranch).CurrentValues.SetValues(branch);
                 await context.SaveChangesAsync();
                 _logger.LogInformation("Branch with ID {BranchId} updated successfully.", branch.BranchId);
+                return branch;
             }
             catch (ValidationException ex)
             {
                 _logger.LogError(ex, "Validation error updating branch with ID {BranchId}.", branch.BranchId);
                 throw;
             }
-            catch (DbUpdateConcurrencyException ex)
-            {
-                _logger.LogError(ex, "Concurrency error updating branch with ID {BranchId}.", branch.BranchId);
-                throw;
-            }
             catch (DbUpdateException ex)
             {
-                _logger.LogError(ex, "Error updating branch with ID {BranchId}.", branch.BranchId);
-                throw;
+                _logger.LogError(ex, "Database error occurred while updating branch with ID {BranchId}.", branch.BranchId);
+                // Attempt to identify unique constraint violation without relying on specific provider exceptions
+                if (ex.InnerException != null)
+                {
+                    string errorMessage = ex.InnerException.Message.ToLowerInvariant();
+                    if (errorMessage.Contains("unique constraint") && errorMessage.Contains("ix_branches_branchname"))
+                    {
+                        throw new ValidationException($"A branch with the name '{branch.BranchName}' already exists.");
+                    }
+                    if (errorMessage.Contains("unique constraint") && errorMessage.Contains("ix_branches_phonenumber"))
+                    {
+                        throw new ValidationException($"A branch with the phone number '{branch.PhoneNumber}' already exists.");
+                    }
+                    // Add more generic checks if needed, but provider-specific checks are more reliable
+                }
+                throw; // Re-throw the original DbUpdateException if not a recognized unique constraint violation
             }
             catch (Exception ex)
             {
@@ -208,7 +234,6 @@ namespace InventiCloud.Services
                 throw;
             }
         }
-
     }
     
 }
