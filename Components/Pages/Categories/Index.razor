@@ -31,7 +31,7 @@
 else
 {
     <MudGrid>
-      
+
         <MudItem sm="6">
             <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search by Category" Adornment="Adornment.Start" Immediate="true"
             AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
@@ -41,22 +41,22 @@ else
             @if (IsAdminUser)
             {
                 <div>
-                  <EditForm method="post" Model="Category" OnValidSubmit="AddCategory" FormName="create" Enhance>
-                    <DataAnnotationsValidator />
-                    <MudStack Row="true" AlignItems="AlignItems.Center">
-                        <div>
-                            <MudTextField @bind-Value="Category.CategoryName" Label="Category Name" For="@(() => Category.CategoryName)" Variant="Variant.Outlined" />
-                        </div>
-                        <div>
-                            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Add Category</MudButton>
-                        </div>
-                    </MudStack>
-                </EditForm>
-            </div>
+                    <EditForm method="post" Model="Category" OnValidSubmit="AddCategory" FormName="create" Enhance>
+                        <DataAnnotationsValidator />
+                        <MudStack Row="true" AlignItems="AlignItems.Center">
+                            <div>
+                                <MudTextField @bind-Value="Category.CategoryName" Label="Category Name" For="@(() => Category.CategoryName)" Variant="Variant.Outlined" />
+                            </div>
+                            <div>
+                                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Add Category</MudButton>
+                            </div>
+                        </MudStack>
+                    </EditForm>
+                </div>
             }
         </MudItem>
     </MudGrid>
-    @if (!_categories.Any())
+    @if (!data.Any())
     {
 
         <MudPaper Height="500px" Class="justify-center align-content-center">
@@ -156,6 +156,7 @@ else
             await CategoryService.AddCategoryAsync(Category);
             Snackbar.Add($"{Category.CategoryName} Added", Severity.Success);
             Category = new();
+            await LoadData();
             await dataGrid.ReloadServerData();
 
         }

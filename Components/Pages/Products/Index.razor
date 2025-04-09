@@ -107,7 +107,7 @@ else
                 <TemplateColumn CellClass="d-flex justify-end">
                     <CellTemplate>
                         <MudMenu Icon="@Icons.Material.Filled.MoreVert" AriaLabel="Open user menu">
-                            <MudMenuItem Label="Edit" href="@($"/products/{context.Item.SKU}")" />
+                            <MudMenuItem Label="View" href="@($"/products/{context.Item.SKU}")" />
                             <MudMenuItem Label="Delete" Class="red-text" OnClick="@(() => OpenDialogAsync(context.Item))" />
                         </MudMenu>
                     </CellTemplate>

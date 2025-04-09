@@ -17,7 +17,7 @@
 
 <PageTitle>Stock Transfers</PageTitle>
 
-<MudText Class="bold mb-2" Typo="Typo.h4">Stock Transfers</MudText>
+<MudText Class="bold mb-2" Typo="Typo.h4">Stock Transfer Approvals</MudText>
 
 @if (_stocktransfers == null)
 {
@@ -41,7 +41,7 @@ else
         <MudGrid>
             <MudItem sm="6">
                 <MudStack Row="true" AlignItems="AlignItems.Center">
-                    <MudTextField T="string" ValueChanged="@(s => OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                    <MudTextField T="string" ValueChanged="@(s => OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search by Reference Number, Source Branch, Destination Branch, Status" Adornment="Adornment.Start" Immediate="true"
                     AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
                 </MudStack>
             </MudItem>
@@ -146,6 +146,12 @@ else
                 return true;
             if (st.ReferenceNumber.Contains(searchString, StringComparison.OrdinalIgnoreCase))
                 return true;
+            if (st.SourceBranch.BranchName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+                return true;
+            if (st.DestinationBranch.BranchName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+                return true;
+            if (st.Status.StatusName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+                return true;
             return false;
         }).ToArray();
         var totalItems = _filteredstocktransfers.Count();
@@ -155,10 +161,16 @@ else
         {
             switch (sortDefinition.SortBy)
             {
-                case nameof(PurchaseOrder.ReferenceNumber):
+                case nameof(StockTransfer.ReferenceNumber):
                     _filteredstocktransfers = _filteredstocktransfers.OrderByDirection(
                         sortDefinition.Descending ? SortDirection.Descending : SortDirection.Ascending,
-                        po => po.ReferenceNumber
+                        st => st.ReferenceNumber
+                    );
+                    break;
+                case nameof(StockTransfer.RequestedDate):
+                    _filteredstocktransfers = _filteredstocktransfers.OrderByDirection(
+                        sortDefinition.Descending ? SortDirection.Descending : SortDirection.Ascending,
+                        st => st.RequestedDate
                     );
                     break;
             }

@@ -49,7 +49,7 @@ else
         <MudGrid>
             <MudItem sm="6">
                 <MudStack Row="true" AlignItems="AlignItems.Center">
-                    <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                    <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search by Code, Name, Company, Contact, Email, or Phone" Adornment="Adornment.Start" Immediate="true"
                     AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
                 </MudStack>
 
@@ -74,7 +74,7 @@ else
                 <PropertyColumn Property="supplier => supplier.Company" Title="Company" />
                 <PropertyColumn Property="supplier => supplier.ContactPerson" Title="Contact Person" />
                 <PropertyColumn Property="supplier => supplier.Email" Title="Country" />
-                <PropertyColumn Property="supplier => supplier.PhoneNumber" Title="Country" />
+                <PropertyColumn Property="supplier => supplier.PhoneNumber" Title="Phone Number" />
                 @if (IsAdminUser)
                 {
                     <TemplateColumn CellClass="d-flex justify-end">

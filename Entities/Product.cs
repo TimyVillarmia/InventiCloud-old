@@ -41,7 +41,6 @@ public class Product
     [Required]
     public string SKU { get; set; }
 
-    [Column(TypeName = "bit")]
 
 
     // navigation properties

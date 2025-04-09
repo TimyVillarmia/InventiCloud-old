@@ -18,7 +18,7 @@
 
 <MudContainer Class="pt-5" MaxWidth="MaxWidth.Medium">
     <div class="d-flex gap-4 align-items-center mb-4">
-        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" aria-label="back" Href="/branches" />
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" aria-label="back" Href="/store/branches" />
         <MudText Typo="Typo.h4">CREATE BRANCH AND INITIAL USER</MudText>
     </div>
 
@@ -38,22 +38,17 @@
                 <MudTextField @bind-Value="CombinedModel.Branch.Address" Label="Address" For="@(() => CombinedModel.Branch.Address)" Variant="Variant.Outlined" Lines="2" />
             </MudItem>
             <MudItem xs="12">
-                <MudDivider Class="my-6" />
                 <MudText Typo="Typo.h6">BRANCH ACCOUNT</MudText>
             </MudItem>
             <MudItem xs="12" sm="12">
                 <MudTextField @bind-Value="CombinedModel.Account.Email" Label="Email" For="@(() => CombinedModel.Account.Email)" Variant="Variant.Outlined" Required InputType="InputType.Email" />
-            </MudItem>
-            <MudItem xs="12" sm="12">
                 <MudTextField @bind-Value="CombinedModel.Account.Password" Label="Password" For="@(() => CombinedModel.Account.Password)" Variant="Variant.Outlined" InputType="InputType.Password" />
-            </MudItem>
-            <MudItem xs="12" sm="12">
                 <MudTextField @bind-Value="CombinedModel.Account.ConfirmPassword" Label="Confirm Password" For="@(() => CombinedModel.Account.ConfirmPassword)" Variant="Variant.Outlined" InputType="InputType.Password" />
-            </MudItem>
 
-            <MudItem xs="12" Class="d-flex align-end mt-12 gap-2">
-                <MudButton Href="/store/branches" Variant="Variant.Outlined">CANCEL</MudButton>
-                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary">CREATE BRANCH</MudButton>
+                </MudItem>
+            <MudItem xs="12" Class="d-flex align-md-end">
+                <MudButton Variant="Variant.Filled" Color="Color.Default" Class="ml-auto" Href="/store/branches">CANCEL</MudButton>
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-2">CREATE BRANCH</MudButton>
             </MudItem>
         </MudGrid>
     </EditForm>

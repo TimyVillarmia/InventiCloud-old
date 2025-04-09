@@ -62,11 +62,13 @@
                 <MudTextField id="Profit" Variant="Variant.Outlined" Label="Profit" @bind-Value="Profit" Immediate="true" ReadOnly="true"/>
                 <MudTextField id="Margin" Variant="Variant.Outlined" Label="Margin" @bind-Value="Margin" Immediate="true" ReadOnly="true"/>
             </MudItem>
+            <MudItem xs="12" Class="d-flex align-md-end mt-12">
+                <MudButton Variant="Variant.Filled" Color="Color.Default" Href="/products" Class="ml-auto">CANCEL</MudButton>
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-2">CREATE PRODUCT</MudButton>
+            </MudItem>
         </MudGrid>
 
-        <MudItem xs="12" Class="d-flex align-md-end mt-12">
-            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">CREATE PRODUCT</MudButton>
-        </MudItem>
+      
 
     </EditForm>
 

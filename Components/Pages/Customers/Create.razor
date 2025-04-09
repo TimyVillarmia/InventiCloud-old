@@ -17,7 +17,7 @@
 <MudContainer Class="pt-5" MaxWidth="MaxWidth.Medium">
     <div class="d-flex gap-4 align-items-center mb-4">
         <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" aria-label="delete" Href="/sales/customers" />
-        <MudText Typo="Typo.h4">Add Customer</MudText>
+        <MudText Typo="Typo.h4">CREATE CUSTOMER</MudText>
     </div>
 
     <EditForm method="post" Model="Customer" OnValidSubmit="AddCustomer" FormName="create" Enhance>
@@ -32,17 +32,18 @@
             </MudItem>
 
             <MudItem xs="12" sm="6">
-                <MudDatePicker Label="Birthday" Editable="true" @bind-Date="Customer.BirthDate"
-                               Mask="@(new DateMask("MM/dd/yyyy"))" DateFormat="MM/dd/yyyy" For="@(() => Customer.BirthDate)" Placeholder="Birthday" Variant="Variant.Outlined" />
+                <MudDatePicker Label="Birth Date" Editable="true" @bind-Date="Customer.BirthDate"
+                               Mask="@(new DateMask("MM/dd/yyyy"))" DateFormat="MM/dd/yyyy" For="@(() => Customer.BirthDate)" Placeholder="Birth Date" Variant="Variant.Outlined" />
             </MudItem>
             <MudItem xs="12" sm="6">
                 <MudTextField @bind-Value="Customer.Occupation" Label="Occupation" For="@(() => Customer.Occupation)" Variant="Variant.Outlined" />
             </MudItem>
-
+            <MudItem xs="12" Class="d-flex align-md-end">
+                <MudButton Variant="Variant.Filled" Color="Color.Default" Class="ml-auto" Href="/sales/customers">CANCEL</MudButton>
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-2">CREATE CUSTOMER</MudButton>
+            </MudItem>
         </MudGrid>
-        <MudItem xs="12" Class="justify-center">
-            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Save</MudButton>
-        </MudItem>
+       
     </EditForm>
 </MudContainer>
 

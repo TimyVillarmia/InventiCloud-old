@@ -41,10 +41,10 @@ else
     {
         <MudGrid>
             <MudItem sm="6">
-                <MudTextField T="string" ValueChanged="@(s=>OnSearchBranches(s))" Variant="Variant.Outlined" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                <MudTextField T="string" ValueChanged="@(s=>OnSearchBranches(s))" Variant="Variant.Outlined" Placeholder="Search by Branch Name, Address, Phone, or Email" Adornment="Adornment.Start" Immediate="true"
                 AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
             </MudItem>
-            <MudItem sm="6" Class="align-end">
+            <MudItem sm="6" Class="d-flex justify-end">
                 <MudButton Variant="Variant.Filled" Href="/store/branches/create" Color="Color.Primary" Class="text-uppercase">
                     Add Branch
                 </MudButton>

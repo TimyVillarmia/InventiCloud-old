@@ -28,7 +28,7 @@
         <MudItem xs="12" sm="6">
             <MudAutocomplete T="Supplier" Label="Supplier" @bind-Value="PurchaseOrder.Supplier" ReadOnly="@(isDraft ? false : true)"
             SearchFunc="@SearchSupplier" ToStringFunc="@(s=> s==null?null : $"{s.SupplierName}")" Variant="Variant.Outlined" />
-            <MudTextField Class="mb-4" @bind-Value="PurchaseOrder.ReferenceNumber" HideSpinButtons="true" Label="Purchase Order Number" ReadOnly="true" Disabled="true" For="@(() => PurchaseOrder.ReferenceNumber)" Variant="Variant.Outlined" />
+            <MudTextField Class="mb-4" @bind-Value="PurchaseOrder.ReferenceNumber" Label="Purchase Order Number" ReadOnly="true" Disabled="true" For="@(() => PurchaseOrder.ReferenceNumber)" Variant="Variant.Outlined" />
         </MudItem>
 
         <MudItem xs="12" sm="6">

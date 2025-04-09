@@ -21,7 +21,7 @@
 <MudContainer Class="pt-5" MaxWidth="MaxWidth.Large">
 
     <div class="d-flex align-items-center mb-4">
-        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Href="/inventory/stock-transfers/requests" />
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" OnClick="HandleNavigation" />
         <MudText Typo="Typo.h4">@ReferenceNumber</MudText>
         <MudChip T="string" Color="@SelectedColor">@Status</MudChip>
     </div>
@@ -32,8 +32,7 @@
         <MudItem xs="12" sm="6">
             <MudTextField T="string" Label="Source Branch" @bind-Value="StockTransfer.SourceBranch.BranchName" ReadOnly="true"
             Variant="Variant.Outlined" />
-            <MudTextField T="string" Class="mb-4" Label="Approver" @bind-Value="StockTransfer.ApprovedBy.UserName" ReadOnly="true" Variant="Variant.Outlined" />
-
+            <MudTextField T="string" Label="Stock Transfer Number" @bind-Value="StockTransfer.ReferenceNumber" ReadOnly="true" Variant="Variant.Outlined" />
         </MudItem>
 
         <MudItem xs="12" sm="6">
@@ -42,34 +41,48 @@
             <MudDatePicker Label="Requested Date" Editable="true" @bind-Date="StockTransfer.RequestedDate" ReadOnly="true"
             Mask="@(new DateMask("MM/dd/yyyy"))" DateFormat="MM/dd/yyyy" Placeholder="Requested Date" Variant="Variant.Outlined" />
         </MudItem>
-        @if (!isRequested)
-        {
-            <MudItem xs="12" sm="6">
-                <MudDatePicker Label="Approved Date" Editable="true" @bind-Date="StockTransfer.DateApproved" ReadOnly="true"
-                Mask="@(new DateMask("MM/dd/yyyy"))" DateFormat="MM/dd/yyyy" Placeholder="Requested Date" Variant="Variant.Outlined" />
-                <MudDatePicker Label="Completed Date" Editable="true" @bind-Date="StockTransfer.DateCompleted" ReadOnly="true"
-                Mask="@(new DateMask("MM/dd/yyyy"))" DateFormat="MM/dd/yyyy" Placeholder="Requested Date" Variant="Variant.Outlined" />
-            </MudItem>
-        }
+        <MudItem xs="12">
+            <MudText Typo="Typo.h6">PRODUCTS</MudText>
+            <MudDataGrid  @ref="dataGrid" T="StockTransferItemViewModel" ServerData="ServerReload" Class="mt-4">
+                <Columns>
+                    <PropertyColumn Property="sti => sti.Product.ProductName" Title="Product" />
+                                            <PropertyColumn Property="sti => sti.AvailableQuantity" Title="Available Quantity" />
+                    <PropertyColumn Property="sti => sti.TransferQuantity" Title="Transfer Quantity" />
+                </Columns>
+                <PagerContent>
+                    <MudDataGridPager T="StockTransferItemViewModel" />
+                </PagerContent>
+            </MudDataGrid>
 
+        </MudItem>
+        <MudItem xs="12" Class="d-flex align-md-end">
 
+            @if (IsAdminUser)
+            {
+                @if (Status.ToLower() == "requested")
+                {
+                    <MudButton OnClick="DeleteStockTransfer" Variant="Variant.Outlined" Color="Color.Error" Class="ml-auto">DELETE</MudButton>
+                    <MudButton OnClick="RejectStockTransfer" Variant="Variant.Filled" Color="Color.Error" Class="ml-2">REJECT</MudButton>
+                    <MudButton OnClick="ApproveStockTransfer" Variant="Variant.Filled" Color="Color.Info" Class="ml-2">APPROVE</MudButton>
+                }
+                else if (Status.ToLower() == "approved")
+                {
+                    <MudButton OnClick="CompleteStockTransfer" Variant="Variant.Filled" Color="Color.Success" Class="ml-auto">COMPLETE</MudButton>
+                }
+            }
+            else
+            {
+                @if (Status.ToLower() == "requested")
+                {
+                    <MudButton OnClick="DeleteStockTransfer" Variant="Variant.Filled" Color="Color.Error" Class="ml-auto">DELETE</MudButton>
+                }
+            }
+        </MudItem>
 
     </MudGrid>
 
-    <MudText Typo="Typo.h6">PRODUCTS</MudText>
-    <MudDataGrid Items="StockTransferItems" Class="mt-4">
-        <Columns>
-            <PropertyColumn Property="sti => sti.Product.ProductName" Title="Product" />
-            <PropertyColumn Property="sti => sti.TransferQuantity" Title="Transfer Quantity" />
-        </Columns>
-    </MudDataGrid>
-    <div class="d-flex align-end mt-12">
-        @if(isRequested)
-        {
-            <MudButton Href="/inventory/stock-transfers/requests" Variant="Variant.Outlined" Color="Color.Default">CANCEL</MudButton>
-            <MudButton OnClick="DeleteStockTransfer" Variant="Variant.Outlined" Color="Color.Error">Delete</MudButton>
-        }
-    </div>
+
+
 
 </MudContainer>
 
@@ -77,16 +90,17 @@
 
 
 @code {
-    MudDataGrid<StockTransfer> dataGrid = new();
+    MudDataGrid<StockTransferItemViewModel> dataGrid = new();
 
 
     [Parameter]
     public string ReferenceNumber { get; set; }
 
 
-    private StockTransfer StockTransfer { get; set; } = new();
+    private StockTransferDetailViewModel StockTransfer { get; set; } = new();
 
     private List<StockTransferItemViewModel> StockTransferItems = new List<StockTransferItemViewModel>();
+    private List<StockTransferItem> data_sti = new List<StockTransferItem>();
 
     private IEnumerable<Inventory>? _sourceBranchInventories;
 
@@ -94,10 +108,19 @@
     private string? Status = "Requested";
     public Color SelectedColor;
     public bool isRequested = true;
+    private bool IsAdminUser { get; set; }
 
-
-
-
+    public class StockTransferDetailViewModel
+    {
+        public string ReferenceNumber { get; set; }
+        public Branch SourceBranch { get; set; } = new();
+        public Branch DestinationBranch { get; set; } = new();
+        public string? ApproverUserName { get; set; }
+        public string? RequesterUserName { get; set; }
+        public DateTime? RequestedDate { get; set; }
+        public DateTime? DateApproved { get; set; }
+        public DateTime? DateCompleted { get; set; }
+    }
 
 
     public class StockTransferItemViewModel : IValidatableObject
@@ -132,63 +155,61 @@
 
     protected override async Task OnInitializedAsync()
     {
-     
-
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
+        var data = await StockTransferService.GetStockTransferByReferenceNumberAsync(ReferenceNumber);
 
-
-        CurrentUser = await UserManager.GetUserAsync(user);
-
-        if (CurrentUser is null)
+        if (user.Identity?.IsAuthenticated == true)
         {
-            // Handle the case where the current user couldn't be retrieved.
-            // This might indicate an authentication issue.
-            NavigationManager.NavigateTo("notfound"); // Or another appropriate page
+            IsAdminUser = user.IsInRole("Administrator"); // Check if the user has the "Administrator" role
         }
-
-        StockTransfer = await StockTransferService.GetStockTransferByReferenceNumberAsync(ReferenceNumber);
-
-
-        if (StockTransfer is null)
+        if (data is null)
         {
             NavigationManager.NavigateTo("notfound");
+            return;
         }
 
-        Status = StockTransfer.Status?.StatusName; // Null-conditional operator
-        if (StockTransfer.SourceBranch != null)
+        StockTransfer = new StockTransferDetailViewModel
+            {
+                ReferenceNumber = data.ReferenceNumber,
+                SourceBranch = data.SourceBranch,
+                DestinationBranch = data.DestinationBranch,
+                ApproverUserName = data.ApprovedBy?.UserName,
+                RequesterUserName = data.RequestedBy?.UserName,
+                RequestedDate = data.RequestedDate,
+                DateApproved = data.DateApproved,
+                DateCompleted = data.DateCompleted,
+            };
+
+        data_sti = data.StockTransferItems.ToList();
+
+
+
+        if (data_sti != null)
         {
-            _sourceBranchInventories = await InventoryService.GetAllInventoryByBranchAsync(StockTransfer.SourceBranch.BranchId);
+            await LoadData();
+
         }
         else
         {
-            _sourceBranchInventories = new List<Inventory>(); // Initialize to an empty list to avoid null
-            // Optionally log a warning if SourceBranch is unexpectedly null
-            Console.WriteLine($"Warning: SourceBranch is null for StockTransfer with ReferenceNumber: {ReferenceNumber}");
-        }
-
-        if (StockTransfer.StockTransferItems != null)
-        {
-            var items = StockTransfer.StockTransferItems.ToList();
-            StockTransferItems = items.Select(vm => new StockTransferItemViewModel
-                {
-                    Id = vm.StockTransferItemlId,
-                    Product = vm.Product,
-                    TransferQuantity = vm.TransferQuantity,
-                }).ToList();
-        }
-        else
-        {
-            StockTransferItems = new List<StockTransferItemViewModel>(); // Initialize to an empty list
-            // Optionally log a warning if StockTransferItems is unexpectedly null
+            StockTransferItems = new List<StockTransferItemViewModel>();
             Console.WriteLine($"Warning: StockTransferItems is null for StockTransfer with ReferenceNumber: {ReferenceNumber}");
         }
-      
+
+        CurrentUser = await UserManager.GetUserAsync(user);
+        if (CurrentUser is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+            return;
+        }
+
+        Status = data.Status.StatusName; // Use the Status property from the ViewModel
+
 
         switch (Status.ToLower()) // Use ToLower() for case-insensitive comparison
         {
             case "requested":
-                SelectedColor = Color.Default;
+                SelectedColor = Color.Warning;
                 isRequested = true;
                 break;
             case "approved":
@@ -208,6 +229,34 @@
                 break;
         }
 
+    }
+
+    private async Task LoadData()
+    {
+        _sourceBranchInventories = await InventoryService.GetAllInventoryByBranchAsync(StockTransfer.SourceBranch.BranchId);
+
+        StockTransferItems = data_sti.Select(vm => new StockTransferItemViewModel
+            {
+                Id = vm.StockTransferItemlId,
+                Product = vm.Product,
+                TransferQuantity = vm.TransferQuantity,
+                AvailableQuantity = _sourceBranchInventories.First(i => i.ProductId == vm.ProductId && i.BranchId == StockTransfer.SourceBranch.BranchId).AvailableQuantity,
+            }).ToList();
+    }
+
+    private async Task<GridData<StockTransferItemViewModel>> ServerReload(GridState<StockTransferItemViewModel> state)
+    {
+
+        await LoadData();
+
+        var totalItems = StockTransferItems.Count();
+
+        var pagedData = StockTransferItems.Skip(state.Page * state.PageSize).Take(state.PageSize).ToArray();
+        return new GridData<StockTransferItemViewModel>
+            {
+                TotalItems = totalItems,
+                Items = pagedData
+            };
     }
 
 
@@ -231,7 +280,7 @@
                 // delete from db
                 await StockTransferService.DeleteStockTransferAsync(ReferenceNumber);
                 NavigationManager.NavigateTo($"/inventory/stock-transfers/requests");
-                Snackbar.Add("Stock Transfer Deleted", Severity.Success);
+                Snackbar.Add($"Stock Transfer '{StockTransfer.ReferenceNumber}' Deleted", Severity.Success);
             }
             catch (InvalidOperationException ex)
             {
@@ -241,6 +290,122 @@
             {
                 Snackbar.Add("An error occurred while deleting the Stock Transfer.", Severity.Error);
             }
+        }
+    }
+
+
+    private async Task ApproveStockTransfer()
+    {
+        var parameters = new DialogParameters<DialogComponent>
+        {
+            { x => x.ContentText, $"Approving Stock Transfer '{StockTransfer.ReferenceNumber}' will allocate the specified quantities in the source branch. Are you sure you want to proceed?" },
+            { "Button1Text", "Approve" },
+            { "Button2Text", "Cancel" },
+            { "Color", Color.Info }
+        };
+
+        var dialog = await DialogService.ShowAsync<DialogComponent>("Approve Stock Transfer", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            try
+            {
+                // ensure the latest changes
+             
+                await dataGrid.ReloadServerData();
+                await StockTransferService.StockTransferToApprovedAsync(ReferenceNumber);
+                Snackbar.Add($"Stock Transfer '{StockTransfer.ReferenceNumber}' Approved", Severity.Success);
+                NavigationManager.NavigateTo($"/inventory/stock-transfers/requests/{ReferenceNumber}", true);
+
+            }
+            catch (InvalidOperationException ex)
+            {
+                Snackbar.Add(ex.Message, Severity.Error);
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add("An error occurred while approving the Stock Transfer.", Severity.Error);
+            }
+        }
+    }
+
+
+    private async Task RejectStockTransfer()
+    {
+        var parameters = new DialogParameters<DialogComponent>
+        {
+            { x => x.ContentText, $"Are you sure you want to reject Stock Transfer '{StockTransfer.ReferenceNumber}'? This action cannot be undone." },
+            { "Button1Text", "Reject" },
+            { "Button2Text", "Cancel" },
+            { "Color", Color.Error }
+        };
+
+        var dialog = await DialogService.ShowAsync<DialogComponent>("Reject Stock Transfer", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            try
+            {
+                await StockTransferService.StockTransferToRejectedAsync(ReferenceNumber);
+                NavigationManager.NavigateTo($"/inventory/stock-transfers/requests/{ReferenceNumber}", true);
+                Snackbar.Add($"Stock Transfer '{StockTransfer.ReferenceNumber}' Rejected.", Severity.Warning);
+            }
+            catch (InvalidOperationException ex)
+            {
+                Snackbar.Add(ex.Message, Severity.Error);
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add("An error occurred while rejecting the Stock Transfer.", Severity.Error);
+            }
+        }
+    }
+
+    private async Task CompleteStockTransfer()
+    {
+        var parameters = new DialogParameters<DialogComponent>
+        {
+            { x => x.ContentText, $"Completing Stock Transfer '{StockTransfer.ReferenceNumber}' will finalize the transfer and update inventory in both the source and destination branches. Are you sure you want to proceed?" },
+            { "Button1Text", "Complete Transfer" },
+            { "Button2Text", "Cancel" },
+            { "Color", Color.Success }
+        };
+
+        var dialog = await DialogService.ShowAsync<DialogComponent>("Complete Stock Transfer", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            try
+            {
+                await dataGrid.ReloadServerData();
+                await StockTransferService.StockTransferToCompletedAsync(ReferenceNumber);
+                NavigationManager.NavigateTo($"/inventory/stock-transfers/requests/{ReferenceNumber}", true);
+                Snackbar.Add($"Stock Transfer '{StockTransfer.ReferenceNumber}' Completed.", Severity.Success);
+            }
+            catch (InvalidOperationException ex)
+            {
+                Snackbar.Add(ex.Message, Severity.Error);
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add("An error occurred while completing the Stock Transfer.", Severity.Error);
+            }
+        }
+    }
+
+    private void HandleNavigation()
+    {
+        if (IsAdminUser)
+        {
+            NavigationManager.NavigateTo("/inventory/stock-transfers/all", true);
+        }
+        else
+        {
+            NavigationManager.NavigateTo("/inventory/stock-transfers/requests", true);
+
         }
     }
 

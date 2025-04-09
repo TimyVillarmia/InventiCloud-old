@@ -10,6 +10,7 @@
 @inject IBranchService BranchService
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
+@inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject UserManager<ApplicationUser> UserManager
 @using Microsoft.AspNetCore.Authorization
@@ -49,7 +50,7 @@ else
         <MudGrid>
             <MudItem sm="5">
                 <MudStack Row="true" AlignItems="AlignItems.Center">
-                    <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                    <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search by Ref. Number, Reason, Status, Branch, or Date" Adornment="Adornment.Start" Immediate="true"
                                   AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
                 </MudStack>
             </MudItem>
@@ -69,7 +70,7 @@ else
 
         </MudGrid>
 
-        <MudDataGrid @ref="dataGrid" T="StockAdjustment" ServerData="ServerReload" MultiSelection="true" Filterable="false">
+        <MudDataGrid @ref="dataGrid" T="StockAdjustment" ServerData="ServerReload" MultiSelection="true" Filterable="false" RowClick="@RowClicked">
             <Columns>
                 <PropertyColumn Property="sa => sa.ReferenceNumber" Title="Reference#" />
                 <PropertyColumn Property="sa => sa.SourceBranch.BranchName" Title="Branch" />
@@ -83,7 +84,7 @@ else
                 <TemplateColumn CellClass="d-flex justify-end">
                     <CellTemplate>
                         <MudMenu Icon="@Icons.Material.Filled.MoreVert" AriaLabel="Open user menu">
-                            <MudMenuItem Label="Edit" href="@($"/inventory/stock-adjustments/{context.Item.ReferenceNumber}")" />
+                            <MudMenuItem Label="View" href="@($"/inventory/stock-adjustments/{context.Item.ReferenceNumber}")" />
                             @if (context.Item.StockAdjustmentStatus.StatusName.ToLower() == "draft")
                             {
                                 <MudMenuItem Label="Delete" Class="red-text" OnClick="@(() => OpenDialogAsync(context.Item))" />
@@ -185,6 +186,12 @@ else
                 return true;
             if (stockadjustment.StockAdjustmentStatus.StatusName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
                 return true;
+            if (stockadjustment.SourceBranch.BranchName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+                return true;
+            if (stockadjustment.AdjustedDate.ToString("yyyy-MM-dd").Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
+                stockadjustment.AdjustedDate.ToString("MM/dd/yyyy").Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
+                stockadjustment.AdjustedDate.ToString("dd/MM/yyyy").Contains(searchString, StringComparison.OrdinalIgnoreCase))
+                return true;
             return false;
         }).ToArray();
         var totalItems = _filteredstockAdjustments.Count();
@@ -194,6 +201,12 @@ else
         {
             switch (sortDefinition.SortBy)
             {
+                 case nameof(StockAdjustment.ReferenceNumber):
+                    _filteredstockAdjustments = _filteredstockAdjustments.OrderByDirection(
+                        sortDefinition.Descending ? SortDirection.Descending : SortDirection.Ascending,
+                        sa => sa.ReferenceNumber
+                    );
+                    break;
                 case nameof(StockAdjustment.AdjustedDate):
                     _filteredstockAdjustments = _filteredstockAdjustments.OrderByDirection(
                         sortDefinition.Descending ? SortDirection.Descending : SortDirection.Ascending,
@@ -258,6 +271,17 @@ else
     {
         return dataGrid.ReloadServerData();
     }
+
+    void RowClicked(DataGridRowClickEventArgs<StockAdjustment> args)
+    {
+        if (args.Item == null)
+        {
+            return;
+        }
+
+        NavigationManager.NavigateTo($"/inventory/stock-adjustments/{args.Item.ReferenceNumber}");
+    }
+
 
 
 
