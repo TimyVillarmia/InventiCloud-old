@@ -28,13 +28,13 @@ else
     {
 
         <MudPaper Height="500px" Class="justify-center align-content-center">
-            <MudText Class="bol" Typo="Typo.h6" Align="Align.Center">No Purchase Orders Found</MudText>
+            <MudText Class="bol" Typo="Typo.h6" Align="Align.Center">No Sales Orders Found</MudText>
             <MudText Typo="Typo.body1" Align="Align.Center">
-                Click the button below to create your first purchase order.
+                It looks like there aren't any sales orders created yet.
             </MudText>
             <MudContainer Class="d-flex justify-center mt-2">
-                <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Href="/sales/orders/create" Color="Color.Primary" Class="text-uppercase">
-                    Create Sales Order
+                <MudButton Variant="Variant.Filled" Href="/sales/orders/create" Color="Color.Primary" Class="text-uppercase">
+                    Create New Sales Order
                 </MudButton>
             </MudContainer>
         </MudPaper>
@@ -51,7 +51,7 @@ else
 
             </MudItem>
 
-            <MudItem sm="6">
+            <MudItem sm="6" Class="d-flex justify-end">
                 <MudButton Variant="Variant.Filled" Href="/purchase/orders/create" Color="Color.Primary" Class="text-uppercase">
                     Create Purchase Order
                 </MudButton>
@@ -69,7 +69,7 @@ else
                 <TemplateColumn CellClass="d-flex justify-end">
                     <CellTemplate>
                         <MudMenu Icon="@Icons.Material.Filled.MoreVert" AriaLabel="Open user menu">
-                            <MudMenuItem Label="Edit" href="@($"/sales/orders/{context.Item.ReferenceNumber}")" />
+                            <MudMenuItem Label="View" href="@($"/sales/orders/{context.Item.ReferenceNumber}")" />
                                 <MudMenuItem Label="Delete" Class="red-text" OnClick="@(() => OpenDialogAsync(context.Item))" />
                         </MudMenu>
                     </CellTemplate>
