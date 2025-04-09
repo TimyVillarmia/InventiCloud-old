@@ -35,7 +35,7 @@ else if (!_branches.Any())
             Before creating stock transfers, you need to have at least two branch set up.
         </MudText>
         <MudContainer Class="d-flex justify-center mt-2">
-            <MudButton Variant="Variant.Filled" Href="/store/branches/create" Color="Color.Primary" Class="text-uppercase">
+            <MudButton Variant="Variant.Filled" Href="/store/branches/create" StartIcon="@Icons.Material.Filled.Add" Color="Color.Primary" Class="text-uppercase">
                 Create New Branch
             </MudButton>
         </MudContainer>
@@ -56,7 +56,7 @@ else if (!_stocktransfers.Any())
             Start a new transfer to move items between branches.
         </MudText>
         <MudContainer Class="d-flex justify-center mt-2">
-            <MudButton Variant="Variant.Filled" Href="/inventory/stock-transfers/create" Color="Color.Primary" Class="text-uppercase">
+            <MudButton Variant="Variant.Filled" Href="/inventory/stock-transfers/create" StartIcon="@Icons.Material.Filled.Add" Color="Color.Primary" Class="text-uppercase">
                 Create Stock Transfer
             </MudButton>
         </MudContainer>
@@ -72,7 +72,7 @@ else
             </MudStack>
         </MudItem>
         <MudItem sm="6" Class="d-flex justify-end">
-            <MudButton Variant="Variant.Filled" Href="/inventory/stock-transfers/create" Color="Color.Primary" Class="text-uppercase">
+            <MudButton Variant="Variant.Filled" Href="/inventory/stock-transfers/create" StartIcon="@Icons.Material.Filled.Add" Color="Color.Primary" Class="text-uppercase">
                 Create Stock Transfer
             </MudButton>
         </MudItem>

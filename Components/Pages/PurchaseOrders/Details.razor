@@ -80,19 +80,19 @@
             }
         </Columns>
     </MudDataGrid>
-    <MudText Typo="Typo.h5">@PurchaseOrderItems.Sum(item => item.SubTotal)</MudText>
+    <MudText class="d-flex justify-end mt-3" Typo="Typo.h5">Total ₱@PurchaseOrderItems.Sum(item => item.SubTotal)</MudText>
 
-    <div class="d-flex align-end mt-12">
+    <div class="d-flex justify-end mt-10">
         @if (Status.ToLower() == "draft")
         {
             <MudButton OnClick="DeletePurchaseOrder" Variant="Variant.Outlined" Color="Color.Error" >DELETE</MudButton>
-            <MudButton  OnClick="MarkAsOrdered" Variant="Variant.Outlined" Color="Color.Info" >MARK AS ORDERED</MudButton>
-            <MudButton  OnClick="SaveChanges" Variant="Variant.Filled" Color="Color.Primary">SAVE CHANGES</MudButton>
+            <MudButton  OnClick="MarkAsOrdered" Variant="Variant.Outlined" Color="Color.Info" Class="ml-2" >MARK AS ORDERED</MudButton>
+            <MudButton OnClick="SaveChanges" Variant="Variant.Filled" Color="Color.Primary" Class="ml-2">SAVE CHANGES</MudButton>
         }
         else if (Status.ToLower() == "ordered")
         {
             <MudButton OnClick="CancelOrder" Variant="Variant.Outlined" Color="Color.Error" >CANCEL ORDER</MudButton>
-            <MudButton  OnClick="CompleteOrder" Variant="Variant.Filled" Color="Color.Success" >COMPLETE ORDER</MudButton>
+            <MudButton OnClick="CompleteOrder" Variant="Variant.Filled" Color="Color.Success" Class="ml-2">COMPLETE ORDER</MudButton>
         }
 
     </div>

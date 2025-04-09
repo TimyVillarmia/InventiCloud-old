@@ -36,7 +36,7 @@ else
                 You don't have any suppliers yet. Click the "Add Supplier" button to get started.
             </MudText>
             <MudContainer Class="d-flex justify-center mt-2">
-                <MudButton Variant="Variant.Filled"  Href="/purchase/suppliers/create" Color="Color.Primary" Class="text-uppercase">
+                <MudButton Variant="Variant.Filled" Href="/purchase/suppliers/create" StartIcon="@Icons.Material.Filled.Add" Color="Color.Primary" Class="text-uppercase">
                     Add Supplier
                 </MudButton>
             </MudContainer>
@@ -57,7 +57,7 @@ else
 
             <MudItem sm="6" Class="d-flex justify-end">
                 <AuthorizeView Roles="Administrator">
-                    <MudButton Variant="Variant.Filled" Href="/purchase/suppliers/create" Color="Color.Primary" Class="text-uppercase">
+                    <MudButton Variant="Variant.Filled" Href="/purchase/suppliers/create" StartIcon="@Icons.Material.Filled.Add" Color="Color.Primary" Class="text-uppercase">
                         Create Supplier
                     </MudButton>
                 </AuthorizeView>
@@ -77,7 +77,7 @@ else
                 <PropertyColumn Property="supplier => supplier.PhoneNumber" Title="Phone Number" />
                 @if (IsAdminUser)
                 {
-                    <TemplateColumn CellClass="d-flex justify-end">
+                    <TemplateColumn CellClass="d-flex justify-end align-items-center">
                         <CellTemplate>
                             <MudMenu Icon="@Icons.Material.Filled.MoreVert" AriaLabel="Open user menu">
                                 <MudMenuItem Label="Edit" href="@($"/purchase/suppliers/{context.Item.SupplierCode}")" />
@@ -86,12 +86,6 @@ else
                         </CellTemplate>
                     </TemplateColumn>
                 }
-                <TemplateColumn CellClass="d-flex justify-end">
-                    <CellTemplate>
-                        <MudStack Row>
-                        </MudStack>
-                    </CellTemplate>
-                </TemplateColumn>
             </Columns>
             <PagerContent>
                 <MudDataGridPager T="Supplier" />

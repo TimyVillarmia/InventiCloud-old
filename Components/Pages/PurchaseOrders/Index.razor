@@ -34,7 +34,7 @@ else if (!_branches.Any())
             To manage purchase orders, you need to have at least one branch set up in your system.
         </MudText>
         <MudContainer Class="d-flex justify-center mt-2">
-            <MudButton Variant="Variant.Filled" Href="/store/branches/create" Color="Color.Primary" Class="text-uppercase">
+            <MudButton Variant="Variant.Filled" Href="/store/branches/create" StartIcon="@Icons.Material.Filled.Add" Color="Color.Primary" Class="text-uppercase">
                 Create New Branch
             </MudButton>
         </MudContainer>
@@ -55,7 +55,7 @@ else if (!_purchaseorders.Any())
             Click the button below to create your first purchase order.
         </MudText>
         <MudContainer Class="d-flex justify-center mt-2">
-            <MudButton Variant="Variant.Filled" Href="/purchase/orders/create" Color="Color.Primary" Class="text-uppercase">
+            <MudButton Variant="Variant.Filled" Href="/purchase/orders/create" StartIcon="@Icons.Material.Filled.Add" Color="Color.Primary" Class="text-uppercase">
                 Create Purchase Order
             </MudButton>
         </MudContainer>
@@ -78,8 +78,8 @@ else
             </MudSelect>
         </MudItem>
 
-        <MudItem sm="6">
-            <MudButton Variant="Variant.Filled" Href="/purchase/orders/create" Color="Color.Primary" Class="text-uppercase">
+        <MudItem sm="6" Class="d-flex justify-end">
+            <MudButton Variant="Variant.Filled" Href="/purchase/orders/create" StartIcon="@Icons.Material.Filled.Add" Color="Color.Primary" Class="text-uppercase">
                 Create Purchase Order
             </MudButton>
         </MudItem>
