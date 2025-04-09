@@ -2,6 +2,7 @@
 @using InventiCloud.Components.UI
 @using InventiCloud.Services
 @using InventiCloud.Services.Interface
+@using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
 @using InventiCloud.Entities
 @using InventiCloud.Data
@@ -9,6 +10,8 @@
 @inject IDbContextFactory<InventiCloud.Data.ApplicationDbContext> DbFactory
 @inject IDialogService DialogService
 @inject ICategoryService CategoryService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<ApplicationUser> UserManager
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
 @using Microsoft.AspNetCore.Authorization
@@ -28,46 +31,67 @@
 else
 {
     <MudGrid>
+
         <MudItem sm="6">
-            <EditForm method="post" Model="Category" OnValidSubmit="AddCategory" FormName="create" Enhance>
-                <DataAnnotationsValidator />
-                <MudStack Row="true" AlignItems="AlignItems.Center">
-                    <div>
-                        <MudTextField @bind-Value="Category.CategoryName" Label="Category Name" For="@(() => Category.CategoryName)" Variant="Variant.Outlined" />
-                    </div>
-                    <div>
-                        <MudButton ButtonType="ButtonType.Submit" StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Add Category</MudButton>
-                    </div>
-                </MudStack>
-            </EditForm>
-        </MudItem>
-        <MudItem sm="6">
-            <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+            <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search by Category" Adornment="Adornment.Start" Immediate="true"
             AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
         </MudItem>
+
+        <MudItem sm="6">
+            @if (IsAdminUser)
+            {
+                <div>
+                    <EditForm method="post" Model="Category" OnValidSubmit="AddCategory" FormName="create" Enhance>
+                        <DataAnnotationsValidator />
+                        <MudStack Row="true" AlignItems="AlignItems.Center">
+                            <div>
+                                <MudTextField @bind-Value="Category.CategoryName" Label="Category Name" For="@(() => Category.CategoryName)" Variant="Variant.Outlined" />
+                            </div>
+                            <div>
+                                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Add Category</MudButton>
+                            </div>
+                        </MudStack>
+                    </EditForm>
+                </div>
+            }
+        </MudItem>
     </MudGrid>
-    @if (!_categories.Any())
+    @if (!data.Any())
     {
 
         <MudPaper Height="500px" Class="justify-center align-content-center">
             <MudText Class="bold" Typo="Typo.h6" Align="Align.Center">No Categories Found</MudText>
-            <MudText Typo="Typo.body1" Align="Align.Center">Let's start organizing your products! Create your first category.</MudText>
+            <MudText Typo="Typo.body1" Align="Align.Center" Class="mt-2">
+                @if (IsAdminUser)
+                {
+                    <span>Let's start organizing your products! Create your first category.</span>
+                }
+                else
+                {
+                    <span>The categories is currently empty. The store owner hasn't added any categories yet.</span>
+                }
+            </MudText>
+
         </MudPaper>
     }
     else
     {
-        <MudDataGrid @ref="dataGrid" T="Category" ServerData="ServerReload" RowClick="@RowClicked">
+        <MudDataGrid @ref="dataGrid" T="CategoryViewModel" ServerData="ServerReload" RowClick="@RowClicked">
             <Columns>
                 <PropertyColumn Property="category => category.CategoryName" Title="Category Name" />
-                <PropertyColumn Property="category => category.Products.Count()" Title="Products" />
-                <TemplateColumn CellClass="d-flex justify-end">
-                    <CellTemplate>
-                        <MudMenu Icon="@Icons.Material.Filled.MoreVert" AriaLabel="Open user menu">
-                            <MudMenuItem Label="Edit" href="@($"/product-setup/categories/{context.Item.CategoryName}")" />
-                            <MudMenuItem Label="Delete" Class="red-text" OnClick="@(() => OpenDialogAsync(context.Item))" />
-                        </MudMenu>
-                    </CellTemplate>
-                </TemplateColumn>
+                <PropertyColumn Property="category => category.ProductCount" Title="Products" />
+                @if(IsAdminUser)
+                {
+                    <TemplateColumn CellClass="d-flex justify-end">
+                        <CellTemplate>
+                            <MudMenu Icon="@Icons.Material.Filled.MoreVert" AriaLabel="Open user menu">
+                                <MudMenuItem Label="Edit" href="@($"/product-setup/categories/{context.Item.CategoryName}")" />
+                                <MudMenuItem Label="Delete" Class="red-text" OnClick="@(() => OpenDialogAsync(context.Item))" />
+                            </MudMenu>
+                        </CellTemplate>
+                    </TemplateColumn>
+                }
+
             </Columns>
             <PagerContent>
                 <MudDataGridPager T="Category" />
@@ -79,17 +103,47 @@ else
 
 
 @code {
-    MudDataGrid<Category> dataGrid = new();
+    MudDataGrid<CategoryViewModel> dataGrid = new();
 
     [SupplyParameterFromForm]
     private Category Category { get; set; } = new();
-    private IEnumerable<Category>? _categories ;
-    private IEnumerable<Category> _filteredcategories = new List<Category>();
+    private IEnumerable<CategoryViewModel>? _categories;
+    private IEnumerable<Category>? data;
+    private ApplicationUser? CurrentUser { get; set; } // Replace ApplicationUser with your actual user class
+
     private string? searchString;
+    private bool IsAdminUser { get; set; }
+
+    public class CategoryViewModel
+    {
+        public string CategoryName {get;set;}
+        public int ProductCount {get;set;}
+    }
 
     protected override async Task OnInitializedAsync()
     {
-        _categories = await CategoryService.GetAllCategoryAsync();
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        await LoadData();
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            CurrentUser = await UserManager.GetUserAsync(user);
+            IsAdminUser = user.IsInRole("Administrator"); // Check if the user has the "Administrator" role
+        }
+
+
+    }
+
+    private async Task LoadData()
+    {
+        data = await CategoryService.GetAllCategoryAsync();
+        _categories = data.Select(c => new CategoryViewModel
+            {
+                CategoryName = c.CategoryName,
+                ProductCount = c.Products.Count(),
+            });
     }
 
 
@@ -102,6 +156,7 @@ else
             await CategoryService.AddCategoryAsync(Category);
             Snackbar.Add($"{Category.CategoryName} Added", Severity.Success);
             Category = new();
+            await LoadData();
             await dataGrid.ReloadServerData();
 
         }
@@ -119,11 +174,11 @@ else
 
 
     // events
-    async Task OpenDialogAsync(Category category)
+    async Task OpenDialogAsync(CategoryViewModel selectedCategory)
     {
         var parameters = new DialogParameters<DialogComponent>
         {
-            {x => x.ContentText, $"Are you sure you want to delete the category '{category.CategoryName}'? This action cannot be undone."},
+            {x => x.ContentText, $"Are you sure you want to delete the category '{selectedCategory.CategoryName}'? This action cannot be undone."},
             { "Button1Text", "Delete" },
             { "Button2Text", "Cancel" },
             { "Color", Color.Error }
@@ -136,8 +191,9 @@ else
         {
             try
             {
+                var category = await CategoryService.GetCategoryByName(selectedCategory.CategoryName);
                 await CategoryService.DeleteCategoryyAsync(category);
-                Snackbar.Add("Category Deleted", Severity.Success);
+                Snackbar.Add($"Category {category.CategoryName} Deleted", Severity.Success);
                 await dataGrid.ReloadServerData();
 
             }
@@ -153,7 +209,7 @@ else
 
     }
 
-    void RowClicked(DataGridRowClickEventArgs<Category> args)
+    void RowClicked(DataGridRowClickEventArgs<CategoryViewModel > args)
     {
 
 
@@ -168,10 +224,10 @@ else
 
 
 
-    private async Task<GridData<Category>> ServerReload(GridState<Category> state)
+    private async Task<GridData<CategoryViewModel>> ServerReload(GridState<CategoryViewModel> state)
     {
-
-        _filteredcategories = _categories;
+        await LoadData();
+        var _filteredcategories = _categories;
 
 
         _filteredcategories = _filteredcategories.Where(category =>
@@ -189,17 +245,24 @@ else
         {
             switch (sortDefinition.SortBy)
             {
-                case nameof(Category.CategoryName):
+                case nameof(CategoryViewModel.CategoryName):
                     _filteredcategories = _filteredcategories.OrderByDirection(
                         sortDefinition.Descending ? SortDirection.Descending : SortDirection.Ascending,
                         o => o.CategoryName
+                    );
+                    break;
+                // Add a new case to sort by the count of products in each category
+                case nameof(CategoryViewModel.ProductCount):
+                    _filteredcategories = _filteredcategories.OrderByDirection(
+                        sortDefinition.Descending ? SortDirection.Descending : SortDirection.Ascending,
+                        o => o.ProductCount 
                     );
                     break;
             }
         }
 
         var pagedData = _filteredcategories.Skip(state.Page * state.PageSize).Take(state.PageSize).ToArray();
-        return new GridData<Category>
+        return new GridData<CategoryViewModel>
             {
                 TotalItems = totalItems,
                 Items = pagedData

@@ -1,4 +1,5 @@
 ﻿@page "/inventory/stock-transfers/requests/"
+@page "/inventory/stock-transfers/all/"
 @using InventiCloud.Components.UI
 @using InventiCloud.Data
 @using InventiCloud.Services
@@ -16,73 +17,112 @@
 @attribute [Authorize]
 <PageTitle>Stock Transfers</PageTitle>
 
-<MudText Class="bold mb-2" Typo="Typo.h4">Stock Transfers</MudText>
+<MudText Class="bold mb-2" Typo="Typo.h4">Stock Transfer Requests</MudText>
 
-@if (_stocktransfers == null)
+
+
+ @if (_branches == null)
 {
     <MudContainer Class="d-flex justify-center align-items-center" Style="height: 100vh;">
         <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
     </MudContainer>
 }
+else if (!_branches.Any())
+{
+    <MudPaper Height="500px" Class="justify-center align-content-center">
+        <MudText Typo="Typo.h6" Align="Align.Center" Class="mb-2">No Branches Exist</MudText>
+        <MudText Typo="Typo.body1" Align="Align.Center" Class="mb-3">
+            Before creating stock transfers, you need to have at least two branch set up.
+        </MudText>
+        <MudContainer Class="d-flex justify-center mt-2">
+            <MudButton Variant="Variant.Filled" Href="/store/branches/create" Color="Color.Primary" Class="text-uppercase">
+                Create New Branch
+            </MudButton>
+        </MudContainer>
+
+    </MudPaper>
+}
+else if (_stocktransfers == null)
+{
+    <MudContainer Class="d-flex justify-center align-items-center" Style="height: 100vh;">
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    </MudContainer>
+}
+else if (!_stocktransfers.Any())
+{
+    <MudPaper Height="500px" Class="justify-center align-content-center">
+        <MudText Typo="Typo.h6" Align="Align.Center">No Stock Transfers Found</MudText>
+        <MudText Typo="Typo.body1" Align="Align.Center">
+            Start a new transfer to move items between branches.
+        </MudText>
+        <MudContainer Class="d-flex justify-center mt-2">
+            <MudButton Variant="Variant.Filled" Href="/inventory/stock-transfers/create" Color="Color.Primary" Class="text-uppercase">
+                Create Stock Transfer
+            </MudButton>
+        </MudContainer>
+    </MudPaper>
+}
 else
 {
-    @if (!_stocktransfers.Any())
-    {
-        <MudPaper Height="500px" Class="justify-center align-content-center">
-            <MudText Class="bol" Typo="Typo.h6" Align="Align.Center">No Stock Transfers Found</MudText>
-            <MudText Typo="Typo.body1" Align="Align.Center">
-                Start a new transfer to move items between branches.
-            </MudText>
-            <MudContainer Class="d-flex justify-center mt-2">
-                <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Href="/inventory/stock-transfers/create" Color="Color.Primary" Class="text-uppercase">
-                    Create Stock Transfer
-                </MudButton>
-            </MudContainer>
-        </MudPaper>
-    }
-    else
-    {
-        <MudGrid>
-            <MudItem sm="6">
-                <MudStack Row="true" AlignItems="AlignItems.Center">
-                    <MudTextField T="string" ValueChanged="@(s => OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
-                    AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
-                </MudStack>
-            </MudItem>
-            <MudItem sm="6">
-                <MudButton Variant="Variant.Filled" Href="/inventory/stock-transfers/create" Color="Color.Primary" Class="text-uppercase">
-                    Create Stock Transfer
-                </MudButton>
-            </MudItem>
-        </MudGrid>
+    <MudGrid>
+        <MudItem sm="6">
+            <MudStack Row="true" AlignItems="AlignItems.Center">
+                <MudTextField T="string" ValueChanged="@(s => OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search by Reference Number, Source Branch, Destination Branch, Status" Adornment="Adornment.Start" Immediate="true"
+                AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+            </MudStack>
+        </MudItem>
+        <MudItem sm="6" Class="d-flex justify-end">
+            <MudButton Variant="Variant.Filled" Href="/inventory/stock-transfers/create" Color="Color.Primary" Class="text-uppercase">
+                Create Stock Transfer
+            </MudButton>
+        </MudItem>
+    </MudGrid>
 
-        <MudDataGrid @ref="dataGrid" T="StockTransfer" ServerData="ServerReload" MultiSelection="true" RowClick="@RowClicked">
-            <Columns>
-                <PropertyColumn Property="st => st.ReferenceNumber" Title="Reference Number" />
-                <PropertyColumn Property="st => st.SourceBranch.BranchName" Title="Source Branch" />
-                <PropertyColumn Property="st => st.DestinationBranch.BranchName" Title="Destination Branch" />
-                <TemplateColumn Title="Status">
-                    <CellTemplate>
-                        <MudChip Color="@GetChipColor(context.Item.Status.StatusName)" Size="Size.Small">@context.Item.Status.StatusName</MudChip>
-                    </CellTemplate>
-                </TemplateColumn>
-                <TemplateColumn CellClass="d-flex justify-end">
-                    <CellTemplate>
-                        <MudMenu Icon="@Icons.Material.Filled.MoreVert" AriaLabel="Open user menu">
-                            <MudMenuItem Label="View" href="@($"/inventory/stock-transfers/requests/{context.Item.ReferenceNumber}")" />
-                            @if (context.Item.Status.StatusName.ToLower() == "allocated")
+    <MudDataGrid @ref="dataGrid" T="StockTransfer" ServerData="ServerReload" MultiSelection="true" RowClick="@RowClicked">
+        <Columns>
+            <PropertyColumn Property="st => st.ReferenceNumber" Title="Reference Number" />
+            <PropertyColumn Property="st => st.SourceBranch.BranchName" Title="Source Branch" />
+            <PropertyColumn Property="st => st.DestinationBranch.BranchName" Title="Destination Branch" />
+            <TemplateColumn Title="Status">
+                <CellTemplate>
+                    <MudChip Color="@GetChipColor(context.Item.Status.StatusName)" Size="Size.Small">@context.Item.Status.StatusName</MudChip>
+                </CellTemplate>
+            </TemplateColumn>
+            <TemplateColumn CellClass="d-flex justify-end">
+                <CellTemplate>
+                    <MudMenu Icon="@Icons.Material.Filled.MoreVert" AriaLabel="Open user menu">
+                        <MudMenuItem Label="View" href="@($"/inventory/stock-transfers/requests/{context.Item.ReferenceNumber}")" />
+                        @if (IsAdminUser)
+                        {
+                            @if (context.Item.Status.StatusName.ToLower() == "requested")
                             {
-                                <MudMenuItem Label="Delete" Class="red-text" OnClick="@(() => OpenDialogAsync(context.Item))" />
+                                <MudMenuItem Label="Delete" Style="@($"color:{Colors.Red.Darken4};")" OnClick="@(() => OpenDialogAsync(context.Item))" />
+                                <MudMenuItem Label="Approve"  Style="@($"color:{Colors.Green.Default};")" OnClick="@(() => Approve(context.Item))" />
+                                <MudMenuItem Label="Reject" Style="@($"color:{Colors.Red.Default};")" OnClick="@(() => Reject(context.Item))" />
                             }
-                        </MudMenu>
-                    </CellTemplate>
-                </TemplateColumn>
-            </Columns>
-            <PagerContent>
-                <MudDataGridPager T="PurchaseOrder" />
-            </PagerContent>
-        </MudDataGrid>
-    }
+                            else if (context.Item.Status.StatusName.ToLower() == "approved")
+                            {
+                                <MudMenuItem Label="Complete" Style="@($"color:{Colors.LightGreen.Accent3};")" OnClick="@(() => Complete(context.Item))" />
+
+                            }
+                        }
+                        else
+                        {
+                            @if (context.Item.Status.StatusName.ToLower() == "requested")
+                            {
+                                <MudMenuItem Label="Delete" Style="@($"color:{Colors.Red.Darken4};")" OnClick="@(() => OpenDialogAsync(context.Item))" />
+
+                            }
+
+                        }
+                    </MudMenu>
+                </CellTemplate>
+            </TemplateColumn>
+        </Columns>
+        <PagerContent>
+            <MudDataGridPager T="StockTransfer" />
+        </PagerContent>
+    </MudDataGrid>
 }
 
 @code {
@@ -93,6 +133,7 @@ else
     private IEnumerable<StockTransfer>? _stocktransfers;
     private IEnumerable<StockTransfer>? _filteredstocktransfers;
     private ApplicationUser? CurrentUser { get; set; } // Replace ApplicationUser with your actual user class
+    private bool IsAdminUser { get; set; }
     protected override async Task OnInitializedAsync()
     {
         await LoadStockTransfers();
@@ -109,8 +150,18 @@ else
 
             if (CurrentUser != null)
             {
-                _stocktransfers = await StockTransferService.GetStockTransfersRequestedByUserAsync(CurrentUser.Id);
+                IsAdminUser = await UserManager.IsInRoleAsync(CurrentUser, "Administrator");
+                if (IsAdminUser)
+                {
+                    // Admin: Load all stock transfers
+                    _stocktransfers = await StockTransferService.GetAllStockTransferAsync();
 
+                }
+                else
+                {
+                    // Branch Account: Load stock transfers requested by the current user
+                    _stocktransfers = await StockTransferService.GetStockTransfersRequestedByUserAsync(CurrentUser.Id);
+                }
             }
         }
 
@@ -118,24 +169,24 @@ else
 
     private Color GetChipColor(string status)
     {
-        switch (status.ToLower())
+        switch (status?.ToLowerInvariant()) // Use null-conditional operator and ToLowerInvariant
         {
-            case "allocated":
-                return Color.Default;
-            case "in transit":
+            case "requested":
+                return Color.Warning; // Or another appropriate color for "Requested"
+            case "approved":
                 return Color.Info;
-            case "cancelled":
-                return Color.Error;
             case "completed":
                 return Color.Success;
+            case "rejected":
+                return Color.Error;
             default:
                 return Color.Default;
         }
     }
-
     private async Task<GridData<StockTransfer>> ServerReload(GridState<StockTransfer> state)
     {
-        _stocktransfers = await StockTransferService.GetStockTransfersRequestedByUserAsync(CurrentUser.Id);
+        await LoadStockTransfers();
+
         _filteredstocktransfers = _stocktransfers;
 
         _filteredstocktransfers = _filteredstocktransfers.Where(st =>
@@ -143,6 +194,12 @@ else
             if (string.IsNullOrWhiteSpace(searchString))
                 return true;
             if (st.ReferenceNumber.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+                return true;
+            if (st.SourceBranch.BranchName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+                return true;
+            if (st.DestinationBranch.BranchName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+                return true;
+            if (st.Status.StatusName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
                 return true;
             return false;
         }).ToArray();
@@ -153,10 +210,16 @@ else
         {
             switch (sortDefinition.SortBy)
             {
-                case nameof(PurchaseOrder.ReferenceNumber):
+                case nameof(StockTransfer.ReferenceNumber):
                     _filteredstocktransfers = _filteredstocktransfers.OrderByDirection(
                         sortDefinition.Descending ? SortDirection.Descending : SortDirection.Ascending,
-                        po => po.ReferenceNumber
+                        st => st.ReferenceNumber
+                    );
+                    break;
+                case nameof(StockTransfer.RequestedDate):
+                    _filteredstocktransfers = _filteredstocktransfers.OrderByDirection(
+                        sortDefinition.Descending ? SortDirection.Descending : SortDirection.Ascending,
+                        st => st.RequestedDate
                     );
                     break;
             }
@@ -203,7 +266,7 @@ else
         {
             try
             {
-                await StockTransferService.DeleteStockTransferAsync(stockTransfer.ReferenceNumber);
+                await StockTransferService.DeleteStockTransferAsync(stockTransfer.ReferenceNumber);               
                 Snackbar.Add("Stock Transfer Deleted", Severity.Success);
                 await LoadStockTransfers(); // Reload data after deletion
                 await dataGrid.ReloadServerData(); // Reload DataGrid
@@ -215,6 +278,94 @@ else
             catch (Exception ex)
             {
                 Snackbar.Add("An error occurred while deleting the Stock Transfer.", Severity.Error);
+            }
+        }
+    }
+
+    private async Task Approve(StockTransfer stockTransfer)
+    {
+        var parameters = new DialogParameters<DialogComponent>
+        {
+            { x => x.ContentText, $"Approving Stock Transfer '{stockTransfer.ReferenceNumber}' will allocate the specified quantities in the source branch. Are you sure you want to proceed?" },
+            { "Button1Text", "Approve" },
+            { "Button2Text", "Cancel" },
+            { "Color", Color.Info }
+        };
+
+        var dialog = await DialogService.ShowAsync<DialogComponent>("Approve Stock Transfer", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            try
+            {
+                await StockTransferService.StockTransferToApprovedAsync(stockTransfer.ReferenceNumber);
+                Snackbar.Add($"Stock Transfer '{stockTransfer.ReferenceNumber}' Approved", Severity.Success);
+                await LoadStockTransfers(); // Reload data after Approve
+                await dataGrid.ReloadServerData(); // Reload DataGrid
+
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"An error occurred during approval: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
+    private async Task Reject(StockTransfer stockTransfer)
+    {
+        var parameters = new DialogParameters<DialogComponent>
+        {
+            { x => x.ContentText, $"Are you sure you want to reject Stock Transfer '{stockTransfer.ReferenceNumber}'? This action cannot be undone." },
+            { "Button1Text", "Reject" },
+            { "Button2Text", "Cancel" },
+            { "Color", Color.Error }
+        };
+
+        var dialog = await DialogService.ShowAsync<DialogComponent>("Reject Stock Transfer", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            try
+            {
+                await StockTransferService.StockTransferToRejectedAsync(stockTransfer.ReferenceNumber);
+                Snackbar.Add($"Stock Transfer '{stockTransfer.ReferenceNumber}' Rejected", Severity.Success);
+                await LoadStockTransfers(); // Reload data after Reject
+                await dataGrid.ReloadServerData(); // Reload DataGrid
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"An error occurred during rejection: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
+    private async Task Complete(StockTransfer stockTransfer)
+    {
+        var parameters = new DialogParameters<DialogComponent>
+        {
+            { x => x.ContentText, $"Completing Stock Transfer '{stockTransfer.ReferenceNumber}' will finalize the transfer and update inventory in both the source and destination branches. Are you sure you want to proceed?" },
+            { "Button1Text", "Complete Transfer" },
+            { "Button2Text", "Cancel" },
+            { "Color", Color.Success }
+        };
+
+        var dialog = await DialogService.ShowAsync<DialogComponent>("Complete Stock Transfer", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            try
+            {
+                await StockTransferService.StockTransferToCompletedAsync(stockTransfer.ReferenceNumber);
+                Snackbar.Add($"Stock Transfer '{stockTransfer.ReferenceNumber}' Completed", Severity.Success);
+                await LoadStockTransfers(); // Reload data after Complete
+                await dataGrid.ReloadServerData(); // Reload DataGrid
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"An error occurred during completion: {ex.Message}", Severity.Error);
             }
         }
     }

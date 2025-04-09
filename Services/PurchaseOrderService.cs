@@ -145,7 +145,11 @@ namespace InventiCloud.Services
                 query = query.Where(po => po.DestinationBranchId == userBranchId);
             }
 
-            return await query.ToListAsync();
+            var purchaseOrders = await query.ToListAsync();
+
+            // If the list of purchase orders is null or empty, return an empty list.
+            // This ensures the calling code receives an empty collection instead of null.
+            return purchaseOrders ?? Enumerable.Empty<PurchaseOrder>();
         }
 
         public async Task PurchaseOrderToCancelAsync(PurchaseOrder purchaseOrder)

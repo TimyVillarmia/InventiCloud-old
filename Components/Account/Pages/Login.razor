@@ -10,7 +10,7 @@
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
 
-<PageTitle>Log in</PageTitle>
+<PageTitle>Sign in</PageTitle>
 <MudGrid Spacing="0" Class="py-4" Style="height:100vh;">
     <MudItem xs="12" md="6" >
        
@@ -30,7 +30,7 @@
                     <MudItem xs="10">
                         <StatusMessage Message="@errorMessage" />
                         <MudStaticTextField For="@(() => Input.UserName)" @bind-Value="Input.UserName"
-                                            Label="Username" Placeholder="username" Variant="Variant.Outlined"
+                                            Label="Email" Placeholder="email" Variant="Variant.Outlined"
                                             UserAttributes="@(new() { { "autocomplete", "true" }, { "aria-required", "true" } } )" />
                     </MudItem>
                     <MudFlexBreak />

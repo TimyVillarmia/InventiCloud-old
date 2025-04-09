@@ -1,6 +1,9 @@
 ﻿@implements IDisposable
+@using InventiCloud.Data
 @using Microsoft.AspNetCore.Authorization
-
+@using Microsoft.AspNetCore.Identity
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<ApplicationUser> UserManager
 @inject NavigationManager NavigationManager
 
 <MudNavMenu>
@@ -14,9 +17,18 @@
     <MudNavGroup Title="Inventory" Expanded="true" Icon="@Icons.Material.Outlined.Warehouse">
         <MudNavLink Href="inventory/stock-levels" Match="NavLinkMatch.Prefix">Stock Levels</MudNavLink>
         <MudNavGroup Title="Stock Transfers" Expanded="true">
-            <MudNavLink Href="inventory/stock-transfers/create" Match="NavLinkMatch.Prefix">Create Transfer</MudNavLink>
-            <MudNavLink Href="inventory/stock-transfers/requests" Match="NavLinkMatch.Prefix">My Requests</MudNavLink>
-            <MudNavLink Href="inventory/stock-transfers/approvals" Match="NavLinkMatch.Prefix">Awaiting Approval</MudNavLink>
+            @if (IsAdminUser)
+            {
+                <MudNavLink Href="inventory/stock-transfers/all" Match="NavLinkMatch.Prefix">All Stock Transfers</MudNavLink>
+
+            }
+            else
+            {
+                <MudNavLink Href="inventory/stock-transfers/requests" Match="NavLinkMatch.Prefix">My Requests</MudNavLink>
+                <MudNavLink Href="inventory/stock-transfers/approvals" Match="NavLinkMatch.Prefix">My Approvals</MudNavLink>
+
+
+            }
         </MudNavGroup>
         <MudNavLink Href="inventory/stock-adjustments" Match="NavLinkMatch.Prefix">Stock Adjustments</MudNavLink>
     </MudNavGroup>
@@ -36,12 +48,7 @@
             <MudNavLink Href="store/sales-persons" Match="NavLinkMatch.Prefix">Sales Person</MudNavLink>
         </MudNavGroup>
     </AuthorizeView>
-    
 
-    <MudNavLink Href="/analytics" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.BarChart">Analytics</MudNavLink>
-
-    <MudText Typo="Typo.body2" Class="px-4 mud-text-secondary">Settings</MudText>
-    <MudNavLink Href="/account" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.AccountCircle">Account</MudNavLink>
     <MudDivider Class="my-2" />
     <MudNavLink Icon="@Icons.Material.Outlined.Logout" IconColor="Color.Error" Class="red-text" OnClick="Logout">Logout</MudNavLink>
 
@@ -51,11 +58,31 @@
 
 @code {
     private string? currentUrl;
+    private bool IsAdminUser { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            IsAdminUser = user.IsInRole("Administrator"); // Check if the user has the "Administrator" role
+        }
+    }
 
     protected override void OnInitialized()
     {
+
+
+
         currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
         NavigationManager.LocationChanged += OnLocationChanged;
+
+
+
+
     }
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)

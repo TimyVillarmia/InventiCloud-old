@@ -25,7 +25,8 @@ public class PurchaseOrderItem
 
     [Required(ErrorMessage = "Price is required.")]
     [Precision(19, 2)]
-    [Range(0.01, double.MaxValue, ErrorMessage = "Price must be greater than 0.")] 
+    [Range(0.01, double.MaxValue, ErrorMessage = "Price must be greater than 0.")]
+    [Display(Name = "Unit Price")]
     public decimal UnitPrice { get; set; }
 
     [Required, Precision(19, 2)]

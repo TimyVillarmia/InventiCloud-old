@@ -13,10 +13,11 @@
 @inject IDialogService DialogService
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Identity
-@attribute [Authorize]
+@attribute [Authorize(Roles = "Branch")]
+
 <PageTitle>Stock Transfers</PageTitle>
 
-<MudText Class="bold mb-2" Typo="Typo.h4">Stock Transfers</MudText>
+<MudText Class="bold mb-2" Typo="Typo.h4">Stock Transfer Approvals</MudText>
 
 @if (_stocktransfers == null)
 {
@@ -29,15 +30,10 @@ else
     @if (!_stocktransfers.Any())
     {
         <MudPaper Height="500px" Class="justify-center align-content-center">
-            <MudText Class="bol" Typo="Typo.h6" Align="Align.Center">No Stock Transfers Found</MudText>
+            <MudText Class="bol" Typo="Typo.h6" Align="Align.Center">No Stock Transfer Requests Pending Approval</MudText>
             <MudText Typo="Typo.body1" Align="Align.Center">
-                Start a new transfer to move items between branches.
+                        There are currently no stock transfer requests awaiting your approval.
             </MudText>
-            <MudContainer Class="d-flex justify-center mt-2">
-                <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Href="/inventory/stock-transfers/create" Color="Color.Primary" Class="text-uppercase">
-                    Create Stock Transfer
-                </MudButton>
-            </MudContainer>
         </MudPaper>
     }
     else
@@ -45,14 +41,9 @@ else
         <MudGrid>
             <MudItem sm="6">
                 <MudStack Row="true" AlignItems="AlignItems.Center">
-                    <MudTextField T="string" ValueChanged="@(s => OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                    <MudTextField T="string" ValueChanged="@(s => OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search by Reference Number, Source Branch, Destination Branch, Status" Adornment="Adornment.Start" Immediate="true"
                     AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
                 </MudStack>
-            </MudItem>
-            <MudItem sm="6">
-                <MudButton Variant="Variant.Filled" Href="/inventory/stock-transfers/create" Color="Color.Primary" Class="text-uppercase">
-                    Create Stock Transfer
-                </MudButton>
             </MudItem>
         </MudGrid>
 
@@ -72,12 +63,12 @@ else
                             <MudMenuItem Label="View" href="@($"/inventory/stock-transfers/approvals/{context.Item.ReferenceNumber}")" />                        
                             @if (context.Item.Status.StatusName.ToLower() == "requested")
                             {
-                                <MudMenuItem Label="Approve" OnClick="@(() => Approve(context.Item))" />
-                                <MudMenuItem Label="Reject" OnClick="@(() => Reject(context.Item))" />
+                                <MudMenuItem Label="Approve" Style="@($"color:{Colors.Green.Default};")" OnClick="@(() => Approve(context.Item))" />
+                                <MudMenuItem Label="Reject" Style="@($"color:{Colors.Red.Default};")" OnClick="@(() => Reject(context.Item))" />
                             }
                             else
                             {
-                                <MudMenuItem Label="Complete" OnClick="@(() => Complete(context.Item))" />
+                                <MudMenuItem Label="Complete" Style="@($"color:{Colors.LightGreen.Accent3};")" OnClick="@(() => Complete(context.Item))" />
 
                             }
                         </MudMenu>
@@ -119,7 +110,6 @@ else
     private async Task LoadStockTransfers()
     {
       
-
         if (CurrentUser != null)
         {
             _stocktransfers = await StockTransferService.GetStockTransfersForApprovalAsync(CurrentUser.Id);
@@ -131,16 +121,16 @@ else
 
     private Color GetChipColor(string status)
     {
-        switch (status.ToLower())
+        switch (status?.ToLowerInvariant()) // Use null-conditional operator and ToLowerInvariant
         {
-            case "allocated":
-                return Color.Default;
-            case "in transit":
+            case "requested":
+                return Color.Warning; // Or another appropriate color for "Requested"
+            case "approved":
                 return Color.Info;
-            case "cancelled":
-                return Color.Error;
             case "completed":
                 return Color.Success;
+            case "rejected":
+                return Color.Error;
             default:
                 return Color.Default;
         }
@@ -156,6 +146,12 @@ else
                 return true;
             if (st.ReferenceNumber.Contains(searchString, StringComparison.OrdinalIgnoreCase))
                 return true;
+            if (st.SourceBranch.BranchName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+                return true;
+            if (st.DestinationBranch.BranchName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+                return true;
+            if (st.Status.StatusName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+                return true;
             return false;
         }).ToArray();
         var totalItems = _filteredstocktransfers.Count();
@@ -165,10 +161,16 @@ else
         {
             switch (sortDefinition.SortBy)
             {
-                case nameof(PurchaseOrder.ReferenceNumber):
+                case nameof(StockTransfer.ReferenceNumber):
                     _filteredstocktransfers = _filteredstocktransfers.OrderByDirection(
                         sortDefinition.Descending ? SortDirection.Descending : SortDirection.Ascending,
-                        po => po.ReferenceNumber
+                        st => st.ReferenceNumber
+                    );
+                    break;
+                case nameof(StockTransfer.RequestedDate):
+                    _filteredstocktransfers = _filteredstocktransfers.OrderByDirection(
+                        sortDefinition.Descending ? SortDirection.Descending : SortDirection.Ascending,
+                        st => st.RequestedDate
                     );
                     break;
             }

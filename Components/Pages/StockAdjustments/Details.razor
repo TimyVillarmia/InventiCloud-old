@@ -32,14 +32,14 @@
 
             <MudItem xs="12" sm="6">
                 <MudAutocomplete T="Branch" Label="Source Branch" @bind-Value="StockAdjustment.SourceBranch" For="@(()=> StockAdjustment.SourceBranch)" @bind-Value:after="HandleChangeSourceBranch"
-                SearchFunc="@SearchBranch" ToStringFunc="@(branch=> branch==null?null : $"{branch.BranchName}")" Variant="Variant.Outlined" Disabled="@(!isDraft || !isEmpty)" />
-                <MudTextField T="string" Class="mb-4" Label="Stock Adjustment Number" @bind-Value="StockAdjustment.ReferenceNumber" ReadOnly="true" Disabled="true" Variant="Variant.Outlined" />
+                SearchFunc="@SearchBranch" ToStringFunc="@(branch=> branch==null?null : $"{branch.BranchName}")" Variant="Variant.Outlined" ReadOnly="@(!isDraft || !isEmpty)" />
+                <MudTextField T="string" Class="mb-4" Label="Stock Adjustment Number" @bind-Value="StockAdjustment.ReferenceNumber" ReadOnly="true"  Variant="Variant.Outlined" />
             </MudItem>
 
             <MudItem xs="12" sm="6">
-                <MudAutocomplete T="StockAdjustmentReason" Label="Reason" @bind-Value="StockAdjustment.Reason" Disabled="@(!isDraft)"
+                <MudAutocomplete T="StockAdjustmentReason" Label="Reason" @bind-Value="StockAdjustment.Reason" ReadOnly="@(!isDraft)"
                 SearchFunc="@SearchReason" ToStringFunc="@(reason=> reason==null?null : $"{reason.Reason}")" For="@(() => StockAdjustment.Reason)" Variant="Variant.Outlined" />
-                <MudDatePicker Label="Date Created" Editable="true" @bind-Date="StockAdjustment.DateCreated" ReadOnly="true" Disabled="true"
+                <MudDatePicker Label="Date Created" Editable="true" @bind-Date="StockAdjustment.DateCreated" ReadOnly="true" 
                 Mask="@(new DateMask("MM/dd/yyyy"))" DateFormat="MM/dd/yyyy" Placeholder="Date Created" Variant="Variant.Outlined" />
             </MudItem>
 
@@ -56,22 +56,22 @@
                         <MudGrid Class="d-flex align-center flex-wrap flex-grow-1">
                             <MudItem xs="12" sm="5">
                                 <MudAutocomplete T="Product" Label="Products" @bind-Value="StockAdjustmentItem.Product" Margin="Margin.Dense" For="@(() => StockAdjustmentItem.Product)"
-                                                 SearchFunc="@SearchProduct" ToStringFunc="@(product=> product==null?null : $"{product.ProductName}")" Variant="Variant.Outlined" @bind-Value:after="After" />
+                                SearchFunc="@SearchProduct" ToStringFunc="@(product=> product==null?null : $"{product.ProductName}")" Variant="Variant.Outlined" @bind-Value:after="After" />
                             </MudItem>
 
                             <MudItem xs="12" sm="2">
                                 <MudNumericField HideSpinButtons="true" T="int" Variant="Variant.Outlined" Label="Available Quantity" ReadOnly="true" For="@(() => StockAdjustmentItem.PreviousQuantity)"
-                                                 @bind-Value="StockAdjustmentItem.PreviousQuantity" Margin="Margin.Dense" />
+                                @bind-Value="StockAdjustmentItem.PreviousQuantity" Margin="Margin.Dense" />
                             </MudItem>
 
                             <MudItem xs="12" sm="2">
                                 <MudNumericField HideSpinButtons="true" T="int" Variant="Variant.Outlined" Label="New Quantity" For="@(() => StockAdjustmentItem.NewQuantity)"
-                                                 @bind-Value="StockAdjustmentItem.NewQuantity" Margin="Margin.Dense" />
+                                @bind-Value="StockAdjustmentItem.NewQuantity" Margin="Margin.Dense" />
                             </MudItem>
 
                             <MudItem xs="12" sm="2">
                                 <MudNumericField HideSpinButtons="true" T="int" Variant="Variant.Outlined" Label="Adjusted Quantity" ReadOnly="true" For="@(() => StockAdjustmentItem.AdjustedQuantity)"
-                                                 @bind-Value="StockAdjustmentItem.AdjustedQuantity" Margin="Margin.Dense" />
+                                @bind-Value="StockAdjustmentItem.AdjustedQuantity" Margin="Margin.Dense" />
                             </MudItem>
 
                             <MudItem xs="6" sm="1">
@@ -85,34 +85,44 @@
 
         </EditForm>
 
-        <MudDataGrid Items="StockAdjustmentItems" Class="mt-4">
-            <Columns>
-                <PropertyColumn Property="poi => poi.Product.ProductName" Title="Product" />
-                <PropertyColumn Property="poi => poi.PreviousQuantity" Title="Available Quantity" />
-                <PropertyColumn Property="poi => poi.NewQuantity" Title="New Quantity" />
-                <PropertyColumn Property="poi => poi.AdjustedQuantity" Title="Adjusted Quantity" />
-                @if (isDraft)
+        <MudGrid>
+
+            <MudItem xs="12">
+                <MudDataGrid Items="StockAdjustmentItems" Class="mt-4">
+                    <Columns>
+                        <PropertyColumn Property="poi => poi.Product.ProductName" Title="Product" />
+                        <PropertyColumn Property="poi => poi.PreviousQuantity" Title="Available Quantity" />
+                        <PropertyColumn Property="poi => poi.NewQuantity" Title="New Quantity" />
+                        <PropertyColumn Property="poi => poi.AdjustedQuantity" Title="Adjusted Quantity" />
+                        @if (isDraft)
+                        {
+                            <TemplateColumn CellClass="d-flex justify-end">
+                                <CellTemplate>
+                                    <MudStack Row>
+                                        <MudIconButton Icon="@Icons.Material.Filled.Close" Color="Color.Error" aria-label="delete" OnClick="@(() => RemoveBatchProduct(context.Item))" />
+                                    </MudStack>
+                                </CellTemplate>
+                            </TemplateColumn>
+                        }
+
+                    </Columns>
+                </MudDataGrid>
+            </MudItem>
+
+
+            <MudItem xs="12" Class="d-flex align-md-end">
+                @if (Status.ToLower() == "draft")
                 {
-                    <TemplateColumn CellClass="d-flex justify-end">
-                        <CellTemplate>
-                            <MudStack Row>
-                                <MudIconButton Icon="@Icons.Material.Filled.Close" Color="Color.Error" aria-label="delete" OnClick="@(() => RemoveBatchProduct(context.Item))" />
-                            </MudStack>
-                        </CellTemplate>
-                    </TemplateColumn>
+                    <MudButton OnClick="DeleteStockAdjustment" Variant="Variant.Outlined" Color="Color.Error" Class="ml-auto">DELETE</MudButton>
+                    <MudButton OnClick="CompleteStockAdjustment" Variant="Variant.Outlined" Color="Color.Info" Class="ml-2">MARK COMPLETE</MudButton>
+                    <MudButton OnClick="SaveChangesDialog" Variant="Variant.Filled" Color="Color.Primary" Class="ml-2">SAVE CHANGES </MudButton>
                 }
+            </MudItem>
+        </MudGrid>
 
-            </Columns>
-        </MudDataGrid>
 
-        <div class="d-flex align-end mt-12">
-            @if (Status.ToLower() == "draft")
-            {
-                <MudButton OnClick="DeleteStockAdjustment" Variant="Variant.Outlined" Color="Color.Error">DELETE</MudButton>
-                <MudButton OnClick="CompleteStockAdjustment" Variant="Variant.Outlined" Color="Color.Info">MARK COMPLETE</MudButton>
-                <MudButton OnClick="SaveChanges" Variant="Variant.Filled" Color="Color.Primary">SAVE CHANGES</MudButton>
-            }
-        </div>
+
+
 
     </EditForm>
 
@@ -259,7 +269,7 @@
 
     }
 
-    
+
 
     private async Task DeleteStockAdjustment()
     {
@@ -281,7 +291,7 @@
                 // delete from db
                 await StockAdjustmentService.DeleteStockAdjustmentAsync(ReferenceNumber);
                 NavigationManager.NavigateTo($"/inventory/stock-adjustments");
-                Snackbar.Add("Stock Adjustment Deleted", Severity.Success);
+                Snackbar.Add($"Stock Adjustment {ReferenceNumber}  Deleted", Severity.Success);
             }
             catch (InvalidOperationException ex)
             {
@@ -294,8 +304,42 @@
         }
     }
 
-
     private async Task SaveChanges()
+    {
+        try
+        {
+            // update stock adjustment from db
+            await StockAdjustmentService.UpdateStockAdjustmentAsync(ReferenceNumber, new StockAdjustment
+                {
+                    SourceBranchId = StockAdjustment.SourceBranch.BranchId,
+                    ReasonId = StockAdjustment.Reason.StockAdjustmentReasonId,
+                }
+            );
+
+
+            // update stock transfer items from db
+            await StockAdjustmentService.UpdateStockAdjustmentItemsAsync(ReferenceNumber,
+                StockAdjustmentItems.Select(vm => new StockAdjustmentItem
+                    {
+                        ProductId = vm.Product.ProductId,
+                        PreviousQuantity = vm.PreviousQuantity,
+                        NewQuantity = vm.NewQuantity,
+                        AdjustedQuantity = vm.AdjustedQuantity,
+                    }).ToList()
+            );
+
+        }
+        catch (InvalidOperationException ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("An error occurred while updating the Stock Adjustment.", Severity.Error);
+        }
+    }
+
+    private async Task SaveChangesDialog()
     {
         var parameters = new DialogParameters<DialogComponent>
         {
@@ -310,38 +354,9 @@
 
         if (!result.Canceled)
         {
-            try
-            {
-                // update stock adjustment from db
-                await StockAdjustmentService.UpdateStockAdjustmentAsync(ReferenceNumber, new StockAdjustment
-                    {
-                        SourceBranchId = StockAdjustment.SourceBranch.BranchId,
-                        ReasonId = StockAdjustment.Reason.StockAdjustmentReasonId,
-                    }
-                );
+            await SaveChanges();
+            Snackbar.Add($"Stock Adjustment {ReferenceNumber} Updated", Severity.Success);
 
-
-                // update stock transfer items from db
-                await StockAdjustmentService.UpdateStockAdjustmentItemsAsync(ReferenceNumber,
-                    StockAdjustmentItems.Select(vm => new StockAdjustmentItem
-                        {
-                            ProductId = vm.Product.ProductId,
-                            PreviousQuantity = vm.PreviousQuantity,
-                            NewQuantity = vm.NewQuantity,
-                            AdjustedQuantity = vm.AdjustedQuantity,
-                        }).ToList()
-                );
-
-                Snackbar.Add("Stock Adjustment Updated", Severity.Success);
-            }
-            catch (InvalidOperationException ex)
-            {
-                Snackbar.Add(ex.Message, Severity.Error);
-            }
-            catch (Exception ex)
-            {
-                Snackbar.Add("An error occurred while updating the Stock Adjustment.", Severity.Error);
-            }
         }
     }
 
@@ -363,9 +378,10 @@
         {
             try
             {
+                await SaveChanges();
                 await StockAdjustmentService.StockAdjustmentToCompleteAsync(ReferenceNumber);
                 NavigationManager.NavigateTo($"/inventory/stock-adjustments/{ReferenceNumber}", true);
-                Snackbar.Add("Stock Transfer Adjustment", Severity.Success);
+                Snackbar.Add($"Stock Adjustment {ReferenceNumber} Completed", Severity.Success);
             }
             catch (Exception ex)
             {

@@ -18,89 +18,108 @@
 <PageTitle>Purchase Orders</PageTitle>
 
 <MudText Class="bold mb-2" Typo="Typo.h4">Purchase Orders</MudText>
-@if (_purchaseorders == null)
+
+
+@if (_branches == null)
 {
     <MudContainer Class="d-flex justify-center align-items-center" Style="height: 100vh;">
         <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
     </MudContainer>
 }
+else if (!_branches.Any())
+{
+    <MudPaper Height="500px" Class="justify-center align-content-center">
+        <MudText Typo="Typo.h6" Align="Align.Center" Class="mb-2">No Branches Exist</MudText>
+        <MudText Typo="Typo.body1" Align="Align.Center" Class="mb-3">
+            To manage purchase orders, you need to have at least one branch set up in your system.
+        </MudText>
+        <MudContainer Class="d-flex justify-center mt-2">
+            <MudButton Variant="Variant.Filled" Href="/store/branches/create" Color="Color.Primary" Class="text-uppercase">
+                Create New Branch
+            </MudButton>
+        </MudContainer>
+    </MudPaper>
+}
+else if (_purchaseorders == null)
+{
+    <MudContainer Class="d-flex justify-center align-items-center" Style="height: 100vh;">
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    </MudContainer>
+}
+else if (!_purchaseorders.Any())
+{
+
+    <MudPaper Height="500px" Class="justify-center align-content-center">
+        <MudText Class="bol" Typo="Typo.h6" Align="Align.Center">No Purchase Orders Found</MudText>
+        <MudText Typo="Typo.body1" Align="Align.Center">
+            Click the button below to create your first purchase order.
+        </MudText>
+        <MudContainer Class="d-flex justify-center mt-2">
+            <MudButton Variant="Variant.Filled" Href="/purchase/orders/create" Color="Color.Primary" Class="text-uppercase">
+                Create Purchase Order
+            </MudButton>
+        </MudContainer>
+    </MudPaper>
+}
 else
 {
-    @if (!_purchaseorders.Any())
-    {
 
-        <MudPaper Height="500px" Class="justify-center align-content-center">
-            <MudText Class="bol" Typo="Typo.h6" Align="Align.Center">No Purchase Orders Found</MudText>
-            <MudText Typo="Typo.body1" Align="Align.Center">
-                Click the button below to create your first purchase order.
-            </MudText>
-            <MudContainer Class="d-flex justify-center mt-2">
-                <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Href="/purchase/orders/create" Color="Color.Primary" Class="text-uppercase">
-                    Create Purchase Order
-                </MudButton>
-            </MudContainer>
-        </MudPaper>
-    }
-    else
-    {
+    <MudGrid>
+        <MudItem sm="4">
+            <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+            AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+        </MudItem>
+        <MudItem sm="2">
+            <MudSelect @bind-Value="@selectedBranch" @bind-Value:after="OnSelect" Variant="Variant.Outlined" Disabled="@autoFill">
+                @foreach (Branch branch in _branches)
+                {
+                    <MudSelectItem Value="@branch.BranchId">@branch.BranchName</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
 
-        <MudGrid>
-            <MudItem sm="4">
-                <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
-                              AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
-            </MudItem>
-            <MudItem sm="2">
-                <MudSelect @bind-Value="@selectedBranch" @bind-Value:after="OnSelect" Variant="Variant.Outlined" Disabled="@autoFill">
-                    @foreach (Branch branch in _branches)
-                    {
-                        <MudSelectItem Value="@branch.BranchId">@branch.BranchName</MudSelectItem>
-                    }
-                </MudSelect>
-            </MudItem>
+        <MudItem sm="6">
+            <MudButton Variant="Variant.Filled" Href="/purchase/orders/create" Color="Color.Primary" Class="text-uppercase">
+                Create Purchase Order
+            </MudButton>
+        </MudItem>
 
-            <MudItem sm="6">
-                <MudButton Variant="Variant.Filled" Href="/purchase/orders/create" Color="Color.Primary" Class="text-uppercase">
-                    Create Purchase Order
-                </MudButton>
-            </MudItem>
+    </MudGrid>
 
-        </MudGrid>
+    <MudDataGrid @ref="dataGrid" T="PurchaseOrder" ServerData="ServerReload" MultiSelection="true" RowClick="@RowClicked">
+        <Columns>
+            <PropertyColumn Property="po => po.ReferenceNumber" Title="Reference Number" />
+            <PropertyColumn Property="po => po.Supplier.SupplierName" Title="Supplier" />
+            <PropertyColumn Property="po => po.DestinationBranch.BranchName" Title="Destination" />
+            <TemplateColumn Title="Status">
+                <CellTemplate>
+                    <MudChip Color="@GetChipColor(context.Item.PurchaseOrderStatus.StatusName)" Size="Size.Small">@context.Item.PurchaseOrderStatus.StatusName</MudChip>
+                </CellTemplate>
+            </TemplateColumn>
+            <PropertyColumn Property="po => po.EstimatedArrival" Title="Estimated Arrival" />
+            <PropertyColumn Property="po => po.TotalAmount" Title="Total" />
+            <TemplateColumn CellClass="d-flex justify-end">
+                <CellTemplate>
+                    <MudMenu Icon="@Icons.Material.Filled.MoreVert" AriaLabel="Open user menu">
+                        <MudMenuItem Label="Edit" href="@($"/purchase/orders/{context.Item.ReferenceNumber}")" />
+                        @if (context.Item.PurchaseOrderStatus.StatusName.ToLower() == "draft")
+                        {
+                            <MudMenuItem Label="Delete" Class="red-text" OnClick="@(() => OpenDialogAsync(context.Item))" />
 
-        <MudDataGrid @ref="dataGrid" T="PurchaseOrder" ServerData="ServerReload" MultiSelection="true" RowClick="@RowClicked">
-            <Columns>
-                <PropertyColumn Property="po => po.ReferenceNumber" Title="Reference Number" />
-                <PropertyColumn Property="po => po.Supplier.SupplierName" Title="Supplier"/>
-                <PropertyColumn Property="po => po.DestinationBranch.BranchName" Title="Destination" />
-                <TemplateColumn Title="Status">
-                    <CellTemplate>
-                        <MudChip Color="@GetChipColor(context.Item.PurchaseOrderStatus.StatusName)" Size="Size.Small">@context.Item.PurchaseOrderStatus.StatusName</MudChip>
-                    </CellTemplate>
-                </TemplateColumn>
-                <PropertyColumn Property="po => po.EstimatedArrival" Title="Estimated Arrival" />
-                <PropertyColumn Property="po => po.TotalAmount" Title="Total" />
-                <TemplateColumn CellClass="d-flex justify-end">
-                    <CellTemplate>
-                        <MudMenu Icon="@Icons.Material.Filled.MoreVert" AriaLabel="Open user menu">
-                            <MudMenuItem Label="Edit" href="@($"/purchase/orders/{context.Item.ReferenceNumber}")" />
-                            @if(context.Item.PurchaseOrderStatus.StatusName.ToLower() == "draft")
-                            {
-                                <MudMenuItem Label="Delete" Class="red-text" OnClick="@(() => OpenDialogAsync(context.Item))" />
-
-                            }
-                        </MudMenu>
-                    </CellTemplate>
-                </TemplateColumn>
-            </Columns>
-            <PagerContent>
-                <MudDataGridPager T="PurchaseOrder" />
-            </PagerContent>
-        </MudDataGrid>
+                        }
+                    </MudMenu>
+                </CellTemplate>
+            </TemplateColumn>
+        </Columns>
+        <PagerContent>
+            <MudDataGridPager T="PurchaseOrder" />
+        </PagerContent>
+    </MudDataGrid>
 
 
-
-    }
 
 }
+
 
 
 @code {
@@ -131,23 +150,22 @@ else
                 autoFill = CurrentUser.BranchId.HasValue;
                 _purchaseorders = await PurchaseOrderService.GetAllPurchaseOrderAsync(CurrentUser.BranchId);
 
-       
-                selectedBranch = _branches.First().BranchId;
+                if (_branches.Any())
+                {
+                    selectedBranch = _branches.First().BranchId;
 
+                }
                 if (_branches.Any() && CurrentUser.BranchId.HasValue)
                 {
                     selectedBranch = (int)CurrentUser.BranchId;
                     autoFill = true;
 
-            
+
                 }
 
             }
 
         }
-
-        
-
 
     }
 

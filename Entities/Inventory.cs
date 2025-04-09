@@ -14,9 +14,17 @@ public class Inventory
 
     [ForeignKey("Branch")]
     public int BranchId { get; set; }
+
+    [Display(Name = "Onhand Quantity")]
     public int OnHandquantity { get; set; } = 0;
+
+    [Display(Name = "Incoming Quantity")]
     public int IncomingQuantity { get; set; } = 0;
+
+    [Display(Name = "Available Quantity")]
     public int AvailableQuantity { get; set; } = 0;
+
+    [Display(Name = "Allocated")]
     public int Allocated { get; set; } = 0;
 
  // navigation properties

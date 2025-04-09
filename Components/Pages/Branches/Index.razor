@@ -30,7 +30,7 @@ else
                 Click the "Add Branch" button to create a new branch.
             </MudText>
             <MudContainer Class="d-flex justify-center mt-2">
-                <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Href="/store/branches/create" Color="Color.Primary" Class="text-uppercase">
+                <MudButton Variant="Variant.Filled" Href="/store/branches/create" Color="Color.Primary" Class="text-uppercase">
                     Add Branch
                 </MudButton>
             </MudContainer>
@@ -41,11 +41,11 @@ else
     {
         <MudGrid>
             <MudItem sm="6">
-                <MudTextField T="string" ValueChanged="@(s=>OnSearchBranches(s))" Variant="Variant.Outlined" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                <MudTextField T="string" ValueChanged="@(s=>OnSearchBranches(s))" Variant="Variant.Outlined" Placeholder="Search by Branch Name, Address, Phone, or Email" Adornment="Adornment.Start" Immediate="true"
                 AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
             </MudItem>
-            <MudItem sm="6" Class="align-end">
-                <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Href="/store/branches/create" Color="Color.Primary" Class="text-uppercase">
+            <MudItem sm="6" Class="d-flex justify-end">
+                <MudButton Variant="Variant.Filled" Href="/store/branches/create" Color="Color.Primary" Class="text-uppercase">
                     Add Branch
                 </MudButton>
             </MudItem>

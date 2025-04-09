@@ -71,11 +71,11 @@
         @if (Status.ToLower() == "requested")
         {
             <MudButton OnClick="RejectStockTransfer" Variant="Variant.Outlined" Color="Color.Error">Reject</MudButton>
-            <MudButton OnClick="ApproveStockTransfer" Variant="Variant.Outlined" Color="Color.Error">Approved</MudButton>
+            <MudButton OnClick="ApproveStockTransfer" Variant="Variant.Outlined" Color="Color.Info">Approved</MudButton>
         }
         else if (Status.ToLower() == "approved")
         {
-            <MudButton OnClick="CompleteStockTransfer" Variant="Variant.Outlined" Color="Color.Error">Complete</MudButton>
+            <MudButton OnClick="CompleteStockTransfer" Variant="Variant.Outlined" Color="Color.Success">Complete</MudButton>
         }
     </div>
 

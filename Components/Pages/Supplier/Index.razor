@@ -2,6 +2,7 @@
 @using InventiCloud.Components.UI
 @using InventiCloud.Services
 @using InventiCloud.Services.Interface
+@using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
 @using InventiCloud.Entities
 @using InventiCloud.Data
@@ -9,6 +10,8 @@
 @inject IDialogService DialogService
 @inject ISupplierService SupplierService
 @inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<ApplicationUser> UserManager
 @inject ISnackbar Snackbar
 @using Microsoft.AspNetCore.Authorization
 @attribute [Authorize]
@@ -33,7 +36,7 @@ else
                 You don't have any suppliers yet. Click the "Add Supplier" button to get started.
             </MudText>
             <MudContainer Class="d-flex justify-center mt-2">
-                <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Href="/purchase/suppliers/create" Color="Color.Primary" Class="text-uppercase">
+                <MudButton Variant="Variant.Filled"  Href="/purchase/suppliers/create" Color="Color.Primary" Class="text-uppercase">
                     Add Supplier
                 </MudButton>
             </MudContainer>
@@ -46,16 +49,19 @@ else
         <MudGrid>
             <MudItem sm="6">
                 <MudStack Row="true" AlignItems="AlignItems.Center">
-                    <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                    <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search by Code, Name, Company, Contact, Email, or Phone" Adornment="Adornment.Start" Immediate="true"
                     AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
                 </MudStack>
 
             </MudItem>
 
-            <MudItem sm="6">
-                <MudButton Variant="Variant.Filled" Href="/purchase/suppliers/create" Color="Color.Primary" Class="text-uppercase">
-                    Create Supplier
-                </MudButton>
+            <MudItem sm="6" Class="d-flex justify-end">
+                <AuthorizeView Roles="Administrator">
+                    <MudButton Variant="Variant.Filled" Href="/purchase/suppliers/create" Color="Color.Primary" Class="text-uppercase">
+                        Create Supplier
+                    </MudButton>
+                </AuthorizeView>
+                
             </MudItem>
 
         </MudGrid>
@@ -65,12 +71,24 @@ else
             <Columns>
                 <PropertyColumn Property="supplier => supplier.SupplierCode" Title="Supplier Code" />
                 <PropertyColumn Property="supplier => supplier.SupplierName" Title="Supplier Name" />
-                <PropertyColumn Property="supplier => supplier.City" Title="City" />
-                <PropertyColumn Property="supplier => supplier.Country" Title="Country" />
+                <PropertyColumn Property="supplier => supplier.Company" Title="Company" />
+                <PropertyColumn Property="supplier => supplier.ContactPerson" Title="Contact Person" />
+                <PropertyColumn Property="supplier => supplier.Email" Title="Country" />
+                <PropertyColumn Property="supplier => supplier.PhoneNumber" Title="Phone Number" />
+                @if (IsAdminUser)
+                {
+                    <TemplateColumn CellClass="d-flex justify-end">
+                        <CellTemplate>
+                            <MudMenu Icon="@Icons.Material.Filled.MoreVert" AriaLabel="Open user menu">
+                                <MudMenuItem Label="Edit" href="@($"/purchase/suppliers/{context.Item.SupplierCode}")" />
+                                <MudMenuItem Label="Delete" Class="red-text" OnClick="@(() => OpenDialogAsync(context.Item))" />
+                            </MudMenu>
+                        </CellTemplate>
+                    </TemplateColumn>
+                }
                 <TemplateColumn CellClass="d-flex justify-end">
                     <CellTemplate>
                         <MudStack Row>
-                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" aria-label="delete" OnClick="@(() => OpenDialogAsync(context.Item))" />
                         </MudStack>
                     </CellTemplate>
                 </TemplateColumn>
@@ -91,9 +109,20 @@ else
 
     private IEnumerable<Supplier> _suppliers = new List<Supplier>();
     private IEnumerable<Supplier> _filteredsuppliers = new List<Supplier>();
-
+    private ApplicationUser? CurrentUser { get; set; } // Replace ApplicationUser with your actual user class
+    private bool IsAdminUser { get; set; }
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            CurrentUser = await UserManager.GetUserAsync(user);
+            IsAdminUser = user.IsInRole("Administrator"); // Check if the user has the "Administrator" role
+        }
+
+
         _suppliers = await SupplierService.GetAllSupplierAsync();
     }
 
@@ -147,6 +176,7 @@ else
 
     private async Task<GridData<Supplier>> ServerReload(GridState<Supplier> state)
     {
+        _suppliers = await SupplierService.GetAllSupplierAsync();
 
         _filteredsuppliers = _suppliers;
 
@@ -159,9 +189,13 @@ else
                 return true;
             if (supplier.SupplierName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
                 return true;
-            if (supplier.City.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            if (supplier.Company.Contains(searchString, StringComparison.OrdinalIgnoreCase))
                 return true;
-            if (supplier.Country.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            if (supplier.ContactPerson.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+                return true;
+            if (supplier.Email.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+                return true;
+            if (supplier.PhoneNumber.Contains(searchString, StringComparison.OrdinalIgnoreCase))
                 return true;
             return false;
         }).ToArray();

@@ -140,7 +140,7 @@
         [Required(ErrorMessage = "Destination Branch is required.")]
         public Branch DestinationBranch { get; set; }
 
-        public DateTime? EstimatedArrival { get; set; }
+        public DateTime? EstimatedArrival { get; set; } = DateTime.UtcNow;
     }
 
     class PurchaseOrderItemViewModel

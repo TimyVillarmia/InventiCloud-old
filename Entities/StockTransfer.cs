@@ -24,6 +24,7 @@ namespace InventiCloud.Entities
         public DateTime? DateCompleted { get; set; }
         public DateTime? DateApproved { get; set; }
         public DateTime? RejectedDate { get; set; } // Added RejectedDate
+
         [Required,
          ForeignKey("RequestedBy")]
         public string RequestedById { get; set; } 
@@ -31,8 +32,12 @@ namespace InventiCloud.Entities
         [ForeignKey("ApprovedBy")]
         public string ApprovedById { get; set; }
 
+        [ForeignKey("CreatedBy")]
+        public string CreatedById { get; set; }
+
         public virtual ApplicationUser RequestedBy { get; set; }
         public virtual ApplicationUser ApprovedBy { get; set; }
+        public virtual ApplicationUser CreatedBy { get; set; }
 
         [Required(ErrorMessage = "Source Branch is required.")]
         public virtual Branch SourceBranch { get; set; }

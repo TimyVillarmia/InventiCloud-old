@@ -57,9 +57,12 @@ namespace InventiCloud.Services
                 .ToListAsync();
         }
 
+
         public async Task<IEnumerable<StockTransfer>> GetStockTransfersForApprovalAsync(string approvedByUserId)
         {
             using var context = _dbFactory.CreateDbContext();
+
+
             return await context.StockTransfers
                 .Include(st => st.SourceBranch)
                 .Include(st => st.DestinationBranch)
@@ -142,10 +145,10 @@ namespace InventiCloud.Services
 
         public async Task<StockTransfer> GetStockTransferByReferenceNumberAsync(string referenceNumber)
         {
+
             if (string.IsNullOrEmpty(referenceNumber))
             {
-                _logger.LogError("GetStockTransferByReferenceNumberAsync called with null or empty referenceNumber.");
-                throw new ArgumentNullException(nameof(referenceNumber), "Reference Number cannot be null or empty.");
+                return null;
             }
 
             using var context = _dbFactory.CreateDbContext();
@@ -153,21 +156,13 @@ namespace InventiCloud.Services
             try
             {
                 var stockTransfer = await context.StockTransfers
-                    .Include(st => st.RequestedBy)
                     .Include(st => st.ApprovedBy)
                     .Include(st => st.SourceBranch)
                     .Include(st => st.DestinationBranch)
                     .Include(st => st.Status)
                     .Include(st => st.StockTransferItems)
                         .ThenInclude(st => st.Product)
-                    .FirstOrDefaultAsync(st => st.ReferenceNumber == referenceNumber);
-
-                if (stockTransfer == null)
-                {
-                    _logger.LogWarning("Stock Transfer with Reference Number '{ReferenceNumber}' not found.", referenceNumber);
-                    return null;
-
-                }
+                    .FirstAsync(st => st.ReferenceNumber == referenceNumber);
 
                 return stockTransfer;
             }
@@ -384,13 +379,54 @@ namespace InventiCloud.Services
             }
         }
 
-        public async Task StockTransferToApprovedAsync(string referenceNumber) => await UpdateStockTransferStatusAndDates(referenceNumber, "Approved", DateTime.Now, null, null);
+        public async Task StockTransferToApprovedAsync(string referenceNumber)
+        {
+            if (string.IsNullOrEmpty(referenceNumber)) throw new ArgumentNullException(nameof(referenceNumber), "Reference number cannot be null or empty.");
 
-        public async Task StockTransferToCompletedAsync(string referenceNumber) => await UpdateStockTransferStatusAndDates(referenceNumber, "Completed", null, DateTime.Now, null);
+            using var context = _dbFactory.CreateDbContext();
 
-        public async Task StockTransferToRejectedAsync(string referenceNumber) => await UpdateStockTransferStatusAndDates(referenceNumber, "Rejected", null, null, DateTime.Now);
+            try
+            {
+                var stockTransfer = await context.StockTransfers
+                    .Include(st => st.Status)
+                    .Include(st => st.StockTransferItems)
+                        .ThenInclude(st => st.Product)
+                    .FirstOrDefaultAsync(st => st.ReferenceNumber == referenceNumber);
 
-        private async Task UpdateStockTransferStatusAndDates(string referenceNumber, string statusName, DateTime? dateApproved, DateTime? dateCompleted, DateTime? rejectedDate)
+                if (stockTransfer == null) throw new InvalidOperationException($"Stock Transfer with Reference Number {referenceNumber} not found.");
+
+                // Check if the status change is valid
+                if (!IsValidStatusChange(stockTransfer.Status.StatusName.ToLower(), "approved"))
+                {
+                    _logger.LogWarning("Invalid status change from '{OldStatus}' to 'Approved' for Stock Transfer {ReferenceNumber}.", stockTransfer.Status.StatusName, referenceNumber);
+                    throw new InvalidOperationException($"Invalid status change from '{stockTransfer.Status.StatusName}' to 'Approved' for Stock Transfer {referenceNumber}.");
+                }
+
+                if (stockTransfer.Status.StatusName.ToLower() == "approved")
+                {
+                    _logger.LogInformation("Stock Transfer {ReferenceNumber} is already in 'Approved' status.", referenceNumber);
+                    return;
+                }
+
+                await UpdateInventoryForApproved(stockTransfer);
+
+                var newStatus = await context.StockTransferStatuses.FirstOrDefaultAsync(s => s.StatusName == "Approved");
+                if (newStatus == null) throw new InvalidOperationException("'Approved' status not found in the database.");
+
+                stockTransfer.StatusId = newStatus.StockTransferStatusId;
+                stockTransfer.DateApproved = DateTime.Now;
+
+                await context.SaveChangesAsync();
+                _logger.LogInformation("Stock Transfer {ReferenceNumber} status changed to 'Approved'.", referenceNumber);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error processing stock transfer {ReferenceNumber} to 'Approved'.", referenceNumber);
+                throw;
+            }
+        }
+
+        public async Task StockTransferToCompletedAsync(string referenceNumber)
         {
             if (string.IsNullOrEmpty(referenceNumber)) throw new ArgumentNullException(nameof(referenceNumber), "Reference number cannot be null or empty.");
 
@@ -406,122 +442,185 @@ namespace InventiCloud.Services
                 if (stockTransfer == null) throw new InvalidOperationException($"Stock Transfer with Reference Number {referenceNumber} not found.");
 
                 // Check if the status change is valid
-                if (!IsValidStatusChange(stockTransfer.Status.StatusName.ToLower(), statusName.ToLower()))
+                if (!IsValidStatusChange(stockTransfer.Status.StatusName.ToLower(), "completed"))
                 {
-                    _logger.LogWarning("Invalid status change from '{OldStatus}' to '{NewStatus}' for Stock Transfer {ReferenceNumber}.", stockTransfer.Status.StatusName, statusName, referenceNumber);
-                    throw new InvalidOperationException($"Invalid status change from '{stockTransfer.Status.StatusName}' to '{statusName}' for Stock Transfer {referenceNumber}.");
+                    _logger.LogWarning("Invalid status change from '{OldStatus}' to 'Completed' for Stock Transfer {ReferenceNumber}.", stockTransfer.Status.StatusName, referenceNumber);
+                    throw new InvalidOperationException($"Invalid status change from '{stockTransfer.Status.StatusName}' to 'Completed' for Stock Transfer {referenceNumber}.");
                 }
 
-                if (stockTransfer.Status.StatusName.ToLower() == statusName.ToLower())
+                if (stockTransfer.Status.StatusName.ToLower() == "completed")
                 {
-                    _logger.LogInformation("Stock Transfer {ReferenceNumber} is already in '{StatusName}' status.", referenceNumber, statusName);
+                    _logger.LogInformation("Stock Transfer {ReferenceNumber} is already in 'Completed' status.", referenceNumber);
                     return;
                 }
 
-                var newStatus = await context.StockTransferStatuses.FirstOrDefaultAsync(s => s.StatusName == statusName);
-                if (newStatus == null) throw new InvalidOperationException($"{statusName} status not found in the database.");
+                await UpdateInventoryForComplete(stockTransfer);
+
+                var newStatus = await context.StockTransferStatuses.FirstOrDefaultAsync(s => s.StatusName == "Completed");
+                if (newStatus == null) throw new InvalidOperationException("'Completed' status not found in the database.");
 
                 stockTransfer.StatusId = newStatus.StockTransferStatusId;
-
-                // Update dates based on the new status
-                stockTransfer.DateApproved = dateApproved ?? stockTransfer.DateApproved;
-                stockTransfer.DateCompleted = dateCompleted ?? stockTransfer.DateCompleted;
-                stockTransfer.RejectedDate = rejectedDate ?? stockTransfer.RejectedDate;
+                stockTransfer.DateCompleted = DateTime.Now;
 
                 await context.SaveChangesAsync();
-
-                switch (statusName.ToLower())
-                {
-                    case "approved": await UpdateInventoryForApproved(stockTransfer); break;
-                    case "completed": await UpdateInventoryForComplete(stockTransfer); break;
-                    case "rejected": // No specific inventory update for rejection in this example
-                        _logger.LogInformation("Stock Transfer {ReferenceNumber} rejected.", referenceNumber);
-                        break;
-                }
-
-                _logger.LogInformation("Stock Transfer {ReferenceNumber} status changed to '{StatusName}'.", referenceNumber, statusName);
+                _logger.LogInformation("Stock Transfer {ReferenceNumber} status changed to 'Completed'.", referenceNumber);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error changing stock transfer {ReferenceNumber} to '{StatusName}'.", referenceNumber, statusName);
+                _logger.LogError(ex, "Error processing stock transfer {ReferenceNumber} to 'Completed'.", referenceNumber);
+                throw;
+            }
+        }
+
+        public async Task StockTransferToRejectedAsync(string referenceNumber)
+        {
+            if (string.IsNullOrEmpty(referenceNumber)) throw new ArgumentNullException(nameof(referenceNumber), "Reference number cannot be null or empty.");
+
+            using var context = _dbFactory.CreateDbContext();
+
+            try
+            {
+                var stockTransfer = await context.StockTransfers
+                    .Include(st => st.Status)
+                    .FirstOrDefaultAsync(st => st.ReferenceNumber == referenceNumber);
+
+                if (stockTransfer == null) throw new InvalidOperationException($"Stock Transfer with Reference Number {referenceNumber} not found.");
+
+                // Check if the status change is valid
+                if (!IsValidStatusChange(stockTransfer.Status.StatusName.ToLower(), "rejected"))
+                {
+                    _logger.LogWarning("Invalid status change from '{OldStatus}' to 'Rejected' for Stock Transfer {ReferenceNumber}.", stockTransfer.Status.StatusName, referenceNumber);
+                    throw new InvalidOperationException($"Invalid status change from '{stockTransfer.Status.StatusName}' to 'Rejected' for Stock Transfer {referenceNumber}.");
+                }
+
+                if (stockTransfer.Status.StatusName.ToLower() == "rejected")
+                {
+                    _logger.LogInformation("Stock Transfer {ReferenceNumber} is already in 'Rejected' status.", referenceNumber);
+                    return;
+                }
+
+                var newStatus = await context.StockTransferStatuses.FirstOrDefaultAsync(s => s.StatusName == "Rejected");
+                if (newStatus == null) throw new InvalidOperationException("'Rejected' status not found in the database.");
+
+                stockTransfer.StatusId = newStatus.StockTransferStatusId;
+                stockTransfer.RejectedDate = DateTime.Now;
+
+                await context.SaveChangesAsync();
+                _logger.LogInformation("Stock Transfer {ReferenceNumber} status changed to 'Rejected'.", referenceNumber);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error processing stock transfer {ReferenceNumber} to 'Rejected'.", referenceNumber);
                 throw;
             }
         }
 
         private async Task UpdateInventoryForApproved(StockTransfer stockTransfer)
         {
-            foreach (var item in stockTransfer.StockTransferItems)
+            using var context = _dbFactory.CreateDbContext();
+            var insufficientItems = new List<string>();
+
+            try
             {
-                // Get inventory for source and destination branches
-                var sourceInventory = await _inventoryService.GetInventoryByProductIdAndBranchIdAsync(item.ProductId, stockTransfer.SourceBranchId);
-                var destinationInventory = await _inventoryService.GetInventoryByProductIdAndBranchIdAsync(item.ProductId, stockTransfer.DestinationBranchId);
-
-                // Validate source inventory exists
-                if (sourceInventory == null)
+                foreach (var item in stockTransfer.StockTransferItems)
                 {
-                    throw new InvalidOperationException($"Source inventory not found for ProductId: {item.ProductId} in BranchId: {stockTransfer.SourceBranchId}.");
+                    var sourceInventory = await _inventoryService.GetInventoryByProductIdAndBranchIdAsync(item.ProductId, stockTransfer.SourceBranchId);
+                    var destinationInventory = await _inventoryService.GetInventoryByProductIdAndBranchIdAsync(item.ProductId, stockTransfer.DestinationBranchId);
+
+                    if (sourceInventory == null)
+                    {
+                        _logger.LogError("Source inventory not found for ProductId: {ProductId} in BranchId: {BranchId}.", item.ProductId, stockTransfer.SourceBranchId);
+                        throw new InvalidOperationException($"Source inventory not found for ProductId: {item.ProductId} in BranchId: {stockTransfer.SourceBranchId}.");
+                    }
+
+                    if (sourceInventory.AvailableQuantity < item.TransferQuantity)
+                    {
+                        _logger.LogError("Insufficient available quantity in source branch (Product: {ProductName}, Available: {Available}, Requested: {Requested}).",
+                                         item.Product.ProductName, sourceInventory.AvailableQuantity, item.TransferQuantity);
+                        insufficientItems.Add($"Product: {item.Product.ProductName}, Available: {sourceInventory.AvailableQuantity}, Requested: {item.TransferQuantity}");
+                        continue; // Continue processing other items
+                    }
+
+                    sourceInventory.Allocated += item.TransferQuantity;
+                    sourceInventory.AvailableQuantity = sourceInventory.OnHandquantity - sourceInventory.Allocated;
+                    await _inventoryService.UpdateInventoryAsync(sourceInventory);
+
+                    if (destinationInventory != null)
+                    {
+                        destinationInventory.IncomingQuantity += item.TransferQuantity;
+                        await _inventoryService.UpdateInventoryAsync(destinationInventory);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Destination inventory not found for ProductId: {ProductId} in BranchId: {BranchId}. Incoming quantity not updated.", item.ProductId, stockTransfer.DestinationBranchId);
+                    }
                 }
 
-                // Validate sufficient available quantity in source
-                if (sourceInventory.AvailableQuantity < item.TransferQuantity)
+                if (insufficientItems.Any())
                 {
-                    throw new InvalidOperationException($"Insufficient available quantity in source branch (ProductId: {item.ProductId}" +
-                                                        $"Available: {sourceInventory.AvailableQuantity}, Requested: {item.TransferQuantity}.");
-                }
-
-                // Update source inventory
-                sourceInventory.Allocated += item.TransferQuantity;
-                sourceInventory.AvailableQuantity = sourceInventory.OnHandquantity - sourceInventory.Allocated;
-
-                await _inventoryService.UpdateInventoryAsync(sourceInventory);
-
-                // Update destination inventory (it should exist, but handle gracefully if not)
-                if (destinationInventory != null)
-                {
-                    destinationInventory.IncomingQuantity += item.TransferQuantity;
-                    await _inventoryService.UpdateInventoryAsync(destinationInventory);
-                }
-                else
-                {
-                    // Consider logging a warning or creating the inventory if business rules allow
-                    _logger.LogWarning($"Destination inventory not found for ProductId: {item.ProductId} in BranchId: {stockTransfer.DestinationBranchId}. Incoming quantity not updated.");
+                    var errorMessage = "Insufficient available quantity for the following products: \n";
+                    errorMessage += string.Join(";\n", insufficientItems.Select(msg => $"- {msg}"));
+                    throw new InvalidOperationException(errorMessage);
                 }
             }
-
+            catch (InvalidOperationException ex) when (ex.Message.StartsWith("Source inventory not found"))
+            {
+                throw; // Re-throw the source not found exception immediately
+            }
+            catch (InvalidOperationException ex) when (ex.Message.StartsWith("Insufficient available quantity"))
+            {
+                throw; // Re-throw the insufficient quantity exception with the formatted message
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating inventory for approved Stock Transfer {ReferenceNumber}.", stockTransfer.ReferenceNumber);
+                throw; // Re-throw other exceptions
+            }
         }
 
         private async Task UpdateInventoryForComplete(StockTransfer stockTransfer)
         {
-            foreach (var item in stockTransfer.StockTransferItems)
+            using var context = _dbFactory.CreateDbContext();
+            try
             {
-                // approver
-                var sourceInventory = await _inventoryService.GetInventoryByProductIdAndBranchIdAsync(item.ProductId, stockTransfer.SourceBranchId);
-                // requester
-                var destinationInventory = await _inventoryService.GetInventoryByProductIdAndBranchIdAsync(item.ProductId, stockTransfer.DestinationBranchId);
-
-                if (sourceInventory != null)
+                foreach (var item in stockTransfer.StockTransferItems)
                 {
+                    var sourceInventory = await _inventoryService.GetInventoryByProductIdAndBranchIdAsync(item.ProductId, stockTransfer.SourceBranchId);
+                    var destinationInventory = await _inventoryService.GetInventoryByProductIdAndBranchIdAsync(item.ProductId, stockTransfer.DestinationBranchId);
 
-                    // after completed
-                    sourceInventory.Allocated -= item.TransferQuantity; // decrease the allocated since transfer is already at the source/requester branch
-                    //recalculate
-                    sourceInventory.OnHandquantity = sourceInventory.AvailableQuantity + sourceInventory.Allocated;
-                    sourceInventory.AvailableQuantity = sourceInventory.OnHandquantity - sourceInventory.Allocated;
+                    if (sourceInventory != null)
+                    {
+                        sourceInventory.Allocated -= item.TransferQuantity;
+                        sourceInventory.OnHandquantity = sourceInventory.AvailableQuantity + sourceInventory.Allocated;
+                        sourceInventory.AvailableQuantity = sourceInventory.OnHandquantity - sourceInventory.Allocated;
+                        await _inventoryService.UpdateInventoryAsync(sourceInventory);
+                    }
+                    else
+                    {
+                        _logger.LogError("Source inventory not found for ProductId: {ProductId} in BranchId: {BranchId} during completion.", item.ProductId, stockTransfer.SourceBranchId);
+                        throw new InvalidOperationException($"Source inventory not found for ProductId: {item.ProductId} in BranchId: {stockTransfer.SourceBranchId} during completion.");
+                    }
 
-                    await _inventoryService.UpdateInventoryAsync(sourceInventory);
-                }
-
-
-                if (destinationInventory != null)
-                {
-                    destinationInventory.IncomingQuantity -= item.TransferQuantity;
-                    destinationInventory.OnHandquantity += item.TransferQuantity;
-                    destinationInventory.AvailableQuantity = destinationInventory.OnHandquantity - destinationInventory.Allocated;
-                    await _inventoryService.UpdateInventoryAsync(destinationInventory);
+                    if (destinationInventory != null)
+                    {
+                        destinationInventory.IncomingQuantity -= item.TransferQuantity;
+                        destinationInventory.OnHandquantity += item.TransferQuantity;
+                        destinationInventory.AvailableQuantity = destinationInventory.OnHandquantity - destinationInventory.Allocated;
+                        await _inventoryService.UpdateInventoryAsync(destinationInventory);
+                    }
+                    else
+                    {
+                        _logger.LogError("Destination inventory not found for ProductId: {ProductId} in BranchId: {BranchId} during completion.", item.ProductId, stockTransfer.DestinationBranchId);
+                        throw new InvalidOperationException($"Destination inventory not found for ProductId: {item.ProductId} in BranchId: {stockTransfer.DestinationBranchId} during completion.");
+                    }
                 }
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating inventory for completed Stock Transfer {ReferenceNumber}.", stockTransfer.ReferenceNumber);
+                throw; // Re-throw the exception
+            }
         }
-
 
         public async Task DisposeAsync()
         {
@@ -535,9 +634,9 @@ namespace InventiCloud.Services
             switch (currentStatus)
             {
                 case "requested":
-                    return newStatus == "approved";
+                    return newStatus == "approved" || newStatus == "rejected";
                 case "approved":
-                    return newStatus == "completed" || newStatus == "rejected";
+                    return newStatus == "completed" ;
                 default:
                     return false;
             }

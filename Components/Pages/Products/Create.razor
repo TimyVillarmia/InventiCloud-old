@@ -15,7 +15,7 @@
 @attribute [Authorize(Roles = "Administrator")]
 
 
-<PageTitle>Create</PageTitle>
+<PageTitle>Create Product</PageTitle>
 
 <MudContainer Class="pt-5" MaxWidth="MaxWidth.Large">
     <div class="d-flex gap-4 align-items-center mb-4">
@@ -62,11 +62,13 @@
                 <MudTextField id="Profit" Variant="Variant.Outlined" Label="Profit" @bind-Value="Profit" Immediate="true" ReadOnly="true"/>
                 <MudTextField id="Margin" Variant="Variant.Outlined" Label="Margin" @bind-Value="Margin" Immediate="true" ReadOnly="true"/>
             </MudItem>
+            <MudItem xs="12" Class="d-flex align-md-end mt-12">
+                <MudButton Variant="Variant.Filled" Color="Color.Default" Href="/products" Class="ml-auto">CANCEL</MudButton>
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-2">CREATE PRODUCT</MudButton>
+            </MudItem>
         </MudGrid>
 
-        <MudItem xs="12" Class="d-flex align-md-end mt-12">
-            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">CREATE PRODUCT</MudButton>
-        </MudItem>
+      
 
     </EditForm>
 
@@ -102,6 +104,12 @@
 
         _categories = await CategoryService.GetAllCategoryAsync();
         _branches = await BranchService.GetAllBranchAsync();
+
+        if(!_branches.Any())
+        {
+            NavigationManager.NavigateTo("/products", true);
+
+        }
 
     }
 

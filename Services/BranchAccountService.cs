@@ -321,6 +321,7 @@ namespace InventiCloud.Services
             }
         }
 
+
         public async Task<bool> IsBranchAccountExist(string email)
         {
             if (string.IsNullOrWhiteSpace(email))

@@ -13,10 +13,12 @@ public class Branch
     public int BranchId { get; set; }
 
     [Required]
+    [Display(Name = "Branch Name")]
     public string BranchName { get; set; } 
     public string Address { get; set; }
 
     [Required]
+    [Display(Name = "Phone Number")]
     public string PhoneNumber { get; set; }
 
     // navigation properties
