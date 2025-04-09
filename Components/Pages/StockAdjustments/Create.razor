@@ -85,7 +85,7 @@
 
         <MudDataGrid Items="StockAdjustmentItems" Class="mt-4">
             <Columns>
-                <PropertyColumn Property="poi => poi.Product" Title="Product" />
+                <PropertyColumn Property="poi => poi.Product.ProductName" Title="Product" />
                 <PropertyColumn Property="poi => poi.PreviousQuantity" Title="Availability" />
                 <PropertyColumn Property="poi => poi.NewQuantity" Title="New Quantity" />
                 <PropertyColumn Property="poi => poi.AdjustedQuantity" Title="Adjusted Quantity" />

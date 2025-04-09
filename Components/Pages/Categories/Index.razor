@@ -32,7 +32,7 @@ else
             <EditForm method="post" Model="Category" OnValidSubmit="AddCategory" FormName="create" Enhance>
                 <DataAnnotationsValidator />
                 <MudStack Row="true" AlignItems="AlignItems.Center">
-                    <div>
+                    <div Style="width:50%;">
                         <MudTextField @bind-Value="Category.CategoryName" Label="Category Name" For="@(() => Category.CategoryName)" Variant="Variant.Outlined" />
                     </div>
                     <div>
@@ -42,8 +42,8 @@ else
             </EditForm>
         </MudItem>
         <MudItem sm="6">
-            <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
-            AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+            <MudTextField  T="string" ValueChanged="@(s=>OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+            AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-2"></MudTextField>
         </MudItem>
     </MudGrid>
     @if (!_categories.Any())

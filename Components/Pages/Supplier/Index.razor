@@ -12,7 +12,7 @@
 @inject ISnackbar Snackbar
 @using Microsoft.AspNetCore.Authorization
 @attribute [Authorize]
-<PageTitle>Index</PageTitle>
+<PageTitle>Supplier</PageTitle>
 
 <MudText Class="bold mb-2" Typo="Typo.h4">Suppliers</MudText>
 @if (_suppliers == null)
@@ -44,7 +44,7 @@ else
     {
 
         <MudGrid>
-            <MudItem sm="6">
+            <MudItem sm="6" Style="height:50%;">
                 <MudStack Row="true" AlignItems="AlignItems.Center">
                     <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
                     AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
@@ -52,8 +52,8 @@ else
 
             </MudItem>
 
-            <MudItem sm="6">
-                <MudButton Variant="Variant.Filled" Href="/purchase/suppliers/create" Color="Color.Primary" Class="text-uppercase">
+            <MudItem sm="6" Class="d-flex justify-end align-items-center" Style="height:50%;">
+                <MudButton Variant="Variant.Filled" Href="/purchase/suppliers/create" StartIcon="@Icons.Material.Filled.Add" Color="Color.Primary" Class="text-uppercase">
                     Create Supplier
                 </MudButton>
             </MudItem>

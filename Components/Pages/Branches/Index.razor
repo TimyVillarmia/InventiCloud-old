@@ -44,7 +44,7 @@ else
                 <MudTextField T="string" ValueChanged="@(s=>OnSearchBranches(s))" Variant="Variant.Outlined" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
                 AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
             </MudItem>
-            <MudItem sm="6" Class="align-end">
+            <MudItem sm="6" Class="d-flex justify-end align-items-center" Style="height:50%;">
                 <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Href="/store/branches/create" Color="Color.Primary" Class="text-uppercase">
                     Add Branch
                 </MudButton>

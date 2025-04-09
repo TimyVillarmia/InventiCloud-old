@@ -61,11 +61,11 @@ else
         <MudGrid>
             <MudItem sm="6">
                 <MudStack Row="true" AlignItems="AlignItems.Center">
-                    <div>
+                    <div Style="width:50%;">
                         <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
-                        AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" Style="width: 150px;"></MudTextField>
+                        AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" Style="width: 100%;"></MudTextField>
                     </div>
-                    <div>
+                    <div Style="width:25%;">
                         <MudSelect Label="Category" @bind-Value="selectedCategory" @bind-Value:after="OnSelect" Variant="Variant.Outlined">
                             <MudSelectItem T="int" Value="0">All</MudSelectItem>
                             @foreach (Category category in _categories)
@@ -79,9 +79,9 @@ else
 
             </MudItem>
 
-            <MudItem sm="6">
+            <MudItem sm="6" Class="d-flex align-items-center justify-end" Style="height:50%;">
                 <AuthorizeView Roles="Administrator">
-                    <MudButton Variant="Variant.Filled" Href="products/create" Color="Color.Primary" Class="text-uppercase">
+                    <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Href="products/create" Color="Color.Primary" Class="text-uppercase" height="50px">
                         Add Product
                     </MudButton>
                 </AuthorizeView>

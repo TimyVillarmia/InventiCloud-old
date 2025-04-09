@@ -105,12 +105,12 @@
             </Columns>
         </MudDataGrid>
 
-        <div class="d-flex align-end mt-12">
+        <div class="d-flex justify-end align-items-center mt-8">
             @if (Status.ToLower() == "draft")
             {
-                <MudButton OnClick="DeleteStockAdjustment" Variant="Variant.Outlined" Color="Color.Error">DELETE</MudButton>
-                <MudButton OnClick="CompleteStockAdjustment" Variant="Variant.Outlined" Color="Color.Info">MARK COMPLETE</MudButton>
-                <MudButton OnClick="SaveChanges" Variant="Variant.Filled" Color="Color.Primary">SAVE CHANGES</MudButton>
+                <MudButton OnClick="DeleteStockAdjustment" Variant="Variant.Outlined" Color="Color.Error" Class="ml-2">DELETE</MudButton>
+                <MudButton OnClick="CompleteStockAdjustment" Variant="Variant.Outlined" Color="Color.Info" Class="ml-2">MARK COMPLETE</MudButton>
+                <MudButton OnClick="SaveChanges" Variant="Variant.Filled" Color="Color.Primary" Class="ml-2">SAVE CHANGES</MudButton>
             }
         </div>
 
