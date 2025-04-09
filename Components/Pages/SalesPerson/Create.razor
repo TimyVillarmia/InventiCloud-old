@@ -1,0 +1,73 @@
+﻿@page "/store/sales-persons/create"
+@using InventiCloud.Data
+@using InventiCloud.Services.Interface
+@using InventiCloud.Utils
+@using Microsoft.EntityFrameworkCore
+@using InventiCloud.Entities
+@inject NavigationManager NavigationManager
+@inject ISalesPersonService SalesPersonService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+
+
+<PageTitle>Create</PageTitle>
+
+<MudContainer Class="pt-5" MaxWidth="MaxWidth.Medium">
+    <div class="d-flex gap-4 align-items-center mb-4">
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" aria-label="delete" Href="/sales/customers" />
+        <MudText Typo="Typo.h4">Add SalesPerson</MudText>
+    </div>
+
+    <EditForm method="post" Model="SalesPerson" OnValidSubmit="AddSalesPerson" FormName="create" Enhance>
+        <DataAnnotationsValidator />
+        <MudGrid>
+            <MudItem xs="12">
+                <MudText Typo="Typo.h6">DETAILS</MudText>
+                <MudTextField @bind-Value="SalesPerson.FullName" Label="Name" For="@(() => SalesPerson.FullName)" Variant="Variant.Outlined" />
+                <MudTextField @bind-Value="SalesPerson.Address" Label="Address" For="@(() => SalesPerson.Address)" Variant="Variant.Outlined" />
+                <MudTextField @bind-Value="SalesPerson.Email" Label="Email Address" For="@(() => SalesPerson.Email)" Variant="Variant.Outlined" />
+            </MudItem>
+
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="SalesPerson.PhoneNumber" Label="Contact Number" For="@(() => SalesPerson.PhoneNumber)" Variant="Variant.Outlined" />
+                <MudDatePicker Label="Birthday" Editable="true" @bind-Date="SalesPerson.BirthDate"
+                               Mask="@(new DateMask("MM/dd/yyyy"))" DateFormat="MM/dd/yyyy" For="@(() => SalesPerson.BirthDate)" Placeholder="Birthday" Variant="Variant.Outlined" />
+            </MudItem>
+
+        </MudGrid>
+        <MudItem xs="12" Class="d-flex align-items-center justify-end mt-2">
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Save</MudButton>
+        </MudItem>
+    </EditForm>
+</MudContainer>
+
+
+@code {
+    [SupplyParameterFromForm]
+    private SalesPerson SalesPerson { get; set; } = new();
+
+
+
+    private async Task AddSalesPerson()
+    {
+        try
+        {
+            await SalesPersonService.AddSalesPersonAsync(SalesPerson);
+            Snackbar.Add($"{SalesPerson.FullName} Added", Severity.Success);
+            NavigationManager.NavigateTo("/store/sales-persons");
+
+        }
+        catch (InvalidOperationException ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+
+    }
+
+}

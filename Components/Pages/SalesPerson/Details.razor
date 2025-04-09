@@ -1,0 +1,123 @@
+﻿@page "/store/sales-persons/{FullName}"
+@using InventiCloud.Components.UI
+@using InventiCloud.Data
+@using InventiCloud.Services.Interface
+@using InventiCloud.Utils
+@using Microsoft.EntityFrameworkCore
+@using InventiCloud.Entities
+@inject NavigationManager NavigationManager
+@inject ISalesPersonService SalesPersonService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+
+<PageTitle>Details</PageTitle>
+
+<MudContainer Class="pt-5" MaxWidth="MaxWidth.Medium">
+    <div class="d-flex gap-4 align-items-center mb-4">
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" aria-label="delete" Href="/store/sales-persons" />
+        <MudText Typo="Typo.h4">@FullName</MudText>
+    </div>
+
+    <EditForm method="post" Model="SalesPerson" OnValidSubmit="SaveChanges" FormName="create" Enhance>
+        <DataAnnotationsValidator />
+        <MudGrid>
+            <MudItem xs="12">
+                <MudText Typo="Typo.h6">DETAILS</MudText>
+                <MudTextField @bind-Value="SalesPerson.Address" Label="Address" For="@(() => SalesPerson.Address)" Variant="Variant.Outlined" />
+                <MudTextField @bind-Value="SalesPerson.Email" Label="Email Address" For="@(() => SalesPerson.Email)" Variant="Variant.Outlined" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="SalesPerson.PhoneNumber" Label="Contact Number" For="@(() => SalesPerson.PhoneNumber)" Variant="Variant.Outlined" />
+                <MudTextField @bind-Value="SalesPerson.BirthDate" Label="Birthday" For="@(() => SalesPerson.BirthDate)" Variant="Variant.Outlined" />
+            </MudItem>
+
+        </MudGrid>
+        <MudItem xs="12" Class="d-flex justify-end align-items-center mt-5">
+            <MudButton Href="/store/sales-persons" Variant="Variant.Filled" Color="Color.Primary" Class="ml-2">Cancel</MudButton>
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-2">SAVE CHANGES</MudButton>
+        </MudItem>
+    </EditForm>
+</MudContainer>
+
+
+@code {
+    [SupplyParameterFromForm]
+    private SalesPerson SalesPerson { get; set; } = new();
+
+
+    [Parameter]
+    public string FullName { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        SalesPerson = await SalesPersonService.GetSalesPersonByNameAsync(FullName);
+
+        if (SalesPerson is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+
+    }
+
+    private async Task SaveChanges()
+    {
+
+        try
+        {
+            await SalesPersonService.UpdateSalesPersonAsync(SalesPerson);
+            Snackbar.Add($"{SalesPerson.FullName} Updated", Severity.Success);
+            NavigationManager.NavigateTo("/store/sales-persons");
+
+        }
+        catch (InvalidOperationException ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+
+    }
+
+
+
+
+    // events
+    async Task OpenDialogAsync()
+    {
+        var parameters = new DialogParameters<DialogComponent>
+        {
+            {x => x.ContentText, $"Are you sure you want to delete the Sales Person '{SalesPerson.FullName}'? This action cannot be undone."},
+            { "Button1Text", "Delete" },
+            { "Button2Text", "Cancel" },
+            { "Color", Color.Error }
+        };
+
+        var dialog = await DialogService.ShowAsync<DialogComponent>("Delete Sales Person", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            try
+            {
+                await SalesPersonService.DeleteSalesPersonAsync(SalesPerson);
+                Snackbar.Add("Sales Person Deleted", Severity.Success);
+                NavigationManager.NavigateTo($"/store/sales-persons");
+
+
+            }
+            catch (InvalidOperationException ex)
+            {
+                Snackbar.Add(ex.Message, Severity.Error);
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add("An error occurred while deleting the Sales Person.", Severity.Error);
+            }
+        }
+
+    }
+}
