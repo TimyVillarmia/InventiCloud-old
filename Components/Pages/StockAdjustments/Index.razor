@@ -35,10 +35,10 @@ else
         <MudPaper Height="500px" Class="justify-center align-content-center">
             <MudText Class="bol" Typo="Typo.h6" Align="Align.Center">No Stock Adjustments Found</MudText>
             <MudText Typo="Typo.body1" Align="Align.Center">
-               Click the button below to create a new stock adjustment to record changes in your inventory.
+                Click the button below to create a new stock adjustment to record changes in your inventory.
             </MudText>
             <MudContainer Class="d-flex justify-center mt-2">
-                <MudButton Variant="Variant.Filled" Href="inventory/stock-adjustments/create" Color="Color.Primary" Class="text-uppercase">
+                <MudButton Variant="Variant.Filled" Href="inventory/stock-adjustments/create" StartIcon="@Icons.Material.Filled.Add" Color="Color.Primary" Class="text-uppercase">
                     New Stock Adjustment
                 </MudButton>
             </MudContainer>
@@ -51,7 +51,7 @@ else
             <MudItem sm="5">
                 <MudStack Row="true" AlignItems="AlignItems.Center">
                     <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Variant="Variant.Outlined" Placeholder="Search by Ref. Number, Reason, Status, Branch, or Date" Adornment="Adornment.Start" Immediate="true"
-                                  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+                    AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
                 </MudStack>
             </MudItem>
             <MudItem sm="2">
@@ -63,7 +63,7 @@ else
                 </MudSelect>
             </MudItem>
             <MudItem sm="5" Class="d-flex justify-end">
-                <MudButton Variant="Variant.Filled" Href="/inventory/stock-adjustments/create" Color="Color.Primary" Class="text-uppercase">
+                <MudButton Variant="Variant.Filled" Href="/inventory/stock-adjustments/create" StartIcon="@Icons.Material.Filled.Add" Color="Color.Primary" Class="text-uppercase">
                     Create Stock Adjustment
                 </MudButton>
             </MudItem>
@@ -84,11 +84,16 @@ else
                 <TemplateColumn CellClass="d-flex justify-end">
                     <CellTemplate>
                         <MudMenu Icon="@Icons.Material.Filled.MoreVert" AriaLabel="Open user menu">
-                            <MudMenuItem Label="View" href="@($"/inventory/stock-adjustments/{context.Item.ReferenceNumber}")" />
                             @if (context.Item.StockAdjustmentStatus.StatusName.ToLower() == "draft")
                             {
+                                <MudMenuItem Disabled = "true" Label="View" href="@($"/inventory/stock-adjustments/{context.Item.ReferenceNumber}")" />
+                                <MudMenuItem Label="Edit" href="@($"/inventory/stock-adjustments/{context.Item.ReferenceNumber}")" />
                                 <MudMenuItem Label="Delete" Class="red-text" OnClick="@(() => OpenDialogAsync(context.Item))" />
 
+                            }
+                            else
+                            {
+                                <MudMenuItem Disabled="false" Label="View" href="@($"/inventory/stock-adjustments/{context.Item.ReferenceNumber}")" />
                             }
                         </MudMenu>
                     </CellTemplate>

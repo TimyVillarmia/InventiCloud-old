@@ -36,7 +36,7 @@ else if (!_branches.Any())
             To manage products effectively, you need at least one branches set up in your system.
         </MudText>
         <MudContainer Class="d-flex justify-center mt-2">
-            <MudButton Variant="Variant.Filled" Href="/store/branches/create" Color="Color.Primary" Class="text-uppercase">
+            <MudButton Variant="Variant.Filled" Href="/store/branches/create" StartIcon="@Icons.Material.Filled.Add" Color="Color.Primary" Class="text-uppercase">
                 Create New Branch
             </MudButton>
         </MudContainer>
@@ -66,7 +66,7 @@ else if (!_products.Any())
         <MudContainer Class="d-flex justify-center mt-4">
             <AuthorizeView Roles="Administrator">
 
-                <MudButton Variant="Variant.Filled"  Href="/products/create" Color="Color.Primary" Class="bold text-uppercase">
+                <MudButton Variant="Variant.Filled" Href="/products/create" StartIcon="@Icons.Material.Filled.Add" Color="Color.Primary" Class="bold text-uppercase">
 
                     Add Product
 
@@ -86,7 +86,7 @@ else
         </MudItem>
         <MudItem sm="6" Class="d-flex justify-end">
             <AuthorizeView Roles="Administrator">
-                <MudButton Variant="Variant.Filled" Href="products/create" Color="Color.Primary" Class="text-uppercase">
+                <MudButton Variant="Variant.Filled" Href="products/create" StartIcon="@Icons.Material.Filled.Add" Color="Color.Primary" Class="text-uppercase">
                     Add Product
                 </MudButton>
             </AuthorizeView>
@@ -107,7 +107,7 @@ else
                 <TemplateColumn CellClass="d-flex justify-end">
                     <CellTemplate>
                         <MudMenu Icon="@Icons.Material.Filled.MoreVert" AriaLabel="Open user menu">
-                            <MudMenuItem Label="View" href="@($"/products/{context.Item.SKU}")" />
+                            <MudMenuItem Label="Edit" href="@($"/products/{context.Item.SKU}")" />
                             <MudMenuItem Label="Delete" Class="red-text" OnClick="@(() => OpenDialogAsync(context.Item))" />
                         </MudMenu>
                     </CellTemplate>

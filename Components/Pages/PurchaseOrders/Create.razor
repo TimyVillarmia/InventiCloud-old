@@ -101,7 +101,7 @@
                 </TemplateColumn>
             </Columns>
         </MudDataGrid>
-        <MudText Typo="Typo.h5">@PurchaseOrderItems.Sum(item => item.SubTotal)</MudText>
+        <MudText class="d-flex justify-end mt-3" Typo="Typo.h5">Total ₱@PurchaseOrderItems.Sum(item => item.SubTotal)</MudText>
 
 
         <div class="d-flex align-end mt-12">
