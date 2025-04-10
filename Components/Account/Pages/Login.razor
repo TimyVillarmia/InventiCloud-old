@@ -16,7 +16,8 @@
        
         <MudContainer MaxWidth="MaxWidth.Small" Style="height:100%;">
             <div class="mb-4">
-                <MudImage Src="images/your_logo.png" Alt="InventiCloud Logo" Width="150" Height="150" />
+                <MudImage Src="logo.png" Alt="InventiCloud Logo" Width="200" Height="200" />
+
             </div>
             <div class="mb-12">
                 <MudText Typo="Typo.h3">Hello,</MudText>
@@ -56,7 +57,7 @@
     </MudItem>
 
     <MudItem xs="12" md="6">
-        <MudPaper Height="100%" Width="100%" Class="mud-theme-primary rounded-xl"></MudPaper>
+        <MudImage Src="logo1.png" style="height:100%; width:100% " Class="mud-theme-primary rounded-xl"></MudImage>
     </MudItem>
 </MudGrid>
 
@@ -93,7 +94,7 @@
         if (result.Succeeded)
         {
             Logger.LogInformation("User logged in.");
-            RedirectManager.RedirectTo("/home");
+            RedirectManager.RedirectTo("/products");
         }
         else if (result.RequiresTwoFactor)
         {

@@ -34,7 +34,7 @@ else
             </MudText>
             <MudContainer Class="d-flex justify-center mt-2">
                 <MudButton Variant="Variant.Filled" Href="/sales/orders/create" Color="Color.Primary" Class="text-uppercase">
-                    Create New Sales Order
+                    Create Sales Order
                 </MudButton>
             </MudContainer>
         </MudPaper>
@@ -52,8 +52,8 @@ else
             </MudItem>
 
             <MudItem sm="6" Class="d-flex justify-end">
-                <MudButton Variant="Variant.Filled" Href="/purchase/orders/create" Color="Color.Primary" Class="text-uppercase">
-                    Create Purchase Order
+                <MudButton Variant="Variant.Filled" Href="/sales/orders/create" Color="Color.Primary" Class="text-uppercase">
+                    Create Sales Order
                 </MudButton>
             </MudItem>
 
@@ -70,7 +70,6 @@ else
                     <CellTemplate>
                         <MudMenu Icon="@Icons.Material.Filled.MoreVert" AriaLabel="Open user menu">
                             <MudMenuItem Label="View" href="@($"/sales/orders/{context.Item.ReferenceNumber}")" />
-                                <MudMenuItem Label="Delete" Class="red-text" OnClick="@(() => OpenDialogAsync(context.Item))" />
                         </MudMenu>
                     </CellTemplate>
                 </TemplateColumn>

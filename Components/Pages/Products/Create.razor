@@ -28,7 +28,7 @@
             <MudItem xs="12">
                 <MudText Typo="Typo.h6">PRODUCT DETAILS</MudText>
             </MudItem>
-            <MudItem xs="12" sm="8">
+            <MudItem xs="12" sm="12">
                 <MudTextField @bind-Value="Product.ProductName" Label="Name" For="@(() => Product.ProductName)" Variant="Variant.Outlined" />
                 <MudTextField @bind-Value="Product.Brand" Label="Brand" For="@(() => Product.Brand)" Variant="Variant.Outlined" />
                 <MudTextField @bind-Value="Product.SKU" Label="SKU" For="@(() => Product.SKU)" Variant="Variant.Outlined" />
@@ -41,10 +41,7 @@
                     }
                 </MudSelect>
 
-            </MudItem>
-            <MudItem xs="12" sm="4">
-                <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">xs=6</MudPaper>
-            </MudItem>
+            </MudItem>         
 
             <MudItem xs="12">
                 <MudTextField @bind-Value="Product.Description" Label="Description" For="@(() => Product.Description)" Variant="Variant.Outlined" Lines="5" />

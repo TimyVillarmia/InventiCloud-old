@@ -10,7 +10,7 @@
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 @using Microsoft.AspNetCore.Authorization
-@attribute [Authorize]
+@attribute [Authorize(Roles = "Administrator")]
 
 <PageTitle>Details</PageTitle>
 
@@ -25,17 +25,20 @@
         <MudGrid>
             <MudItem xs="12">
                 <MudText Typo="Typo.h6">DETAILS</MudText>
+                <MudTextField @bind-Value="SalesPerson.FullName" Label="Name" For="@(() => SalesPerson.FullName)" Variant="Variant.Outlined" />
                 <MudTextField @bind-Value="SalesPerson.Address" Label="Address" For="@(() => SalesPerson.Address)" Variant="Variant.Outlined" />
                 <MudTextField @bind-Value="SalesPerson.Email" Label="Email Address" For="@(() => SalesPerson.Email)" Variant="Variant.Outlined" />
             </MudItem>
             <MudItem xs="12" sm="6">
                 <MudTextField @bind-Value="SalesPerson.PhoneNumber" Label="Contact Number" For="@(() => SalesPerson.PhoneNumber)" Variant="Variant.Outlined" />
+            </MudItem>  
+            <MudItem xs="12" sm="6">
                 <MudTextField @bind-Value="SalesPerson.BirthDate" Label="Birthday" For="@(() => SalesPerson.BirthDate)" Variant="Variant.Outlined" />
             </MudItem>
 
         </MudGrid>
         <MudItem xs="12" Class="d-flex justify-end align-items-center mt-5">
-            <MudButton Href="/store/sales-persons" Variant="Variant.Filled" Color="Color.Primary" Class="ml-2">Cancel</MudButton>
+            <MudButton OnClick="OpenDialogAsync" Variant="Variant.Outlined" Color="Color.Error">DELETE</MudButton>
             <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-2">SAVE CHANGES</MudButton>
         </MudItem>
     </EditForm>

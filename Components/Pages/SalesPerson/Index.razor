@@ -10,7 +10,7 @@
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 @using Microsoft.AspNetCore.Authorization
-@attribute [Authorize]
+@attribute [Authorize(Roles = "Administrator")]
 
 
 <PageTitle>Sales Person</PageTitle>
@@ -27,14 +27,14 @@ else
     @if (!_salesperson.Any())
     {
 
-        <MudPaper Height="500px" Class="justify-center align-content-center">
+        <MudPaper Height="500px" Class="d-flex flex-column justify-center align-items-center">
             <MudText Class="bol" Typo="Typo.h6" Align="Align.Center">No Sales Person Found</MudText>
             <MudText Typo="Typo.body1" Align="Align.Center">
-                Add Sales Person.
+                Looks like you haven't added any sales personnel yet.
             </MudText>
-            <MudContainer Class="d-flex justify-center mt-2">
+            <MudContainer Class="d-flex justify-center mt-4">
                 <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Href="/store/sales-persons/create" Color="Color.Primary" Class="text-uppercase">
-                    Create SALES PERSON
+                    Add Sales Person
                 </MudButton>
             </MudContainer>
         </MudPaper>
@@ -50,7 +50,7 @@ else
                 </MudStack>
             </MudItem>
 
-            <MudItem sm="6" Class="d-flex align-items-center justify-end" Style="height:50%;">
+            <MudItem sm="6" Class="d-flex justify-end">
                 <MudButton Variant="Variant.Filled" Href="/store/sales-persons/create" StartIcon="@Icons.Material.Filled.Add" Color="Color.Primary" Class="text-uppercase">
                     ADD SALES PERSON
                 </MudButton>
@@ -98,6 +98,8 @@ else
 
     private async Task<GridData<SalesPerson>> ServerReload(GridState<SalesPerson> state)
     {
+        _salesperson = await SalesPersonService.GetAllSalesPersonAsync();
+
         _filteredsalesperson = _salesperson;
 
         _filteredsalesperson = _filteredsalesperson.Where(sp =>

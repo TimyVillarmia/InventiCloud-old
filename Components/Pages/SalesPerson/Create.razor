@@ -9,15 +9,15 @@
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 @using Microsoft.AspNetCore.Authorization
-@attribute [Authorize]
+@attribute [Authorize(Roles = "Administrator")]
 
 
 <PageTitle>Create</PageTitle>
 
 <MudContainer Class="pt-5" MaxWidth="MaxWidth.Medium">
     <div class="d-flex gap-4 align-items-center mb-4">
-        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" aria-label="delete" Href="/sales/customers" />
-        <MudText Typo="Typo.h4">Add SalesPerson</MudText>
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" aria-label="delete" Href="/store/sales-persons" />
+        <MudText Typo="Typo.h4">CREATE SALESPERSON</MudText>
     </div>
 
     <EditForm method="post" Model="SalesPerson" OnValidSubmit="AddSalesPerson" FormName="create" Enhance>
@@ -31,15 +31,19 @@
             </MudItem>
 
             <MudItem xs="12" sm="6">
-                <MudTextField @bind-Value="SalesPerson.PhoneNumber" Mask="@(new PatternMask("00000000000"))" Label="Contact Number" For="@(() => SalesPerson.PhoneNumber)" Variant="Variant.Outlined" />
-                <MudDatePicker Label="Birthday" Editable="true" @bind-Date="SalesPerson.BirthDate"
-                               Mask="@(new DateMask("MM/dd/yyyy"))" DateFormat="MM/dd/yyyy" For="@(() => SalesPerson.BirthDate)" Placeholder="Birthday" Variant="Variant.Outlined" />
+                <MudTextField @bind-Value="SalesPerson.PhoneNumber" Mask="@(new PatternMask("00000000000"))" Label="Contact Number" For="@(() => SalesPerson.PhoneNumber)" Variant="Variant.Outlined" />          
+            </MudItem>
+             <MudItem xs="12" sm="6">
+                <MudDatePicker Label="Birth Date" Editable="true" @bind-Date="SalesPerson.BirthDate"
+                    Mask="@(new DateMask("MM/dd/yyyy"))" DateFormat="MM/dd/yyyy" For="@(() => SalesPerson.BirthDate)" Placeholder="Birth date" Variant="Variant.Outlined" />
+             </MudItem>
+            <MudItem xs="12" Class="d-flex align-items-center justify-end mt-2">
+                <MudButton Variant="Variant.Filled" Color="Color.Default" Href="/store/sales-persons" Class="ml-auto">CANCEL</MudButton>
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-2">CREATE SALESPERSON</MudButton>
             </MudItem>
 
         </MudGrid>
-        <MudItem xs="12" Class="d-flex align-items-center justify-end mt-2">
-            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Save</MudButton>
-        </MudItem>
+       
     </EditForm>
 </MudContainer>
 

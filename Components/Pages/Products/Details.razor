@@ -8,79 +8,77 @@
 @inject IDbContextFactory<InventiCloud.Data.ApplicationDbContext> DbFactory
 @inject NavigationManager NavigationManager
 @inject IProductService ProductService
+@inject ICategoryService CategoryService
 @inject IDialogService DialogService
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject UserManager<ApplicationUser> UserManager
 @inject ISnackbar Snackbar
 @using Microsoft.AspNetCore.Authorization
+@using System.ComponentModel.DataAnnotations
 @attribute [Authorize]
 <PageTitle>Product Details</PageTitle>
 
 <MudContainer Class="pt-5" MaxWidth="MaxWidth.Large">
     <div class="d-flex gap-4 align-items-center mb-4">
         <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" aria-label="back" Href="/products" />
-        <MudText Typo="Typo.h4">@Product.ProductName</MudText>
+        <MudText Typo="Typo.h4">@(Product?.ProductName ?? "Loading...")</MudText>
     </div>
-    <EditForm method="post" Model="Product" OnValidSubmit="UpdateProduct" FormName="create" Enhance>
-        <DataAnnotationsValidator />
-        <MudGrid>
-            <MudItem xs="12">
-                <MudText Typo="Typo.h6">PRODUCT DETAILS</MudText>
-            </MudItem>
-            <MudItem xs="12" sm="8">
-                <MudTextField @bind-Value="Product.ProductName" Label="Name" For="@(() => Product.ProductName)" Variant="Variant.Outlined" ReadOnly="@(!IsAdminUser)" />
-                <MudTextField @bind-Value="Product.Brand" Label="Brand" For="@(() => Product.Brand)" Variant="Variant.Outlined" ReadOnly="@(!IsAdminUser)"/>
-                <MudTextField @bind-Value="Product.SKU" Label="SKU" For="@(() => Product.SKU)" Variant="Variant.Outlined" ReadOnly="@(!IsAdminUser)" />
-                <MudSelect Label="Category" @bind-Value="Product.CategoryId" For="@(() => Product.CategoryId)" ReadOnly="@(!IsAdminUser)" Variant="Variant.Outlined">
-                    <MudSelectItem T="int" Value="0" Disabled="true">Select Category</MudSelectItem>
-                    @foreach (var category in _categories)
+
+    @if (Product == null)
+    {
+        <MudProgressLinear Indeterminate="true" Color="Color.Primary" Class="mt-4" />
+    }
+    else
+    {
+        <EditForm method="post" Model="Product" OnValidSubmit="UpdateProduct" FormName="create" Enhance>
+            <DataAnnotationsValidator />
+            <MudGrid>
+                <MudItem xs="12">
+                    <MudText Typo="Typo.h6">PRODUCT DETAILS</MudText>
+                </MudItem>
+                <MudItem xs="12" sm="12">
+                    <MudTextField @bind-Value="Product.ProductName" Label="Name" For="@(() => Product.ProductName)" Variant="Variant.Outlined" ReadOnly="@(!IsAdminUser)" />
+                    <MudTextField @bind-Value="Product.Brand" Label="Brand" For="@(() => Product.Brand)" Variant="Variant.Outlined" ReadOnly="@(!IsAdminUser)" />
+                    <MudTextField @bind-Value="Product.SKU" Label="SKU" For="@(() => Product.SKU)" Variant="Variant.Outlined" ReadOnly="@(!IsAdminUser)" />
+                    <MudSelect Label="Category" @bind-Value="Product.CategoryId" For="@(() => Product.CategoryId)" ReadOnly="@(!IsAdminUser)" Variant="Variant.Outlined">
+                        <MudSelectItem T="int" Value="0" Disabled="true">Select Category</MudSelectItem>
+                        @if (_categories != null)
+                        {
+                            @foreach (var category in _categories)
+                            {
+                                <MudSelectItem Value="@category.CategoryId">@category.CategoryName</MudSelectItem>
+                            }
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="Product.Description" Label="Description" For="@(() => Product.Description)" Variant="Variant.Outlined" Lines="5" ReadOnly="@(!IsAdminUser)" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudText Typo="Typo.h6">PRICING</MudText>
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudNumericField Label="Cost" T="decimal?" For="@(() => Product.UnitCost)" Variant="Variant.Outlined" @bind-Value="Product.UnitCost" @bind-Value:after="(() => UpdateProfitMargin(Product.UnitCost, Product?.UnitPrice))" ReadOnly="@(!IsAdminUser)" HideSpinButtons="true" />
+                    <MudNumericField Label="Price" T="decimal?" For="@(() => Product.UnitPrice)" Variant="Variant.Outlined" @bind-Value="Product.UnitPrice" @bind-Value:after="(() => UpdateProfitMargin(Product?.UnitCost, Product.UnitPrice))" ReadOnly="@(!IsAdminUser)" HideSpinButtons="true" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField id="Profit" Variant="Variant.Outlined" Label="Profit" Value="@Profit" Immediate="true" ReadOnly="true" />
+                    <MudTextField id="Margin" Variant="Variant.Outlined" Label="Margin" Value="@Margin" Immediate="true" ReadOnly="true" />
+                </MudItem>
+                <MudItem xs="12" Class="d-flex align-md-end">
+                    @if (IsAdminUser)
                     {
-                        <MudSelectItem Value="@category.CategoryId">@category.CategoryName</MudSelectItem>
+                        <MudButton ButtonType="ButtonType.Button" Variant="Variant.Outlined" Color="Color.Error" Class="ml-auto" OnClick="@(() => OpenDialogAsync())">DELETE</MudButton>
+                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-2">SAVE CHANGES</MudButton>
                     }
-                </MudSelect>
-
-            </MudItem>
-            <MudItem xs="12" sm="4">
-                <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">xs=6</MudPaper>
-            </MudItem>
-
-            <MudItem xs="12">
-                <MudTextField @bind-Value="Product.Description" Label="Description" For="@(() => Product.Description)" Variant="Variant.Outlined" Lines="5" ReadOnly="@(!IsAdminUser)" />
-            </MudItem>
-
-            <MudItem xs="12">
-                <MudText Typo="Typo.h6">PRICING</MudText>
-            </MudItem>
-
-            <MudItem xs="12" sm="6">
-                <MudNumericField @bind-Value="Product.UnitCost" HideSpinButtons="true" Label="Cost" For="@(() => Product.UnitCost)" Variant="Variant.Outlined" @bind-Value:after="After" ReadOnly="@(!IsAdminUser)"/>
-                <MudNumericField @bind-Value="Product.UnitPrice" HideSpinButtons="true" Label="Price" For="@(() => Product.UnitPrice)" Variant="Variant.Outlined" @bind-Value:after="After" ReadOnly="@(!IsAdminUser)" />
-            </MudItem>
-            <MudItem xs="12" sm="6">
-                <MudTextField id="Profit" Variant="Variant.Outlined" Label="Profit" @bind-Value="Profit" Immediate="true" ReadOnly="true" />
-                <MudTextField id="Margin" Variant="Variant.Outlined" Label="Margin" @bind-Value="Margin" Immediate="true" ReadOnly="true" />
-            </MudItem>
-
-            <MudItem xs="12" Class="d-flex align-md-end">
-                @if (IsAdminUser)
-                {
-                    <MudButton ButtonType="ButtonType.Button" Variant="Variant.Outlined" Color="Color.Error" Class="ml-auto" OnClick="@(() => OpenDialogAsync())">DELETE</MudButton>
-                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-2">SAVE CHANGES</MudButton>
-                }
-
-            </MudItem>
-        </MudGrid>
-
-    
-
-    </EditForm>
-
-
-
+                </MudItem>
+            </MudGrid>
+        </EditForm>
+    }
 </MudContainer>
 
 @code {
-    #nullable enable
+#nullable enable
     private const string DefaultDragClass = "relative rounded-lg border-2 border-dashed pa-4 mt-4 mud-width-full mud-height-full";
     private string _dragClass = DefaultDragClass;
     private readonly List<string> _fileNames = new();
@@ -95,27 +93,102 @@
 
 
     [SupplyParameterFromForm]
-    private Product Product { get; set; } = new();
+    private ProductViewModel? Product { get; set; } = null; // Initialize to null
 
 
-    private List<Category> _categories = new();
-    private List<Inventory> _inventories = new();
-    private List<Branch> _branches = new();
+    private IEnumerable<Category>? _categories { get; set; } = null; // Initialize to null
+    private List<Inventory>? _inventories { get; set; } = null; // Initialize to null
+    private List<Branch>? _branches { get; set; } = null; // Initialize to null
 
 
     [Parameter]
     public string SKU { get; set; }
     private bool IsAdminUser { get; set; }
 
+    private string Profit = "--";
+    private string Margin = "--";
+
+    public class ProductViewModel
+    {
+        [Key]
+        public int ProductId { get; set; }
+
+        [Required(ErrorMessage = "You must select a category for this product.")]
+        [Range(1, int.MaxValue, ErrorMessage = "You must select a category for this product.")]
+        [Display(Name = "Category")]
+        public int CategoryId { get; set; }
+
+        [Required(ErrorMessage = "Product Name is required.")]
+        [Display(Name = "Product Name")]
+        public string ProductName { get; set; }
+
+        public string? ImageURL { get; set; }
+
+        public string? Brand { get; set; }
+
+        public string? Description { get; set; }
+
+        [Required(ErrorMessage = "Cost is required.")]
+        [Display(Name = "Cost")]
+        public decimal? UnitCost { get; set; }
+
+        [Required(ErrorMessage = "Price is required.")]
+        [Display(Name = "Price")]
+        [Range(0.01, double.MaxValue, ErrorMessage = "Price must be greater than 0.")] // Added basic range
+        public decimal? UnitPrice { get; set; }
+
+        [Display(Name = "Profit")]
+        public decimal Profit => UnitPrice.HasValue && UnitCost.HasValue ? UnitPrice.Value - UnitCost.Value : 0;
+
+        [Display(Name = "Margin (%)")]
+        public decimal Margin => UnitPrice.HasValue && UnitPrice.Value != 0 && UnitCost.HasValue ? (UnitPrice.Value - UnitCost.Value) / UnitPrice.Value : 0;
+
+        [Required(ErrorMessage = "SKU is required.")]
+        public string SKU { get; set; }
+
+        // Optional: Navigation property for Category if needed in the ViewModel
+        public CategoryViewModel? Category { get; set; } = new();
+    }
+
+    // Optional: Simplified Category ViewModel if you need to display category info
+    public class CategoryViewModel
+    {
+        public int CategoryId { get; set; }
+        public string CategoryName { get; set; }
+        // Add other relevant category properties
+    }
 
     protected override async Task OnInitializedAsync()
     {
-        Product = await ProductService.GetProductBySKUAsync(SKU);
+        var data = await ProductService.GetProductBySKUAsync(SKU);
+        _categories = await CategoryService.GetAllCategoryAsync(); // Load categories
 
-        if (Product is null)
+        if (data is null)
         {
             NavigationManager.NavigateTo("notfound");
+            return;
         }
+
+        // Map the Product entity to the ProductViewModel
+        Product = new ProductViewModel
+            {
+                ProductId = data.ProductId,
+                CategoryId = data.CategoryId,
+                ProductName = data.ProductName,
+                ImageURL = data.ImageURL,
+                Brand = data.Brand,
+                Description = data.Description,
+                UnitCost = data.UnitCost,
+                UnitPrice = data.UnitPrice,
+                SKU = data.SKU,
+                Category = data.Category == null ? new CategoryViewModel() : new CategoryViewModel
+                {
+                    CategoryId = data.Category.CategoryId,
+                    CategoryName = data.Category.CategoryName
+                }
+            };
+
+        UpdateProfitMargin(Product.UnitCost, Product.UnitPrice); // Calculate on initialize
 
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
@@ -126,88 +199,126 @@
         }
     }
 
-
-    // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
-    private async Task UpdateProduct()
+    private void UpdateProfitMargin(decimal? cost, decimal? price)
     {
-        try
+        if (price.HasValue && cost.HasValue)
         {
-            await ProductService.UpdateProductAsync(Product);
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add("An error occurred while deleting the category.", Severity.Error);
-
-        }
-        NavigationManager.NavigateTo("/products");
-    }
-
-    // events
-    async Task OpenDialogAsync()    
-    {
-        var parameters = new DialogParameters<DialogComponent>
-        {
-            {x => x.ContentText, $"Are you sure you want to delete the product '{Product.ProductName}'? This action cannot be undone."}
-        };
-
-        var dialog = await DialogService.ShowAsync<DialogComponent>("Delete Product", parameters);
-        var result = await dialog.Result;
-
-        if (!result.Canceled)
-        {
-            try
+            if (price.Value == 0)
             {
-                await ProductService.DeleteProductAsync(Product);
-                Snackbar.Add("Product Deleted", Severity.Success);
-
+                Profit = "--";
+                Margin = "--";
             }
-            catch (InvalidOperationException ex)
+            else
             {
-                Snackbar.Add(ex.Message, Severity.Error);
+                decimal profit = price.Value - cost.Value;
+                decimal margin = (price.Value - cost.Value) / price.Value; // Calculate as a decimal
+
+                Profit = String.Format(new System.Globalization.CultureInfo("en-PH"), "{0:C2}", profit);
+                Margin = $"{margin:P2}"; // Format as percentage here
             }
-            catch (Exception ex)
-            {
-                Snackbar.Add("An error occurred while deleting the category.", Severity.Error);
-            }
-        }
-
-    }
-
-    private string Profit = "--";
-    private string Margin = "--";
-    private decimal? _profit;
-    private decimal? _margin;
-
-    private void After()
-    {
-
-        if (Product.UnitPrice == 0)
-        {
-            Profit = "--";
-            Margin = "--";
-
         }
         else
         {
-            _profit = Product.UnitPrice - Product.UnitCost;
-            _margin = _profit / Product.UnitPrice;
-
-            Profit = String.Format(new System.Globalization.CultureInfo("en-PH"), "{0:C2}", _profit);
-            Margin = $"{_margin:P2}"; // Displays percentage with 2 decimal places
+            Profit = "--";
+            Margin = "--";
         }
+    }
+    // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async Task UpdateProduct()
+    {
+        if (Product != null) // Check if Product is not null before updating
+        {
+            try
+            {
+                // Map from ProductViewModel to the Product entity
+                var productEntity = new Product
+                    {
+                        ProductId = Product.ProductId,
+                        CategoryId = Product.CategoryId,
+                        ProductName = Product.ProductName,
+                        ImageURL = Product.ImageURL,
+                        Brand = Product.Brand,
+                        Description = Product.Description,
+                        UnitCost = Product.UnitCost ?? 0, // Provide default if null
+                        UnitPrice = Product.UnitPrice ?? 0, // Provide default if null
+                        SKU = Product.SKU,
+                    };
+                await ProductService.UpdateProductAsync(productEntity);
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add(ex.Message, Severity.Error);
+                // Optionally log the error: _logger.LogError(ex, "Error updating product", ex);
+            }
+            NavigationManager.NavigateTo("/products");
+        }
+        else
+        {
+            Snackbar.Add("Product data is not loaded. Cannot update.", Severity.Error);
+        }
+    }
 
+    // events
+    async Task OpenDialogAsync()
+    {
+        if (Product != null) // Check if Product is not null before deleting
+        {
+            var parameters = new DialogParameters<DialogComponent>
+            {
+                {x => x.ContentText, $"Are you sure you want to delete the product '{Product.ProductName}'? This action cannot be undone."},
+                { "Button1Text", "Delete" },
+            { "Button2Text", "Cancel" },
+            { "Color", Color.Error }
+            };
+
+            var dialog = await DialogService.ShowAsync<DialogComponent>("Delete Product", parameters);
+            var result = await dialog.Result;
+
+            if (!result.Canceled)
+            {
+                try
+                {
+                    // Map from ProductViewModel to the Product entity for deletion
+                    var productEntity = new Product
+                        {
+                            ProductId = Product.ProductId,
+                            CategoryId = Product.CategoryId,
+                            ProductName = Product.ProductName,
+                            ImageURL = Product.ImageURL,
+                            Brand = Product.Brand,
+                            Description = Product.Description,
+                            UnitCost = Product.UnitCost ?? 0, // Provide default if null
+                            UnitPrice = Product.UnitPrice ?? 0, // Provide default if null
+                            SKU = Product.SKU,
+
+                        };
+                    await ProductService.DeleteProductAsync(productEntity);
+                    Snackbar.Add("Product Deleted", Severity.Success);
+                    NavigationManager.NavigateTo("/products");
+                }
+                catch (InvalidOperationException ex)
+                {
+                    Snackbar.Add(ex.Message, Severity.Error);
+                }
+                catch (Exception ex)
+                {
+                    Snackbar.Add("An error occurred while deleting the product.", Severity.Error);
+                    // Optionally log the error: _logger.LogError(ex, "Error deleting product", ex);
+                }
+            }
+        }
+        else
+        {
+            Snackbar.Add("Product data is not loaded. Cannot delete.", Severity.Error);
+        }
     }
 
     private async Task<IEnumerable<string>> Search(string value, CancellationToken token)
     {
-        // In real life use an asynchronous function for fetching data from an api.
         await Task.Delay(5, token);
-
-        // if text is null or empty, show complete list
         if (string.IsNullOrEmpty(value))
-            return _brands;
-
-        return _brands.Where(x => x.Contains(value, StringComparison.InvariantCultureIgnoreCase));
+            return _brands ?? Enumerable.Empty<string>(); // Null-safe return
+        return _brands?.Where(x => x.Contains(value, StringComparison.InvariantCultureIgnoreCase)) ?? Enumerable.Empty<string>(); // Null-safe filtering
     }
 
     private async Task ClearAsync()
@@ -233,8 +344,6 @@
     private void Upload()
     {
         // Upload the files here
-        // Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomCenter;
-        // Snackbar.Add("TODO: Upload your files!");
     }
 
     private void SetDragClass()

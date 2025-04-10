@@ -48,6 +48,8 @@ namespace InventiCloud.Services
                     throw new InvalidOperationException($"A sales person with the phone number '{salesperson.PhoneNumber}' already exists.");
                 }
 
+                salesperson.BirthDate = salesperson.BirthDate?.Date; // Normalize date to remove time component
+
                 context.SalesPersons.Add(salesperson);
                 await context.SaveChangesAsync();
             }

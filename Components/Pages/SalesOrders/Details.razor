@@ -1,241 +1,80 @@
 ﻿@page "/sales/orders/{ReferenceNumber}"
 @using InventiCloud.Components.UI
-@using InventiCloud.Services
 @using InventiCloud.Services.Interface
-@using InventiCloud.Utils
-@using Microsoft.EntityFrameworkCore
 @using InventiCloud.Entities
-@using InventiCloud.Data
-@inject IDbContextFactory<InventiCloud.Data.ApplicationDbContext> DbFactory
-@inject IDialogService DialogService
-@inject ICustomerService CustomerService
-@inject IBranchService BranchService
 @inject ISalesOrderService SalesOrderService
-@inject IProductService ProductService
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
 
-
 <MudContainer Class="pt-5" MaxWidth="MaxWidth.Large">
-    <div class="d-flex gap-4 align-items-center mb-4">
-        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" aria-label="delete" Href="/purchase/orders" />
+
+    <div class="d-flex align-items-center mb-4">
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Href="/sales/orders" />
         <MudText Typo="Typo.h4">@ReferenceNumber</MudText>
     </div>
-    <MudText Typo="Typo.h6">DETAILS</MudText>
-    <MudGrid>
-        <MudItem xs="12" sm="6">
-            <MudAutocomplete T="Customer" Label="Customer" @bind-Value="SalesOrder.Customer"
-                             SearchFunc="@SearchCustomer" ToStringFunc="@(c=> c==null?null : $"{c.CustomerName}")" Variant="Variant.Outlined" />
-            <MudAutocomplete T="Branch" Label="Branch" @bind-Value="SalesOrder.OrderBranch"
-                             SearchFunc="@SearchBranch" ToStringFunc="@(b=> b==null?null : $"{b.BranchName}")" Variant="Variant.Outlined" />
-        </MudItem>
 
-        <MudItem xs="12" sm="6">
-            <MudAutocomplete T="SalesPerson" Label="Sales Person" @bind-Value="SalesOrder.SalesPerson"
-                             SearchFunc="@SearchSalesPerson" ToStringFunc="@(sp=> sp==null?null : $"{sp.FullName}")" For="@(() => SalesOrder.SalesPerson)" Variant="Variant.Outlined" />
-            <MudDatePicker Label="Estimated Arrival" Editable="true" @bind-Date="SalesOrder.OrderedDate" Mask="@(new DateMask("MM/dd/yyyy"))" DateFormat="MM/dd/yyyy" Placeholder="Order Date" Variant="Variant.Outlined" />
-        </MudItem>
-        <MudTextField Class="mb-4" @bind-Value="SalesOrder.ReferenceNumber" HideSpinButtons="true" Label="Purchase Order Number" ReadOnly="true" Disabled="true" For="@(() => SalesOrder.ReferenceNumber)" Variant="Variant.Outlined" />
-    </MudGrid>
+    @if (salesOrderDetails != null)
+    {
+        <MudText Typo="Typo.h6">DETAILS</MudText>
+        <MudGrid>
+            <MudItem xs="12" sm="6">
+                <MudAutocomplete T="Customer" Label="Customer" Value="@salesOrderDetails.Customer" For="@(()=> salesOrderDetails.Customer)" ReadOnly="true"
+                                 ToStringFunc="@(customer=> customer?.CustomerName)" Variant="Variant.Outlined" />
+                <MudAutocomplete T="Branch" Label="Branch" Value="@salesOrderDetails.OrderBranch" For="@(() => salesOrderDetails.OrderBranch)" ReadOnly="true"
+                                 ToStringFunc="@(branch=> branch?.BranchName)" Variant="Variant.Outlined" />
+            </MudItem>
 
-    <MudText Typo="Typo.h6">PRODUCTS</MudText>
+            <MudItem xs="12" sm="6">
+                <MudAutocomplete T="SalesPerson" Label="Sales Person" Value="@salesOrderDetails.SalesPerson" For="@(() => salesOrderDetails.SalesPerson)" ReadOnly="true"
+                                 ToStringFunc="@(salesperson=> salesperson?.FullName)" Variant="Variant.Outlined" />
+                <MudDatePicker Label="Order Date" Date="@salesOrderDetails.OrderedDate" For="@(() => salesOrderDetails.OrderedDate)" ReadOnly="true"
+                               Mask="@(new DateMask("MM/dd/yyyy"))" DateFormat="MM/dd/yyyy" Placeholder="Order Date" Variant="Variant.Outlined" />
+            </MudItem>
+        </MudGrid>
 
-    <MudGrid Class="d-flex align-center flex-wrap flex-grow-1">
-        <MudItem xs="12" sm="5">
-            <MudAutocomplete T="Product" Label="Products" @bind-Value="NewSalesOrderItem.Product"
-                             SearchFunc="@SearchProduct" ToStringFunc="@(p=> p==null?null : $"{p.ProductName}")" Variant="Variant.Outlined" />
-        </MudItem>
-
-        <MudItem xs="12" sm="3">
-            <MudTextField Variant="Variant.Outlined" Label="Discount" @bind-Value="NewSalesOrderItem.Discount" />
-        </MudItem>
-
-        <MudItem xs="12" sm="3">
-            <MudTextField Variant="Variant.Outlined" Label="Quantity" @bind-Value="NewSalesOrderItem.Quantity" />
-        </MudItem>
-
-        <MudItem xs="12" sm="3">
-            <MudTextField Variant="Variant.Outlined" Label="Price" @bind-Value="NewSalesOrderItem.UnitPrice" />
-        </MudItem>
+        <MudText Typo="Typo.h6">PRODUCTS</MudText>
+        <MudDataGrid Items="@salesOrderDetails.SalesOrderItems" Class="mt-4" ReadOnly="true">
+            <Columns>
+                <PropertyColumn Property="soi => soi.Product.ProductName" Title="Product" />
+                <PropertyColumn Property="soi => soi.Discount" Title="Discount " Format="P2" />
+                <PropertyColumn Property="soi => soi.Quantity" Title="Quantity" />
+                <PropertyColumn Property="soi => soi.UnitPrice" Title="Price" Format="C" />
+                <PropertyColumn Property="soi => soi.SubTotal" Title="Subtotal" Format="C" />
+            </Columns>
+        </MudDataGrid>
+        <MudText Typo="Typo.h5" Class="mt-2">Total: @salesOrderDetails.TotalAmount.ToString("C")</MudText>
 
 
-        <MudItem xs="12" sm="1">
-            <MudButton ButtonType="ButtonType.Submit" OnClick="AddSalesOrderItem" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Add</MudButton>
-        </MudItem>
-    </MudGrid>
+    }
+    else
+    {
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" Class="my-4" />
+    }
 
-
-    <MudDataGrid @ref="dataGrid" T="SalesOrderItem" ServerData="ServerReload" Class="mt-4">
-        <Columns>
-            <PropertyColumn Property="soi => soi.Product.ProductName" Title="Product" />
-            <PropertyColumn Property="soi => soi.Discount" Title="Discount" />
-            <PropertyColumn Property="soi => soi.Quantity" Title="Quantity" />
-            <PropertyColumn Property="soi => soi.UnitPrice" Title="Price" />
-            <PropertyColumn Property="soi => soi.SubTotal" Title="Subtotal" />
-                <TemplateColumn CellClass="d-flex justify-end">
-                    <CellTemplate>
-                        <MudStack Row>
-                            <MudIconButton Icon="@Icons.Material.Filled.Close" Color="Color.Error" aria-label="delete"
-                                           OnClick="@(() => RemoveSalesOrderItem(context.Item))" />
-                        </MudStack>
-                    </CellTemplate>
-                </TemplateColumn>
-
-        </Columns>
-    </MudDataGrid>
-    <MudText Typo="Typo.h5">@SalesOrderItems.Sum(item => item.SubTotal)</MudText>
 </MudContainer>
 
 @code {
     [Parameter]
     public string ReferenceNumber { get; set; }
 
-
-    MudDataGrid<SalesOrderItem> dataGrid = new();
-
-    private SalesOrder SalesOrder { get; set; } = new();
-    private Product selectedProduct { get; set; } = new();
-    private SalesOrderItem NewSalesOrderItem { get; set; } = new();
-
-    private IEnumerable<Customer>? _customer;
-    private IEnumerable<Branch>? _branches;
-    private IEnumerable<SalesPerson>? _salesperson;
-    private IEnumerable<Product>? _products;
-    private IEnumerable<SalesOrderItem> SalesOrderItems = new List<SalesOrderItem>();
+    private SalesOrder? salesOrderDetails;
 
     protected override async Task OnInitializedAsync()
     {
-
-        SalesOrder = await SalesOrderService.GetSalesOrderByReferenceNumberAsync(ReferenceNumber);
-        await dataGrid.ReloadServerData();
-
-        if (SalesOrder is null)
+        if (!string.IsNullOrEmpty(ReferenceNumber))
         {
-            NavigationManager.NavigateTo("notfound");
-        }
+            salesOrderDetails = await SalesOrderService.GetSalesOrderByReferenceNumberAsync(ReferenceNumber);
 
-        SalesOrderItems = SalesOrder.SalesOrderItems.ToList();
-
-        _products = await ProductService.GetAllProductAsync();
-        _branches = await BranchService.GetAllBranchAsync();
-        _customer = await CustomerService.GetAllCustomerAsync();
-    }
-
-    private async Task SaveChanges()
-    {
-
-        await SalesOrderService.UpdateSalesOrderAsync(SalesOrder);
-        NavigationManager.NavigateTo($"/sales/orders/{SalesOrder.ReferenceNumber}", forceLoad: true);
-    }
-
-    private async Task AddSalesOrderItem()
-    {
-        try
-        {
-            NewSalesOrderItem.SubTotal = NewSalesOrderItem.Quantity * NewSalesOrderItem.UnitPrice;
-
-
-            await SalesOrderService.AddSalesOrderItemAsync(NewSalesOrderItem);
-
-            NewSalesOrderItem = new();
-
-            await dataGrid.ReloadServerData();
-        }
-        catch (InvalidOperationException ex)
-        {
-            Snackbar.Add(ex.Message, Severity.Error);
-        }
-    }
-
-    async Task RemoveSalesOrderItem(SalesOrderItem item)
-    {
-
-        try
-        {
-
-            await SalesOrderService.DeleteSalesOrderItemAsync(item);
-
-            await dataGrid.ReloadServerData();
-        }
-        catch (InvalidOperationException ex)
-        {
-            Snackbar.Add(ex.Message, Severity.Error);
-        }
-
-    }
-
-    private async Task<GridData<SalesOrderItem>> ServerReload(GridState<SalesOrderItem> state)
-    {
-
-        var totalItems = SalesOrderItems.Count();
-
-        var sortDefinition = state.SortDefinitions.FirstOrDefault();
-        if (sortDefinition != null)
-        {
-            switch (sortDefinition.SortBy)
+            if (salesOrderDetails == null)
             {
-                case nameof(SalesOrderItem.Quantity):
-                    SalesOrderItems = SalesOrderItems.OrderByDirection(
-                        sortDefinition.Descending ? SortDirection.Descending : SortDirection.Ascending,
-                        o => o.Quantity
-                    );
-                    break;
+                Snackbar.Add($"Sales order with reference '{ReferenceNumber}' not found.", Severity.Error);
+                NavigationManager.NavigateTo("/sales/orders", true);
             }
         }
-
-        var pagedData = SalesOrderItems.Skip(state.Page * state.PageSize).Take(state.PageSize).ToArray();
-        return new GridData<SalesOrderItem>
-            {
-                TotalItems = totalItems,
-                Items = pagedData
-            };
-    }
-
-    private async Task<IEnumerable<Product>> SearchProduct(string value, CancellationToken token)
-    {
-
-        if (string.IsNullOrEmpty(value))
+        else
         {
-            // Return all available products excluding already added ones.
-            return _products.Where(p => !SalesOrderItems.Any(poi => poi.Product.ProductId == p.ProductId));
+            Snackbar.Add("Invalid sales order reference.", Severity.Error);
+            NavigationManager.NavigateTo("/sales/orders", true);
         }
-
-        // Filter products based on search value and exclude already added ones.
-        return _products
-            .Where(p => p.ProductName.Contains(value, StringComparison.InvariantCultureIgnoreCase) ||
-                        p.SKU.Contains(value, StringComparison.InvariantCultureIgnoreCase)) // Add other search properties if needed
-            .Where(p => !SalesOrderItems.Any(poi => poi.Product.ProductId == p.ProductId));
     }
-
-    private async Task<IEnumerable<Customer>> SearchCustomer(string value, CancellationToken token)
-    {
-
-        if (string.IsNullOrEmpty(value))
-        {
-            return _customer;
-        }
-
-        return _customer.Where(c => c.CustomerName.Contains(value, StringComparison.InvariantCultureIgnoreCase));
-    }
-
-    private async Task<IEnumerable<Branch>> SearchBranch(string value, CancellationToken token)
-    {
-        if (string.IsNullOrEmpty(value))
-        {
-            return _branches;
-        }
-
-        return _branches.Where(b => b.BranchName.Contains(value, StringComparison.InvariantCultureIgnoreCase));
-    }
-
-    private async Task<IEnumerable<SalesPerson>> SearchSalesPerson(string value, CancellationToken token)
-    {
-        if (string.IsNullOrEmpty(value))
-        {
-            return _salesperson;
-        }
-
-        return _salesperson.Where(sp => sp.FullName.Contains(value, StringComparison.InvariantCultureIgnoreCase));
-    }
-
 }

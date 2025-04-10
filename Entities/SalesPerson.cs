@@ -15,8 +15,6 @@ namespace InventiCloud.Entities
         [MaxLength(20)]
         public string? PhoneNumber { get; set; }
 
-        public string Occupation { get; set; }
-
         [MaxLength(255)]
         public string? Email { get; set; }
 

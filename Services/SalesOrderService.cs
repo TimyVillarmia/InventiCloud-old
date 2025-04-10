@@ -32,42 +32,63 @@ namespace InventiCloud.Services
 
             try
             {
-
-                //purchaseOrder.TotalAmount = salesOrderItems.Sum(item => item.SubTotal);
-
                 // Add the sales order.
                 context.SalesOrders.Add(salesOrder);
-                await context.SaveChangesAsync(); // Generate PurchaseOrderId
+                await context.SaveChangesAsync(); // Generate SalesOrderId
 
                 // Generate and set the reference number.
-                salesOrder.ReferenceNumber = ReferenceNumberGenerator.GeneratePurchaseOrderReference(salesOrder.SalesOrderId);
+                salesOrder.ReferenceNumber = ReferenceNumberGenerator.GenerateSalesOrderReference(salesOrder.SalesOrderId);
 
-                // Update the sales order 
+                // Update the sales order with the reference number.
                 context.SalesOrders.Update(salesOrder);
-
-                ////// Update status to draft.
-                ////await UpdatePurchaseOrderStatusAsync(purchaseOrder, 1, "Draft");
-
-                // Save all changes.
                 await context.SaveChangesAsync();
 
-
-                // Set SalesOrderID for items.
+                // Set SalesOrderId for items and process inventory.
                 foreach (var item in salesOrderItems)
                 {
                     item.SalesOrderId = salesOrder.SalesOrderId;
+
+                    // Get inventory using the inventory service.
+                    var inventory = await inventoryService.GetInventoryByProductIdAndBranchIdAsync(item.ProductId, salesOrder.OrderBranchId);
+
+                    if (inventory != null)
+                    {
+                        if (inventory.AvailableQuantity >= item.Quantity)
+                        {
+                            // Decrease OnHand quantity.
+                            inventory.OnHandquantity -= item.Quantity;
+
+                            // Recalculate AvailableQuantity.
+                            inventory.AvailableQuantity = inventory.OnHandquantity - inventory.Allocated;
+
+                            // Update inventory using the inventory service.
+                            await inventoryService.UpdateInventoryAsync(inventory);
+                        }
+                        else
+                        {
+                            throw new InvalidOperationException($"Insufficient available quantity for product '{item.Product?.ProductName ?? item.ProductId.ToString()}' in branch '{salesOrder.OrderBranch?.BranchName ?? salesOrder.OrderBranchId.ToString()}'. Available: {inventory.AvailableQuantity}, Requested: {item.Quantity}");
+                        }
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Inventory not found for product {ProductId} in branch {BranchId}.", item.ProductId, salesOrder.OrderBranchId);
+                        throw new InvalidOperationException($"Inventory not found for product '{item.Product?.ProductName ?? item.ProductId.ToString()}' in branch '{salesOrder.OrderBranch?.BranchName ?? salesOrder.OrderBranchId.ToString()}'.");
+                    }
                 }
 
                 context.SalesOrderItems.AddRange(salesOrderItems);
 
-                // Save all changes.
+                // Save the sales order items.
                 await context.SaveChangesAsync();
-
 
                 NavigationManager.NavigateTo($"/sales/orders/{salesOrder.ReferenceNumber}");
 
-
                 _logger.LogInformation("Sales order {SalesOrderId} added successfully.", salesOrder.SalesOrderId);
+            }
+            catch (InvalidOperationException ex)
+            {
+                _logger.LogError(ex, "Invalid operation adding sales order {SalesOrderId}: {Message}", salesOrder.SalesOrderId, ex.Message);
+                throw;
             }
             catch (DbUpdateException ex)
             {
@@ -76,18 +97,15 @@ namespace InventiCloud.Services
                     _logger.LogError(ex, "Unique constraint violation adding sales order {SalesOrderId}.", salesOrder.SalesOrderId);
                     throw new InvalidOperationException("A unique constraint violation occurred (e.g., duplicate reference number).", ex);
                 }
-                _logger.LogError(ex, "Database error adding purchase order {SalesOrderId}.", salesOrder.SalesOrderId);
+                _logger.LogError(ex, "Database error adding sales order {SalesOrderId}.", salesOrder.SalesOrderId);
                 throw;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error adding purchase order {SalesOrderId}.", salesOrder.SalesOrderId);
+                _logger.LogError(ex, "Error adding sales order {SalesOrderId}.", salesOrder.SalesOrderId);
                 throw;
             }
-
-
         }
-
         public async Task DeleteSalesOrderAsync(SalesOrder salesOrder)
         {
 
@@ -131,8 +149,10 @@ namespace InventiCloud.Services
             using var context = DbFactory.CreateDbContext();
             return await context.SalesOrders
                 .Include(so => so.CreatedBy)
+                .Include(so => so.Customer)
                 .Include(so => so.SalesPerson)
                 .Include(so => so.OrderBranch)
+                .AsNoTracking()
                 .ToListAsync();
         }
 
@@ -269,6 +289,7 @@ namespace InventiCloud.Services
                 var salesOrder = await context.SalesOrders
                     .Include(so => so.CreatedBy)
                     .Include(so => so.SalesPerson)
+                    .Include(so => so.Customer)
                     .Include(so => so.OrderBranch)
                     .Include(so => so.SalesOrderItems)
                     .ThenInclude(so => so.Product)

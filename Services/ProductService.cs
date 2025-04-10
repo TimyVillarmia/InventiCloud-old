@@ -78,20 +78,41 @@ namespace InventiCloud.Services
             {
                 using var context = DbFactory.CreateDbContext();
 
-                // Check if there are any associated PurchaseOrderItems
+                // Check for associated PurchaseOrderItems
                 if (await context.PurchaseOrderItems.AnyAsync(poi => poi.ProductID == product.ProductId))
                 {
                     throw new InvalidOperationException("Cannot delete product. It has associated purchase order items.");
                 }
 
-                // Check if any inventory quantities are not zero
-                var inventory = await context.Inventories.FirstOrDefaultAsync(i => i.ProductId == product.ProductId);
-                if (inventory != null && (inventory.OnHandquantity != 0 && inventory.IncomingQuantity != 0 && inventory.AvailableQuantity != 0 && inventory.Allocated != 0))
+                // Check for associated SalesOrderItems (assuming you have this entity)
+                if (await context.SalesOrderItems.AnyAsync(soi => soi.ProductId == product.ProductId))
                 {
-                    throw new InvalidOperationException("Unable to delete. Please adjust inventory to zero before deleting this product.");
+                    throw new InvalidOperationException("Cannot delete product. It has associated sales order items.");
                 }
 
-                // Remove the product if no associated data is found
+                // Check for non-zero inventory quantities
+                var inventory = await context.Inventories.FirstOrDefaultAsync(i => i.ProductId == product.ProductId);
+                if (inventory != null && (inventory.OnHandquantity != 0 || inventory.IncomingQuantity != 0 || inventory.AvailableQuantity != 0 || inventory.Allocated != 0))
+                {
+                    throw new InvalidOperationException("Unable to delete. Please ensure all inventory quantities are zero before deleting this product.");
+                }
+
+                // Check for other related transactions (add more checks as needed)
+                // Example: Checking for ProductMovements
+                if (await context.StockAdjustmentItems.AnyAsync(pm => pm.ProductId == product.ProductId))
+                {
+                    throw new InvalidOperationException("Cannot delete product. It has associated product movements.");
+                }
+
+                // Check for other related transactions (add more checks as needed)
+                // Example: Checking for ProductMovements
+                if (await context.StockTransferItems.AnyAsync(pm => pm.ProductId == product.ProductId))
+                {
+                    throw new InvalidOperationException("Cannot delete product. It has associated product movements.");
+                }
+
+
+                // If no associated data is found, remove the product
                 context.Products.Remove(product);
                 await context.SaveChangesAsync();
 
@@ -108,7 +129,6 @@ namespace InventiCloud.Services
                 throw; // Re-throw the exception to be handled in the calling method
             }
         }
-
         public async Task DisposeAsync()
         {
             using var context = DbFactory.CreateDbContext();

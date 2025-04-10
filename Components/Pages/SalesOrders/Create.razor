@@ -14,6 +14,7 @@
 @inject ICustomerService CustomerService
 @inject IProductService ProductService
 @inject ISalesOrderService SalesOrderService
+@inject ISalesPersonService SalesPersonService
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject UserManager<ApplicationUser> UserManager
 @inject NavigationManager NavigationManager
@@ -55,33 +56,31 @@
             <MudGrid>
                 <MudItem sm="12">
                     <MudGrid Class="d-flex align-center flex-wrap flex-grow-1">
-                        <MudItem xs="12" sm="5">
+                        <MudItem xs="12" sm="3">
                             <MudAutocomplete T="Product" Label="Products" @bind-Value="SalesOrderItem.Product" For="@(() => SalesOrderItem.Product)" Margin="Margin.Dense"
-                                             SearchFunc="@SearchProduct" ToStringFunc="@(product=> product==null?null : $"{product}")" Variant="Variant.Outlined" @bind-Value:after="After" />
+                                             SearchFunc="@SearchProduct" ToStringFunc="@(product=> product==null?null : $"{product.ProductName}")" Variant="Variant.Outlined" @bind-Value:after="After" />
                         </MudItem>
 
-                        <MudItem xs="12" sm="3">
+                        <MudItem xs="12" sm="2">
                             <MudNumericField HideSpinButtons="true" T="int" Variant="Variant.Outlined" ReadOnly="true" Label="Available" For="@(() => SalesOrderItem.Available)"
                                              @bind-Value="SalesOrderItem.Available" Margin="Margin.Dense" />
                         </MudItem>
 
-                        <MudItem xs="12" sm="3">
+                        <MudItem xs="12" sm="2">
                             <MudNumericField HideSpinButtons="true" T="decimal" Variant="Variant.Outlined" Label="Price" For="@(() => SalesOrderItem.UnitPrice)"
                                              @bind-Value="SalesOrderItem.UnitPrice" Margin="Margin.Dense" />
                         </MudItem>
-                        <MudItem xs="12" sm="3">
-                            <MudNumericField HideSpinButtons="true" T="int" Variant="Variant.Outlined" Label="Quantity" For="@(() => SalesOrderItem.Quantity)"
-                                             @bind-Value="SalesOrderItem.Quantity"  Margin="Margin.Dense"/>
+
+
+                        <MudItem xs="12" sm="2">
+                            <MudNumericField HideSpinButtons="true" T="int" Variant="Variant.Outlined" For="@(() => SalesOrderItem.Quantity)"
+                                                                    @bind-Value="SalesOrderItem.Quantity" Margin="Margin.Dense" />
                         </MudItem>
 
-
-
-                        <MudItem xs="12" sm="3">
-                            <MudNumericField HideSpinButtons="true" T="decimal" Variant="Variant.Outlined" Label="Discount" For="@(() => SalesOrderItem.Discount)"
-                                             @bind-Value="SalesOrderItem.Discount" Margin="Margin.Dense" />
+                        <MudItem xs="12" sm="2">
+                            <MudNumericField HideSpinButtons="true" T="int" Variant="Variant.Outlined" Label="Discount (%)"
+                                                                    @bind-Value="_discountInput" Margin="Margin.Dense" />
                         </MudItem>
-
-
                         <MudItem xs="6" sm="1">
                             <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary">Add</MudButton>
                         </MudItem>
@@ -94,11 +93,11 @@
 
         <MudDataGrid Items="SalesOrderItems" Class="mt-4">
             <Columns>
-                <PropertyColumn Property="soi => soi.Product" Title="Product" />
-                <PropertyColumn Property="soi => soi.Discount" Title="Discount " />
+                <PropertyColumn Property="soi => soi.Product.ProductName" Title="Product" />
+                <PropertyColumn Property="soi => soi.Discount" Title="Discount " Format="P2" />
                 <PropertyColumn Property="soi => soi.Quantity" Title="Quantity" />
-                <PropertyColumn Property="soi => soi.UnitPrice" Title="Price" />
-                <PropertyColumn Property="soi => soi.SubTotal" Title="Subtotal" />
+                <PropertyColumn Property="soi => soi.UnitPrice" Title="Price" Format="C" />
+                <PropertyColumn Property="soi => soi.SubTotal" Title="Subtotal" Format="C" />
                 <TemplateColumn CellClass="d-flex justify-end">
                     <CellTemplate>
                         <MudStack Row>
@@ -108,12 +107,13 @@
                 </TemplateColumn>
             </Columns>
         </MudDataGrid>
-        <MudText Typo="Typo.h5">@SalesOrderItems.Sum(item => item.SubTotal)</MudText>
+        <MudText Typo="Typo.h5" Class="mt-2">@SalesOrderItems.Sum(item => item.SubTotal).ToString("C")</MudText>
+
 
 
         <div class="d-flex align-end mt-12">
             <MudButton Variant="Variant.Filled" Color="Color.Default" Href="/purchase/orders" Class="ml-auto">CANCEL</MudButton>
-            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-2">SAVE AS DRAFT</MudButton>
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-2">CREATE SALES ORDER</MudButton>
 
         </div>
 
@@ -129,6 +129,7 @@
 
     [SupplyParameterFromForm(FormName = "createSalesOrderItem")]
     private SalesOrderItemViewModel SalesOrderItem { get; set; } = new();
+    private int _discountInput;
 
 
     private List<SalesOrderItemViewModel> SalesOrderItems = new List<SalesOrderItemViewModel>();
@@ -162,12 +163,12 @@
 
 
         [Required(ErrorMessage = "Quantity is required.")]
-        [Range(1, int.MaxValue, ErrorMessage = "Quantity must be greater than 0.")]
+        [Range(1, int.MaxValue, ErrorMessage = "Quantity must not be 0.")]
         public int Quantity { get; set; }
 
         [Range(0, 1, ErrorMessage = "Discount must be between 0 and 1.")]
-        [Precision(19, 4)]
         public decimal Discount { get; set; }
+
 
         [Required(ErrorMessage = "Unit Price is required.")]
         [Precision(19, 2)]
@@ -176,8 +177,11 @@
 
         public decimal SubTotal
         {
-            get { return Quantity * UnitPrice * (1 - Discount); }
-            set { } // Make the setter private to prevent external modification
+            get
+            {
+                return Quantity * UnitPrice * (1 - Discount);
+            }
+            set { }
         }
     }
 
@@ -191,6 +195,7 @@
         var user = authState.User;
         _branches = await BranchService.GetAllBranchAsync();
         _customer = await CustomerService.GetAllCustomerAsync();
+        _salesperson = await SalesPersonService.GetAllSalesPersonAsync();
 
         if (user.Identity?.IsAuthenticated == true)
         {
@@ -236,6 +241,7 @@
                         ProductId = vm.Product.ProductId,
                         Quantity = vm.Quantity,
                         UnitPrice = vm.UnitPrice,
+                        Discount = vm.Discount,
                         SubTotal = vm.SubTotal,
                     }).ToList();
 
@@ -245,6 +251,10 @@
                 await dataGrid.ReloadServerData(); // Reload grid if it exists
             }
             catch (InvalidOperationException ex)
+            {
+                Snackbar.Add(ex.Message, Severity.Error);
+            }
+            catch (Exception ex)
             {
                 Snackbar.Add(ex.Message, Severity.Error);
             }
@@ -282,11 +292,12 @@
 
         if (context.Validate())
         {
-            SalesOrderItem.SubTotal = SalesOrderItem.Quantity * SalesOrderItem.UnitPrice;
+            SalesOrderItem.Discount = (decimal)_discountInput / 100;
+            SalesOrderItem.SubTotal = SalesOrderItem.Quantity * SalesOrderItem.UnitPrice * (1 - SalesOrderItem.Discount);
             SalesOrderItems.Add(SalesOrderItem);
-            SalesOrderItem = new SalesOrderItemViewModel(); // Reset
+            SalesOrderItem = new SalesOrderItemViewModel(); // Reset the ViewModel
+            _discountInput = 0; // Reset the input field
             isEmpty = !SalesOrderItems.Any();
-
         }
 
         return dataGrid.ReloadServerData();
@@ -362,14 +373,14 @@
 
     private void After()
     {
-        SalesOrderItem.Quantity = _sourceBranchInventories.Where(i => i.Product.ProductId == SalesOrderItem.Product.ProductId)
-                                                          .First().AvailableQuantity;
+        SalesOrderItem.Available = _sourceBranchInventories.Where(i => i.Product.ProductId == SalesOrderItem.Product.ProductId)
+                                 .First().AvailableQuantity;
 
         SalesOrderItem.UnitPrice = _sourceBranchInventories.Where(i => i.Product.ProductId == SalesOrderItem.Product.ProductId)
        .First().Product.UnitPrice;
 
+        _discountInput = (int)(SalesOrderItem.Discount * 100); // Convert decimal back to whole number for input
     }
-
     private async void HandleChangeSourceBranch()
     {
         _sourceBranchInventories = await InventoryService.GetAllInventoryByBranchAsync(SalesOrder.OrderBranch.BranchId);
