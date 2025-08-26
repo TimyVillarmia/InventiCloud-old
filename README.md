@@ -16,15 +16,6 @@ The system replaces outdated manual inventory methods (spreadsheets, paper recor
 - **Sales Order Management:** Handle cash-based sales orders with customer and product details.
 - **Reports Dashboard:** Monitor sales, orders, top-selling products, gross sales, and staff performance.
 - **Cloud Services Integration:** Utilize cloud infrastructure for scalability and reliability.
-
-### Non-Functional Requirements
-- Modular architecture for easy maintenance and updates.
-- 99.5% uptime or higher to minimize downtime.
-- Response time of ≤2 seconds under normal load.
-- Scalable cloud infrastructure to handle varying traffic and data loads.
-- Robust authentication and authorization mechanisms.
-- User-friendly and intuitive interface.
-
 ---
 
 ## Project Highlights
